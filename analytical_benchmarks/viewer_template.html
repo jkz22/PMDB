@@ -1,0 +1,342 @@
+<style>
+.tv-canvas{display:block;width:100%;height:auto;image-rendering:pixelated;border-radius:var(--radius-sm);border:1px solid rgb(var(--border-secondary))}
+.tv-row{display:flex;flex-wrap:wrap;gap:calc(var(--unit)*3);align-items:center}
+.tv-row input[type=range]{flex:1 1 200px;min-width:160px;accent-color:rgb(var(--text-accent))}
+.tv-out{font-family:var(--font-mono);font-size:13px;min-width:7ch}
+.tv-sw{display:inline-block;width:12px;height:12px;border-radius:2px;border:1px solid rgb(var(--border-primary));vertical-align:-2px}
+.tv-cbar{height:10px;border-radius:2px;margin-top:4px}
+.tv-cbar-l{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:rgb(var(--text-tertiary))}
+.tv-mini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:calc(var(--unit)*2);margin-top:calc(var(--unit)*2)}
+.tv-mini .a-metric{padding:calc(var(--unit)*2)}
+.tv-mini .a-metric__value{font-size:17px;line-height:22px}
+.tv-charts{display:grid;gap:calc(var(--unit)*3);grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.tv-charts figure{margin:0}
+.tv-ct{font-size:13px;font-weight:600;margin:0}
+.tv-cv{font-family:var(--font-mono);font-size:11px;color:rgb(var(--text-secondary));margin:2px 0 4px}
+.tv-clk{cursor:crosshair}
+.tv-maps{display:grid;gap:calc(var(--unit)*3);grid-template-columns:repeat(2,minmax(0,1fr))}
+.tv-maps figure{margin:0}
+.tv-maps figcaption{font-size:12px;color:rgb(var(--text-secondary));margin-bottom:4px}
+@media (max-width:520px){.tv-mini{grid-template-columns:repeat(2,minmax(0,1fr))}.tv-maps{gap:calc(var(--unit)*2)}}
+</style>
+
+<section class="a-section">
+  <h2 class="a-section__title">What the trajectories show</h2>
+  <p class="a-prose">__LEAD__ This is an illustrative model with uncalibrated literature parameters: compare the sites with each other and do not read the numbers as predictions. No site is used as a reference.</p>
+  <p class="a-section__note">Each site: a __WIDTH__ µm wide crop of the BSE segmentation, __CYCLES__ cycles at __CRATE__C, __SEEDS__ random seeds. Images show seed 0; curves show the mean of the seeds with the min–max band.</p>
+</section>
+
+<section class="a-section" aria-labelledby="tv-h-img">
+  <h2 class="a-section__title" id="tv-h-img">Microstructure at the selected cycle</h2>
+  <div class="tv-row a-no-print">
+    <label class="a-label" for="tv-a">Left site</label><select class="a-select" id="tv-a">__SITE_OPTIONS__</select>
+    <label class="a-label" for="tv-b">Right site</label><select class="a-select" id="tv-b">__SITE_OPTIONS__</select>
+    <label class="a-label" for="tv-mode">Colour</label>
+    <select class="a-select" id="tv-mode"><option value="phase">Phases</option><option value="change">Changes since cycle 0</option></select>
+  </div>
+  <div class="tv-row" style="margin-top:calc(var(--unit)*3)">
+    <button type="button" class="a-btn a-btn--outline a-no-print" id="tv-play" aria-pressed="false">Play</button>
+    <label class="a-label" for="tv-cyc">Cycle</label>
+    <input type="range" id="tv-cyc" min="0" max="__CYCLES__" step="1" value="0">
+    <output class="tv-out" id="tv-cyc-o" for="tv-cyc" aria-live="polite">0</output>
+  </div>
+  <p class="a-section__note" id="tv-legend"></p>
+  <div class="a-grid a-grid--halves" style="margin-top:calc(var(--unit)*3)">
+    <figure class="a-panel" style="margin:0"><figcaption class="a-panel__title" id="tv-cap-a"></figcaption>
+      <canvas class="tv-canvas" id="tv-img-a" role="img"></canvas><div class="tv-mini" id="tv-m-a"></div></figure>
+    <figure class="a-panel" style="margin:0"><figcaption class="a-panel__title" id="tv-cap-b"></figcaption>
+      <canvas class="tv-canvas" id="tv-img-b" role="img"></canvas><div class="tv-mini" id="tv-m-b"></div></figure>
+  </div>
+</section>
+
+<section class="a-section" aria-labelledby="tv-h-kpi">
+  <h2 class="a-section__title" id="tv-h-kpi">KPIs over cycles</h2>
+  <p class="a-section__note">Thick lines are the two selected sites; thin lines the other sites. Shaded bands are the min–max over seeds. The vertical line is the selected cycle; click a chart to move it.</p>
+  <ul class="a-legend" id="tv-site-legend"></ul>
+  <div class="tv-charts" id="tv-charts"></div>
+</section>
+
+<section class="a-section" aria-labelledby="tv-h-path">
+  <h2 class="a-section__title" id="tv-h-path">Trajectory path</h2>
+  <p class="a-section__note">Plots one KPI against another, with one dot per cycle. A square marks cycle 0 and the large circle marks the selected cycle.</p>
+  <div class="tv-row a-no-print">
+    <label class="a-label" for="tv-px">X axis</label><select class="a-select" id="tv-px">__KPI_OPTIONS__</select>
+    <label class="a-label" for="tv-py">Y axis</label><select class="a-select" id="tv-py">__KPI_OPTIONS__</select>
+  </div>
+  <figure class="a-panel" style="margin:calc(var(--unit)*3) 0 0"><svg class="a-chart tv-clk" id="tv-path" viewBox="0 0 760 330" role="img"></svg></figure>
+</section>
+
+<section class="a-section" aria-labelledby="tv-h-in">
+  <h2 class="a-section__title" id="tv-h-in">Inside one charge and discharge</h2>
+  <p class="a-section__note">Li content inside each Si particle, and the largest tensile stress, at each saved time step. Stress comes from a linear-elastic model, so treat it as relative. Pores are white and graphite/binder is grey.</p>
+  <div class="tv-row a-no-print">
+    <label class="a-label" for="tv-wc">Cycle</label><select class="a-select" id="tv-wc"></select>
+    <button type="button" class="a-btn a-btn--outline" id="tv-wplay" aria-pressed="false">Play</button>
+    <label class="a-label" for="tv-ws">Time step</label>
+    <input type="range" id="tv-ws" min="0" max="9" step="1" value="0">
+  </div>
+  <p class="tv-out" id="tv-w-o" aria-live="polite" style="margin:calc(var(--unit)*2) 0"></p>
+  <div class="tv-maps">
+    <figure><figcaption id="tv-c-la"></figcaption><canvas class="tv-canvas" id="tv-li-a" role="img"></canvas></figure>
+    <figure><figcaption id="tv-c-lb"></figcaption><canvas class="tv-canvas" id="tv-li-b" role="img"></canvas></figure>
+    <figure><figcaption id="tv-c-sa"></figcaption><canvas class="tv-canvas" id="tv-s-a" role="img"></canvas></figure>
+    <figure><figcaption id="tv-c-sb"></figcaption><canvas class="tv-canvas" id="tv-s-b" role="img"></canvas></figure>
+  </div>
+  <div class="a-grid a-grid--halves" style="margin-top:calc(var(--unit)*2)">
+    <div><div class="tv-cbar" id="tv-cb-li"></div><div class="tv-cbar-l"><span>0 (empty)</span><span>Li fraction in Si</span><span>1 (full)</span></div></div>
+    <div><div class="tv-cbar" id="tv-cb-s"></div><div class="tv-cbar-l"><span>0</span><span>tensile stress (GPa)</span><span id="tv-smax"></span></div></div>
+  </div>
+  <div class="tv-charts" id="tv-wcharts" style="margin-top:calc(var(--unit)*4)"></div>
+</section>
+
+<section class="a-section" aria-labelledby="tv-h-tab">
+  <h2 class="a-section__title" id="tv-h-tab">All sites at cycle <span id="tv-tab-c">0</span></h2>
+  <div class="a-table-scroll">
+    <table class="a-table" data-a-sticky-columns="1">
+      <caption class="a-visually-hidden">Simulated KPIs per site at the selected cycle (mean of seeds, min–max in brackets)</caption>
+      <thead><tr><th scope="col">Site</th><th scope="col" data-numeric>Capacity retention (%)</th><th scope="col" data-numeric>Swelling when charged (%)</th>
+      <th scope="col" data-numeric>Irreversible thickening (%)</th><th scope="col" data-numeric>Cracks</th><th scope="col" data-numeric>SEI fraction</th>
+      <th scope="col" data-numeric>Porosity</th><th scope="col" data-numeric>Active Si fraction</th><th scope="col" data-numeric>Si d90 (µm)</th></tr></thead>
+      <tbody id="tv-tab"></tbody>
+    </table>
+  </div>
+</section>
+
+<script type="application/json" id="tv-data">__DATA__</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("tv-data").textContent);
+  var $ = function (id) { return document.getElementById(id); };
+  var NAMES = D.names, S = D.sites, KL = {}, KU = {};
+  D.kpi.forEach(function (k) { KL[k[0]] = k[1]; KU[k[0]] = k[2]; });
+  var SER = {}; NAMES.forEach(function (n, i) { SER[n] = "a-series-" + (i % 4 + 1); });
+  var st = { a: D.A, b: D.B, c: 0, mode: "phase", px: "n_cracks", py: "retention_pct", wc: null, ws: 0 };
+
+  function bytes(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function u32(s) { return new Uint32Array(bytes(s).buffer); }
+  function unrle(r, N) { var a = new Uint8Array(N), p = 0; for (var i = 0; i < r.v.length; i++) { a.fill(r.v[i], p, p + r.n[i]); p += r.n[i]; } return a; }
+  function fmt(v, k) { if (v === null || v === undefined) return "–"; var a = Math.abs(v); return k === "n_cracks" ? v.toFixed(0) : a >= 100 ? v.toFixed(1) : a >= 10 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : v.toFixed(3); }
+  function unit(k) { return KU[k] ? " " + KU[k] : ""; }
+
+  var PAL = [[40, 70, 200], [110, 110, 110], [255, 150, 0], [40, 190, 90], [220, 30, 30]];
+  var PN = ["pore or crack", "graphite + binder", "active Si", "SEI", "inactive Si"];
+  var CH = { crack: [250, 225, 40], sei: [40, 190, 90], dead: [220, 30, 30] };
+
+  var cache = {};
+  function frame(n, k) {
+    var s = S[n], c = cache[n];
+    if (!c) { var f0 = unrle(s.f0, s.H * s.W); c = cache[n] = { f0: f0, cur: f0.slice(), k: 0 }; }
+    if (k < c.k) { c.cur = c.f0.slice(); c.k = 0; }
+    for (var j = c.k + 1; j <= k; j++) { var ix = u32(s.diffs[j - 1][0]), v = bytes(s.diffs[j - 1][1]); for (var i = 0; i < ix.length; i++) c.cur[ix[i]] = v[i]; }
+    c.k = k; return c;
+  }
+
+  function drawImg(cv, n, k) {
+    var s = S[n], c = frame(n, k), cur = c.cur, f0 = c.f0, N = s.H * s.W;
+    cv.width = s.W; cv.height = s.H;
+    var ctx = cv.getContext("2d"), im = ctx.createImageData(s.W, s.H), d = im.data, cnt = { crack: 0, sei: 0, dead: 0 };
+    for (var i = 0; i < N; i++) {
+      var col, v = cur[i];
+      if (st.mode === "change") {
+        var o = f0[i];
+        if (v !== o && v === 0) { col = CH.crack; cnt.crack++; } else if (v !== o && v === 3) { col = CH.sei; cnt.sei++; }
+        else if (v !== o && v === 4) { col = CH.dead; cnt.dead++; }
+        else { var p = PAL[v]; col = [p[0] * 0.35 + 150, p[1] * 0.35 + 150, p[2] * 0.35 + 150]; }
+      } else col = PAL[v];
+      d[i * 4] = col[0]; d[i * 4 + 1] = col[1]; d[i * 4 + 2] = col[2]; d[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(im, 0, 0);
+    var bar = Math.round(10 / s.px);
+    ctx.fillStyle = "#000"; ctx.fillRect(10, s.H - 22, bar + 4, 10); ctx.fillStyle = "#fff"; ctx.fillRect(12, s.H - 20, bar, 6);
+    ctx.font = "bold 14px sans-serif"; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText("10 µm", 22 + bar, s.H - 12); ctx.fillText("10 µm", 22 + bar, s.H - 12);
+    var t = S[n].traj, lbl = n + " at cycle " + k + ": capacity retention " + fmt(t.retention_pct[0][k]) + "%, " + fmt(t.n_cracks[0][k], "n_cracks") + " cracks, SEI fraction " + fmt(t.sei_frac[0][k]);
+    if (st.mode === "change") lbl += "; changed pixels: " + cnt.crack + " new pore/crack, " + cnt.sei + " new SEI, " + cnt.dead + " inactive Si";
+    cv.setAttribute("aria-label", lbl);
+  }
+
+  function legend() {
+    var items = st.mode === "change"
+      ? [[CH.crack, "new crack or pore"], [CH.sei, "new SEI"], [CH.dead, "Si that became inactive"], [[170, 170, 170], "unchanged (faded)"]]
+      : PAL.map(function (p, i) { return [p, PN[i]]; });
+    $("tv-legend").innerHTML = items.map(function (it) { return '<span style="margin-right:14px;white-space:nowrap"><span class="tv-sw" style="background:rgb(' + it[0].join(",") + ')"></span> ' + it[1] + "</span>"; }).join("");
+  }
+
+  function metrics(el, n, k) {
+    var t = S[n].traj, rows = [["retention_pct", "Capacity left", "%"], ["thickness_charged_pct", "Swelling", "%"], ["n_cracks", "Cracks", ""], ["sei_frac", "SEI fraction", ""]];
+    el.innerHTML = rows.map(function (r) {
+      var m = t[r[0]][0][k], lo = t[r[0]][1][k], hi = t[r[0]][2][k];
+      return '<div class="a-metric"><div class="a-metric__label">' + r[1] + '</div><div class="a-metric__value">' + fmt(m, r[0]) + r[2] + '</div><div class="a-metric__delta">' + (m === null ? "not defined at cycle 0" : fmt(lo, r[0]) + "–" + fmt(hi, r[0])) + "</div></div>";
+    }).join("");
+  }
+
+  function ext(vals) { var lo = Infinity, hi = -Infinity; vals.forEach(function (v) { if (v !== null && isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } }); if (!isFinite(lo)) { lo = 0; hi = 1; } if (hi - lo < 1e-9) { hi += 0.5; lo -= 0.5; } var p = (hi - lo) * 0.06; return [lo - p, hi + p]; }
+  function ticks(lo, hi, n) { var r = (hi - lo) / n, m = Math.pow(10, Math.floor(Math.log10(r))), s = [1, 2, 2.5, 5, 10].map(function (x) { return x * m; }).find(function (x) { return x >= r; }), out = []; for (var v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toPrecision(10)); return out; }
+  function pathOf(xs, ys, X, Y) { var d = "", pen = false; for (var i = 0; i < xs.length; i++) { if (ys[i] === null || xs[i] === null) { pen = false; continue; } d += (pen ? "L" : "M") + X(xs[i]).toFixed(1) + "," + Y(ys[i]).toFixed(1); pen = true; } return d; }
+  function axes(W, H, L, R, T, B, xt, yt, X, Y, xl, yl) {
+    var g = '<g class="a-chart__grid">' + yt.map(function (v) { return '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '"/>'; }).join("") + "</g>";
+    g += '<g class="a-chart__axis">' + yt.map(function (v) { return '<text x="' + (L - 4) + '" y="' + (Y(v) + 3).toFixed(1) + '" text-anchor="end">' + v + "</text>"; }).join("")
+      + xt.map(function (v) { return '<text x="' + X(v).toFixed(1) + '" y="' + (H - B + 13) + '" text-anchor="middle">' + v + "</text>"; }).join("");
+    if (xl) g += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 3) + '" text-anchor="middle">' + xl + "</text>";
+    if (yl) g += '<text x="12" y="' + ((T + H - B) / 2) + '" text-anchor="middle" transform="rotate(-90 12 ' + ((T + H - B) / 2) + ')">' + yl + "</text>";
+    return g + "</g>";
+  }
+
+  var CHARTS = ["retention_pct", "thickness_charged_pct", "n_cracks", "sei_frac", "si_active_frac", "si_d90_um", "porosity", "sigma1_p95_si"];
+  function order() { return NAMES.filter(function (n) { return n !== st.a && n !== st.b; }).concat(st.a === st.b ? [st.a] : [st.b, st.a]); }
+
+  function kpiChart(k) {
+    var W = 300, H = 170, L = 44, R = 8, T = 8, B = 22, nc = D.cycles, all = [];
+    NAMES.forEach(function (n) { var t = S[n].traj[k]; all = all.concat(t[1], t[2]); });
+    var e = ext(all), X = function (x) { return L + x / nc * (W - L - R); }, Y = function (y) { return T + (1 - (y - e[0]) / (e[1] - e[0])) * (H - T - B); };
+    var xs = []; for (var i = 0; i <= nc; i++) xs.push(i);
+    var s = axes(W, H, L, R, T, B, ticks(0, nc, 5), ticks(e[0], e[1], 4), X, Y);
+    order().forEach(function (n) {
+      var t = S[n].traj[k], sel = n === st.a || n === st.b, up = "", dn = "";
+      for (var i = 0; i <= nc; i++) if (t[1][i] !== null) { up += (up ? "L" : "M") + X(i).toFixed(1) + "," + Y(t[2][i]).toFixed(1); dn = "L" + X(i).toFixed(1) + "," + Y(t[1][i]).toFixed(1) + dn; }
+      if (sel && up) s += '<path class="' + SER[n] + '" style="fill:rgb(var(--series) / 0.16);stroke:none" d="' + up + dn + 'Z"/>';
+      s += '<path class="a-chart__series ' + SER[n] + '" style="stroke-width:' + (sel ? 2.4 : 1) + ";opacity:" + (sel ? 1 : 0.45) + '" d="' + pathOf(xs, t[0], X, Y) + '"/>';
+    });
+    s += '<line x1="' + X(st.c) + '" x2="' + X(st.c) + '" y1="' + T + '" y2="' + (H - B) + '" style="stroke:rgb(var(--text-secondary));stroke-width:1"/>';
+    [st.a, st.b].forEach(function (n) { var v = S[n].traj[k][0][st.c]; if (v !== null) s += '<circle class="a-chart__point ' + SER[n] + '" cx="' + X(st.c).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="3.5"/>'; });
+    return s;
+  }
+
+  function buildCharts() {
+    $("tv-charts").innerHTML = CHARTS.map(function (k) {
+      return '<figure class="a-panel"><p class="tv-ct">' + KL[k] + unit(k).replace(/^ /, " (") + (KU[k] ? ")" : "") + '</p><p class="tv-cv" id="tv-cv-' + k + '"></p><svg class="a-chart tv-clk" viewBox="0 0 300 170" role="img" id="tv-ch-' + k + '"></svg></figure>';
+    }).join("");
+    CHARTS.forEach(function (k) { $("tv-ch-" + k).addEventListener("click", function (ev) { var r = this.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * 300; setCycle(Math.round((x - 44) / (300 - 52) * D.cycles)); }); });
+  }
+
+  function siteLegend() {
+    $("tv-site-legend").innerHTML = NAMES.map(function (n) { return '<li class="' + SER[n] + '"><span class="a-legend__swatch"></span>' + n + (D.flagged.indexOf(n) >= 0 ? " (flagged Batch_1)" : "") + (n === st.a || n === st.b ? " · selected" : "") + "</li>"; }).join("");
+  }
+
+  function pathPlot() {
+    var W = 760, H = 330, L = 60, R = 16, T = 12, B = 40, kx = st.px, ky = st.py, ax = [], ay = [];
+    NAMES.forEach(function (n) { ax = ax.concat(S[n].traj[kx][0]); ay = ay.concat(S[n].traj[ky][0]); });
+    var ex = ext(ax), ey = ext(ay), X = function (x) { return L + (x - ex[0]) / (ex[1] - ex[0]) * (W - L - R); }, Y = function (y) { return T + (1 - (y - ey[0]) / (ey[1] - ey[0])) * (H - T - B); };
+    var s = axes(W, H, L, R, T, B, ticks(ex[0], ex[1], 6), ticks(ey[0], ey[1], 5), X, Y, KL[kx] + unit(kx), KL[ky] + unit(ky));
+    order().forEach(function (n) {
+      var t = S[n].traj, xs = t[kx][0], ys = t[ky][0], sel = n === st.a || n === st.b;
+      s += '<path class="a-chart__series ' + SER[n] + '" style="stroke-width:' + (sel ? 2.2 : 1) + ";opacity:" + (sel ? 1 : 0.4) + '" d="' + pathOf(xs, ys, X, Y) + '"/>';
+      for (var i = 0; i < xs.length; i++) if (xs[i] !== null && ys[i] !== null) {
+        if (sel) s += '<circle class="a-chart__point ' + SER[n] + '" data-c="' + i + '" cx="' + X(xs[i]).toFixed(1) + '" cy="' + Y(ys[i]).toFixed(1) + '" r="' + (i <= st.c ? 2.2 : 1.4) + '" style="opacity:' + (i <= st.c ? 1 : 0.35) + '"/>';
+      }
+      var i0 = xs.findIndex(function (v, i) { return v !== null && ys[i] !== null; });
+      if (i0 >= 0) s += '<rect class="' + SER[n] + '" x="' + (X(xs[i0]) - 4).toFixed(1) + '" y="' + (Y(ys[i0]) - 4).toFixed(1) + '" width="8" height="8" style="fill:rgb(var(--series));opacity:' + (sel ? 1 : 0.4) + '"/>';
+      var c = st.c, last = xs.length - 1;
+      if (sel && xs[c] !== null && ys[c] !== null) s += '<circle class="' + SER[n] + '" cx="' + X(xs[c]).toFixed(1) + '" cy="' + Y(ys[c]).toFixed(1) + '" r="6.5" style="fill:rgb(var(--series));stroke:rgb(var(--bg-page));stroke-width:2"/>';
+      if (xs[last] !== null && ys[last] !== null) s += '<text class="a-chart__axis" x="' + (X(xs[last]) + 6).toFixed(1) + '" y="' + (Y(ys[last]) - 6).toFixed(1) + '" style="font-size:11px;fill:rgb(var(--text-secondary))">' + n + "</text>";
+    });
+    var svg = $("tv-path"); svg.innerHTML = s;
+    svg.setAttribute("aria-label", KL[ky] + " against " + KL[kx] + " for each site over " + D.cycles + " cycles; selected cycle " + st.c + ". " + [st.a, st.b].map(function (n) { return n + ": " + fmt(S[n].traj[kx][0][st.c], kx) + unit(kx) + ", " + fmt(S[n].traj[ky][0][st.c], ky) + unit(ky); }).join("; "));
+  }
+
+  function table() {
+    var cols = ["retention_pct", "thickness_charged_pct", "thickness_irrev_pct", "n_cracks", "sei_frac", "porosity", "si_active_frac", "si_d90_um"], k = st.c;
+    $("tv-tab-c").textContent = k;
+    $("tv-tab").innerHTML = NAMES.map(function (n) {
+      var t = S[n].traj;
+      return '<tr><th scope="row">' + n + (D.flagged.indexOf(n) >= 0 ? " (flagged)" : "") + "</th>" + cols.map(function (c) {
+        var m = t[c][0][k]; return "<td data-numeric>" + fmt(m, c) + (m === null || D.seeds < 2 ? "" : ' <span style="color:rgb(var(--text-tertiary))">[' + fmt(t[c][1][k], c) + "–" + fmt(t[c][2][k], c) + "]</span>") + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+  }
+
+  function setCycle(k) {
+    k = Math.max(0, Math.min(D.cycles, k | 0)); st.c = k; $("tv-cyc").value = k; $("tv-cyc-o").textContent = k;
+    [["a", st.a], ["b", st.b]].forEach(function (p) {
+      $("tv-cap-" + p[0]).textContent = p[1] + (D.flagged.indexOf(p[1]) >= 0 ? " (flagged Batch_1 site)" : "") + " · cycle " + k;
+      drawImg($("tv-img-" + p[0]), p[1], k); metrics($("tv-m-" + p[0]), p[1], k);
+    });
+    CHARTS.forEach(function (c) {
+      $("tv-ch-" + c).innerHTML = kpiChart(c);
+      $("tv-cv-" + c).textContent = "cycle " + k + ": " + [st.a, st.b].filter(function (n, i, a) { return a.indexOf(n) === i; }).map(function (n) { return n + " " + fmt(S[n].traj[c][0][k], c); }).join(" · ");
+      $("tv-ch-" + c).setAttribute("aria-label", KL[c] + " over cycles. " + $("tv-cv-" + c).textContent);
+    });
+    pathPlot(); table();
+  }
+
+  function lut(stops) { var o = []; for (var i = 0; i < 256; i++) { var x = i / 255 * (stops.length - 1), j = Math.min(stops.length - 2, Math.floor(x)), f = x - j; o.push([0, 1, 2].map(function (c) { return Math.round(stops[j][c] + (stops[j + 1][c] - stops[j][c]) * f); })); } return o; }
+  var VIR = lut([[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]]);
+  var INF = lut([[0, 0, 4], [87, 16, 110], [188, 55, 84], [249, 142, 9], [252, 255, 164]]);
+  function grad(l) { return "linear-gradient(to right," + [0, 64, 128, 192, 255].map(function (i) { return "rgb(" + l[i].join(",") + ")"; }).join(",") + ")"; }
+  $("tv-cb-li").style.background = grad(VIR); $("tv-cb-s").style.background = grad(INF); $("tv-smax").textContent = "≥" + D.smax;
+
+  var mcache = {};
+  function mapsOf(n) {
+    var m = S[n].maps[st.wc], key = n + "/" + st.wc; if (!m) return null;
+    if (!mcache[key]) { var s = S[n], Hm = s.H / s.mb, Wm = s.W / s.mb; mcache[key] = { Hm: Hm, Wm: Wm, mask: unrle(m.mask, Hm * Wm), bg: unrle(m.bg, Hm * Wm), li: m.li.map(bytes), s1: m.s1.map(bytes) }; }
+    return mcache[key];
+  }
+  function drawMap(cv, n, kind) {
+    var c = mapsOf(n); if (!c) return;
+    cv.width = c.Wm; cv.height = c.Hm;
+    var ctx = cv.getContext("2d"), im = ctx.createImageData(c.Wm, c.Hm), d = im.data, vals = c[kind][st.ws], L = kind === "li" ? VIR : INF, j = 0;
+    for (var i = 0; i < c.Hm * c.Wm; i++) {
+      var col = c.mask[i] ? L[vals[j++]] : c.bg[i] ? [175, 175, 175] : [245, 245, 245];
+      d[i * 4] = col[0]; d[i * 4 + 1] = col[1]; d[i * 4 + 2] = col[2]; d[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(im, 0, 0);
+    var m = S[n].maps[st.wc], i2 = st.ws;
+    cv.setAttribute("aria-label", (kind === "li" ? "Li fraction map" : "Tensile stress map") + " for " + n + ", cycle " + st.wc + ", " + (m.charge[i2] ? "charging" : "discharging") + " at " + m.t[i2] + " min: mean Li in Si " + m.si_li[i2].toFixed(2) + ", stress p95 " + m.sig[i2].toFixed(1) + " GPa");
+  }
+  function wChart(key, label, unitS) {
+    var W = 300, H = 170, L = 44, R = 8, T = 8, B = 30, sel = [st.a, st.b].filter(function (n, i, a) { return a.indexOf(n) === i; }), all = [], tmax = 0;
+    sel.forEach(function (n) { var m = S[n].maps[st.wc]; if (m) { all = all.concat(m[key]); tmax = Math.max(tmax, m.t[m.t.length - 1]); } });
+    var e = ext(all.concat([0])), X = function (x) { return L + x / tmax * (W - L - R); }, Y = function (y) { return T + (1 - (y - e[0]) / (e[1] - e[0])) * (H - T - B); };
+    var s = axes(W, H, L, R, T, B, ticks(0, tmax, 4), ticks(e[0], e[1], 4), X, Y, "time (min)");
+    var m0 = S[sel[0]].maps[st.wc], tc = m0.t[m0.charge.lastIndexOf(true)];
+    s += '<rect x="' + L + '" y="' + T + '" width="' + (X(tc) - L).toFixed(1) + '" height="' + (H - T - B) + '" style="fill:rgb(var(--tint-secondary))"/><text class="a-chart__axis" x="' + (L + 4) + '" y="' + (T + 11) + '" style="font-size:10px;fill:rgb(var(--text-tertiary))">charge</text>';
+    sel.forEach(function (n) {
+      var m = S[n].maps[st.wc]; if (!m) return;
+      s += '<path class="a-chart__series ' + SER[n] + '" style="stroke-width:2" d="' + pathOf([0].concat(m.t), [key === "si_li" || key === "thick" ? 0 : null].concat(m[key]), X, Y) + '"/>';
+      s += m.t.map(function (t, i) { return '<circle class="a-chart__point ' + SER[n] + '" cx="' + X(t).toFixed(1) + '" cy="' + Y(m[key][i]).toFixed(1) + '" r="' + (i === st.ws ? 5 : 2.2) + '"/>'; }).join("");
+    });
+    var tt = m0.t[st.ws]; s += '<line x1="' + X(tt) + '" x2="' + X(tt) + '" y1="' + T + '" y2="' + (H - B) + '" style="stroke:rgb(var(--text-secondary))"/>';
+    return '<figure class="a-panel"><p class="tv-ct">' + label + '</p><p class="tv-cv">' + sel.map(function (n) { var m = S[n].maps[st.wc]; return n + " " + (m ? m[key][st.ws].toFixed(2) + unitS : "–"); }).join(" · ") + '</p><svg class="a-chart" viewBox="0 0 300 170" role="img" aria-label="' + label + ' over time in cycle ' + st.wc + '">' + s + "</svg></figure>";
+  }
+  function setStep(i) {
+    var m = S[st.a].maps[st.wc]; if (!m) return;
+    st.ws = Math.max(0, Math.min(m.t.length - 1, i | 0)); $("tv-ws").max = m.t.length - 1; $("tv-ws").value = st.ws;
+    $("tv-w-o").textContent = "Cycle " + st.wc + " · " + (m.charge[st.ws] ? "charging" : "discharging") + " · t = " + m.t[st.ws] + " min";
+    [["a", st.a], ["b", st.b]].forEach(function (p) {
+      $("tv-c-l" + p[0]).textContent = p[1] + ": Li in Si"; $("tv-c-s" + p[0]).textContent = p[1] + ": tensile stress";
+      drawMap($("tv-li-" + p[0]), p[1], "li"); drawMap($("tv-s-" + p[0]), p[1], "s1");
+    });
+    $("tv-wcharts").innerHTML = wChart("si_li", "Li fraction in Si", "") + wChart("thick", "Thickness change (%)", "%") + wChart("sig", "Tensile stress in Si, p95 (GPa)", " GPa") + wChart("pore", "Pore volume closed (%)", "%");
+  }
+
+  var wcs = Object.keys(S[NAMES[0]].maps).map(Number).sort(function (a, b) { return a - b; });
+  $("tv-wc").innerHTML = wcs.map(function (c) { return '<option value="' + c + '">Cycle ' + c + "</option>"; }).join(""); st.wc = String(wcs[0]);
+
+  function timer(btn, step) {
+    var id = null;
+    function stop() { clearInterval(id); id = null; btn.textContent = "Play"; btn.setAttribute("aria-pressed", "false"); }
+    btn.addEventListener("click", function () { if (id) return stop(); btn.textContent = "Pause"; btn.setAttribute("aria-pressed", "true"); if (!step(true)) step(false, true); id = setInterval(function () { if (!step(false)) stop(); }, 160); });
+    return stop;
+  }
+  var stopC = timer($("tv-play"), function (first, reset) { if (reset) { setCycle(0); return true; } if (first) return st.c < D.cycles; if (st.c >= D.cycles) return false; setCycle(st.c + 1); return true; });
+  var stopW = timer($("tv-wplay"), function (first, reset) { var mx = +$("tv-ws").max; if (reset) { setStep(0); return true; } if (first) return st.ws < mx; if (st.ws >= mx) return false; setStep(st.ws + 1); return true; });
+
+  $("tv-a").value = st.a; $("tv-b").value = st.b; $("tv-px").value = st.px; $("tv-py").value = st.py;
+  $("tv-cyc").addEventListener("input", function () { stopC(); setCycle(+this.value); });
+  $("tv-ws").addEventListener("input", function () { stopW(); setStep(+this.value); });
+  $("tv-mode").addEventListener("change", function () { st.mode = this.value; legend(); setCycle(st.c); });
+  $("tv-a").addEventListener("change", function () { st.a = this.value; siteLegend(); setCycle(st.c); setStep(st.ws); });
+  $("tv-b").addEventListener("change", function () { st.b = this.value; siteLegend(); setCycle(st.c); setStep(st.ws); });
+  $("tv-px").addEventListener("change", function () { st.px = this.value; pathPlot(); });
+  $("tv-py").addEventListener("change", function () { st.py = this.value; pathPlot(); });
+  $("tv-wc").addEventListener("change", function () { st.wc = this.value; setStep(st.ws); });
+  $("tv-path").addEventListener("click", function (ev) {
+    var r = this.getBoundingClientRect(), best = null, bd = Infinity, svg = this, pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    var p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    svg.querySelectorAll("circle.a-chart__point").forEach(function (c, i) { var dx = c.cx.baseVal.value - p.x, dy = c.cy.baseVal.value - p.y, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = c; } });
+    if (best && bd < 400) setCycle(+best.getAttribute("data-c"));
+  });
+
+  legend(); siteLegend(); buildCharts(); setCycle(0); setStep(0);
+})();
+</script>

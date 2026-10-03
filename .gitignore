@@ -10,3 +10,7 @@ __pycache__/
 # macOS
 .DS_Store
 outputs/modal/
+
+# simulator intermediates (regenerate with simulate.py / viewer.py)
+analytical_benchmarks/sim/frames_*.npz
+analytical_benchmarks/sim/viewer_body.html

@@ -127,7 +127,7 @@ def kpis_of(lab):
                 si_fragments_per_1000um2=(n_all - kp["si_count_per_1000um2"] * area / 1000) / area * 1000)
 
 
-def half_cycle(mesh, lab, d_si, c_end, T, charge, rec=None, n=0):
+def half_cycle(mesh, lab, d_si, c_end, T, charge, rec=None, n=0, maps=None):
     """Returns Li in Si at the end, plus elementwise max principal stress and its angle."""
     act = lab == 2; gr = lab == 1; ts = T * np.array([0.1, 0.25, 0.5, 0.75, 1.0])
     s1max = np.full(mesh.E.shape, -np.inf); amax = np.zeros_like(s1max); por = blocks((lab == 0).astype(float)) > 0.5
@@ -143,21 +143,23 @@ def half_cycle(mesh, lab, d_si, c_end, T, charge, rec=None, n=0):
                             thickness_pct=100 * r["thick"], si_li=c[act].mean() if act.any() else np.nan,
                             sigma1_p95_si=np.percentile(r["s1"][sim], 95) if sim.any() else np.nan,
                             pore_closure_pct=-100 * (r["vol"][por].mean() if por.any() else 0)))
+        if maps is not None:
+            maps.append((n, int(charge), t, c.astype(np.float16), r["s1"].astype(np.float16)))
     return c, s1max, amax
 
 
 def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
     rng = np.random.default_rng(seed); lab = lab0.copy(); H, W = lab.shape; area = lab.size
     mesh = Mesh(H // MB, W // MB, PX * MB, PAR["nu"]); T = 3600 / crate
-    born = np.full(lab.shape, -1, int); rows, within, snaps = [], [], [(0, lab.copy())]
+    born = np.full(lab.shape, -1, int); rows, within, snaps, maps = [], [], [(0, lab.copy())], []
     li_lost = sei_acc = 0.0; inv0 = None; n_cracks = 0; crack_px = 0; extra = {}
     for n in range(1, cycles + 1):
         mesh.factor(blocks(np.vectorize(PAR["E"].get)(lab).astype(float)))
         act = lab == 2; d_si = np.maximum(ndi.distance_transform_edt(act) * PX - PX / 2, 0)
-        rec = within if n in (1, cycles) else None
-        c_end, s1c, ac = half_cycle(mesh, lab, d_si, None, T, True, rec, n)
+        rec = within if n in (1, cycles) else None; mp = maps if (snap and rec is not None) else None
+        c_end, s1c, ac = half_cycle(mesh, lab, d_si, None, T, True, rec, n, mp)
         full = mesh.solve(blocks(np.where(act, PAR["eps_si"] * c_end, 0) + np.where(lab == 1, PAR["eps_gr"], 0)))
-        c_dis, s1d, ad = half_cycle(mesh, lab, d_si, c_end, T, False, rec, n)
+        c_dis, s1d, ad = half_cycle(mesh, lab, d_si, c_end, T, False, rec, n, mp)
         s1 = np.maximum(s1c, s1d); ang = np.where(s1d >= s1c, ad, ac)
         rev = ((c_end - c_dis)[act].sum() * PAR["Q_si"] + (lab == 1).sum() * PAR["Q_gr"]) / area
         if n == 1:
@@ -204,7 +206,7 @@ def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
     t = pd.DataFrame(rows); t["retention_pct"] = 100 * t.capacity_mAh_cm3 / t.capacity_mAh_cm3.iloc[0]
     k0 = kpis_of(lab0); t0 = {**{k: np.nan for k in t.columns}, **k0, "cycle": 0}
     t = pd.concat([pd.DataFrame([t0]), t], ignore_index=True)
-    return dict(traj=t, within=pd.DataFrame(within), snaps=snaps, **extra)
+    return dict(traj=t, within=pd.DataFrame(within), snaps=snaps, maps=maps, **extra)
 
 
 def _job(a):
@@ -288,6 +290,10 @@ if __name__ == "__main__":
         pd.concat([r["traj"] for r in runs]).to_csv(f"{a.out}/traj_{name}.csv", index=False)
         runs[0]["within"].to_csv(f"{a.out}/within_{name}.csv", index=False)
         site_figure(name, runs, a.out)
+        r0 = runs[0]; mp = r0["maps"]   # data for viewer.py: label image per cycle, Li/stress per time step
+        np.savez_compressed(f"{a.out}/frames_{name}.npz", labs=np.stack([l for _, l in r0["snaps"]]),
+                            m_cycle=[m[0] for m in mp], m_charge=[m[1] for m in mp], m_t=[m[2] for m in mp],
+                            li=np.stack([m[3] for m in mp]), s1=np.stack([m[4] for m in mp]), px=PX, mb=MB)
         L = pd.concat([r["traj"] for r in runs]); end = L[L.cycle == a.cycles]; c1 = L[L.cycle == 1]
         summ[name] = {k: dict(cycle1=float(c1[k].mean()), end=float(end[k].mean()), end_min=float(end[k].min()), end_max=float(end[k].max()))
                       for k, _ in TRAJ + [("capacity_mAh_cm3", ""), ("si_utilisation", ""), ("si_frac", "")]}
