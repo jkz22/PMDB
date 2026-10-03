@@ -35,11 +35,12 @@ one-vs-rest:
 | batch | AUC (conformal p) | AUC (likelihood) | recall | precision |
 |---|---|---|---|---|
 | Batch 1 | 0.74 | 0.74 | 0.71 | 0.50 |
-| Batch 2 | 0.38 | 0.70 | 0.43 | 0.60 |
+| Batch 2 | 0.38 | 0.30 | 0.43 | 0.60 |
 | **Batch 3** | **0.56** | **0.54** | 0.77 | 0.81 |
 
-The fingerprint's 0.68 three-way accuracy is earned by telling Batch 1 from Batch 2 (mid-depth Si
-dip); its ability to say "this is *not* the baseline" is 0.54–0.56 AUC. The 0.77 recall / 0.81
+The fingerprint's 0.68 three-way accuracy is earned by recognising Batch 1 (AUC 0.74) and by the
+Batch 1 / Batch 2 mid-depth contrast inside the three-way vote (Batch 2 on its own is *not*
+recognised one-vs-rest, AUC 0.30–0.38); its ability to say "this is *not* the baseline" is 0.54–0.56 AUC. The 0.77 recall / 0.81
 precision on Batch 3 are what a 17-of-31 majority buys, not discrimination.
 
 ## 3. Why, and what it means
