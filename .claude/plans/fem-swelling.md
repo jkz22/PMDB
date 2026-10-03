@@ -77,3 +77,8 @@ committing and pushing to branch fem-sim (PR #18 merged 2026-10-03; new PR from 
   outside the literature bands (docs/fem/literature-review.md validation targets); solver non-convergence on many
   sites (> 3 of 34 before 100% SOC in the default run); or the cap would be exceeded.
 - Never: merge the PR, write to data/ or data_heldout/, train on held-out sites.
+- SWELLING GATE (user-amended "ok gate", 2026-10-03): the literature band [9%, 39%] is REPORTED as a comparison only.
+  The STOP condition is swelling < 3% or > 39% (bug-level: eigenstrain not applied / wrong sign / runaway).
+  Reason: a dense 2D elastic model cannot capture particle rearrangement, binder deformation and SEI growth that
+  make measured electrode swelling exceed particle-scale swelling; planner estimate ~7%. The analytic
+  free-expansion unit test (J = Jλ, zero stress) must still pass exactly.
