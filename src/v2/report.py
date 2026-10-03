@@ -26,12 +26,23 @@ def md(df: pd.DataFrame, nd=3, index=False) -> str:
 
 
 def cost_lines() -> list[str]:
+    """One line per Modal job from status/<tag>.csv (run states, run-seconds) and the job log's last cost line."""
+    import re
     out = []
-    for p in sorted((OUT / "status").glob("*_summary.json")):
-        s = json.loads(p.read_text())
-        out.append(f"- `{p.stem.replace('_summary', '')}`: {s.get('n_done', '?')} done, {s.get('n_failed', '?')} failed, "
-                   f"{s.get('wall_h', float('nan')):.2f} h wall, ${s.get('usd', float('nan')):.2f}, "
-                   f"GPU util mean {s.get('util_mean', float('nan')):.0f}% (busy {s.get('util_busy_mean', float('nan')):.0f}%)")
+    for p in sorted((OUT / "status").glob("*.csv")):
+        tag = p.stem
+        if tag.startswith("calibrate"):
+            continue
+        d = pd.read_csv(p)
+        cnt = d.state.value_counts().to_dict()
+        usd, mins = float("nan"), float("nan")
+        log = OUT / f"{tag}.log"
+        if log.exists():
+            m = re.findall(r"\[\s*([\d.]+) min \$\s*([\d.]+)\]", log.read_text(errors="ignore"))
+            if m:
+                mins, usd = float(m[-1][0]), float(m[-1][1])
+        out.append(f"- `{tag}`: {cnt}, run-time sum {d.sec.sum() / 3600:.2f} GPU-h (8 concurrent), "
+                   f"wall {mins / 60:.2f} h, ${usd:.2f} (H100 + 24 CPU + 96 GiB at $5.85/h)")
     return out
 
 
@@ -49,6 +60,37 @@ def factor_effects(lb: pd.DataFrame) -> pd.DataFrame:
                      **{f"d_{m}": r[m] - base[m] for m in ["kpi_r2", "img_r2", "image_id_ratio", "knn_batch_acc", "lift_shift"]},
                      "rank": r.selection_rank, "rank_default": base.selection_rank})
     return pd.DataFrame(rows).sort_values(["factor", "level", "family"])
+
+
+def extra_sections(lb: pd.DataFrame) -> list[str]:
+    S = []
+    ak = OUT / "leaderboard_allkpi.csv"
+    if ak.exists():
+        a = pd.read_csv(ak)
+        cols = ["selection_rank", *CFG, "kpi_set", "kpi_r2", "kpi_r2_all", "kpi_r2_ungated", "img_r2", "image_id_ratio", "knn_batch_acc"]
+        S += ["## All-KPI track (Kevin's 10 crop KPIs incl. ungated K02/K03/K04-density; top 15)\n",
+              "Ungated KPIs fail gates G2/G3 (size/count not scale-stable); shown for comparison only.\n",
+              md(a[[c for c in cols if c in a]].head(15)), ""]
+    if "baseline" in lb:
+        b = lb[lb.train_set == "baseline"].copy()
+        b["baseline"] = b.baseline.fillna("Batch_1")
+        if len(b):
+            S += ["## Baseline-only training: Batch_1 (6 fields, original assumption) vs Batch_3 (14 fields, corrected baseline)\n",
+                  md(b.sort_values(["family", "baseline"])[["family", "kpi_set", "baseline", *[m for m in M if m in b]]]), ""]
+    cl = OUT / "cls_leaderboard.csv"
+    if cl.exists():
+        c = pd.read_csv(cl)
+        S += ["## Supervised 3-class batch classification (stratified grouped 5-fold by field; mean over folds)\n",
+              md(c[["arch", "view", "input", "harmonise", "aug", "n_folds_done", "crop_acc", "field_acc", "field_acc_sd",
+                    "field_f1", "field_acc_Batch_1", "field_acc_Batch_2", "field_acc_Batch_3", "raw_minus_harm_field_acc"]]), ""]
+    cp = OUT / "cls_probe.csv"
+    if cp.exists():
+        p = pd.read_csv(cp)
+        cols = ["name", "clf", "n_crops", "crop_acc", "field_acc", "field_f1", "field_acc_Batch_1", "field_acc_Batch_2", "field_acc_Batch_3"]
+        S += ["## Batch classification from features only (leave-one-field-out)\n", md(p[p.source == "features"][cols]), "",
+              "## Batch classification from saved embeddings (leave-one-field-out; top 15 by field accuracy)\n",
+              md(p[p.source != "features"].sort_values("field_acc", ascending=False)[cols].head(15)), ""]
+    return S
 
 
 def main():
@@ -94,6 +136,7 @@ def main():
             par = lb.set_index("hash")
             r2 = r2.assign(parent_rank=[par.selection_rank.get(p, np.nan) for p in runs.set_index("hash").loc[r2.hash, "parent"]])
             S += ["### Round 2 reruns\n", md(r2[["family", "factor", "parent_rank", "selection_rank", *M]]), ""]
+    S += extra_sections(lb)
     (OUT / "results_tables.md").write_text("\n".join(S))
     print("\n".join(S)[:3000])
 
