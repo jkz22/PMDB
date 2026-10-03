@@ -1,0 +1,15 @@
+version: 1
+mesh: {res_nm: 100.0}
+soc: {frames: 11, s_star: 0.25, si_ratio: [0.96, 0.58], gr_ratio: [0.04, 0.42], u_max: 0.80, y_max: 0.91}
+si: {beta: 2.8, E_MPa: [96000.0, -55000.0], nu: [0.29, -0.04], yield_MPa: [3000.0, 3150.0], x_per_u: 3.75}
+graphite: {eps_c_points: [[0.0, 0.0], [0.25, 0.055], [0.5, 0.055], [1.0, 0.103]],
+           eps_a_over_c: [0.01, 0.103], E_MPa: [32000.0, 77000.0], nu: [0.32, -0.08]}
+binder: {E_MPa: 500.0, nu: 0.34}
+pore: {E_rel_binder: 1.0e-4, nu: 0.3, closure_J: 0.1}
+solver: {ds_max: 0.05, ds_min: 0.0015625, grow_if_its_le: 5, snes_rtol: 1.0e-8, snes_atol: 1.0e-10,
+         snes_max_it: 25, quadrature_degree: 2, linesearch: bt}
+remediation: []   # P25 ladder: one string appended per applied rung
+features: {n_tiles: 6, edge_um: 20.0, quantiles: [5, 25, 50, 75, 95, 99], n_depth_bands: 5}
+gif: {width_px: 900, ladder: [[900, 128], [900, 64], [720, 64], [600, 32]], vm_range_MPa: [1.0, 10000.0],
+      frame_ms: 500, max_bytes: 2000000, alpha: 0.55}
+gates: {swelling_stop: [0.03, 0.39], swelling_lit_band: [0.09, 0.39], max_failed_sites: 3}
