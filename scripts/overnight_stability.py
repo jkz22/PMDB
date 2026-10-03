@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import math
 import subprocess
 import sys
 import time
@@ -60,11 +61,19 @@ def predict_heldout(X, y, H) -> pd.DataFrame:
     return fp.predict(model, H)
 
 
+def check_n_drop3(n_drop3: int, n_sites: int) -> None:
+    cap = math.comb(n_sites, 3)
+    if not 0 <= n_drop3 <= cap:
+        raise SystemExit(f"--n-drop3 must be between 0 and {cap} "
+                         f"(distinct 3-site subsets of {n_sites} sites), got {n_drop3}")
+
+
 def jackknife(X, y, H, n_drop3: int, seed: int) -> pd.DataFrame:
     n = len(X)
     subsets: list[tuple[int, tuple[int, ...]]] = []
     subsets += [(1, (i,)) for i in range(n)]
     subsets += [(2, c) for c in itertools.combinations(range(n), 2)]
+    check_n_drop3(n_drop3, n)
     rng = np.random.default_rng(seed)
     seen: set[tuple[int, ...]] = set()
     while len(seen) < n_drop3:

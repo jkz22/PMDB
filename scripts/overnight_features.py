@@ -213,6 +213,45 @@ def write_tables(results: dict, order: list[tuple[str, str]], out: Path) -> None
                       out / "tile_kpis_rich.csv")
 
 
+CURVE_COLS = ["batch", "site", "curve", "x", "value"]
+TILE_COLS = ["batch", "site", "n_tiles", "tile"]
+
+
+def load_existing(out: Path) -> dict[str, dict]:
+    """Per-site rows already saved in `out`, keyed 'batch/site'. {} if absent or invalid."""
+    paths = {k: out / f for k, f in (("curves", "curves_rich.csv"),
+                                     ("scalars", "site_scalars.csv"),
+                                     ("tiles", "tile_kpis_rich.csv"))}
+    if not all(p.exists() for p in paths.values()):
+        return {}
+    try:
+        frames = {k: pd.read_csv(p) for k, p in paths.items()}
+    except Exception as e:
+        print(f"NOTE: ignoring existing tables in {out}: {e}", file=sys.stderr)
+        return {}
+    required = {"curves": CURVE_COLS, "scalars": ["batch", "site"], "tiles": TILE_COLS}
+    for k, cols in required.items():
+        if not set(cols) <= set(frames[k].columns):
+            print(f"NOTE: ignoring existing tables in {out}: {paths[k].name} "
+                  f"lacks columns {sorted(set(cols) - set(frames[k].columns))}", file=sys.stderr)
+            return {}
+    _, tile_cols = catalogue_columns()
+    expected_tiles = set(TILE_COLS) | {c for cols in tile_cols.values() for c in cols} | {"nan_reason"}
+    if set(frames["tiles"].columns) != expected_tiles:
+        print(f"NOTE: ignoring existing tables in {out}: tile columns differ from catalogue",
+              file=sys.stderr)
+        return {}
+    results: dict[str, dict] = {}
+    for rec in frames["scalars"].to_dict("records"):
+        results[f"{rec['batch']}/{rec['site']}"] = {"curves": [], "scalars": rec, "tiles": []}
+    for k in ("curves", "tiles"):
+        for rec in frames[k].to_dict("records"):
+            key = f"{rec['batch']}/{rec['site']}"
+            if key in results:
+                results[key][k].append(rec)
+    return results
+
+
 def git_commit() -> str:
     try:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -228,6 +267,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     order = all_sites()
+    all_order = list(order)
     if args.sites:
         wanted = {tuple(s.split("/", 1)) for s in args.sites}
         unknown = wanted - set(order)
@@ -239,7 +279,13 @@ def main(argv=None) -> int:
     out.mkdir(parents=True, exist_ok=True)
 
     t_start = time.time()
-    results: dict[str, dict] = {}
+    results = {k: v for k, v in load_existing(out).items()
+               if tuple(k.split("/", 1)) in set(all_order)}
+    if not args.sites:
+        order = [p for p in order if f"{p[0]}/{p[1]}" not in results]
+        if results:
+            print(f"resuming: {len(results)} site(s) already in {out}, {len(order)} to compute",
+                  flush=True)
     log: dict[str, dict] = {}
 
     def record(i, batch, site, res, err):
@@ -247,7 +293,7 @@ def main(argv=None) -> int:
         if err is None:
             results[key] = res
             log[key] = {"status": "ok", "seconds": round(res["seconds"], 1)}
-            write_tables(results, order, out)
+            write_tables(results, all_order, out)
             print(f"[{i:2d}/{len(order)}] {key:28s} ok  {res['seconds']:6.1f}s", flush=True)
         else:
             log[key] = {"status": "error", "error": err}
