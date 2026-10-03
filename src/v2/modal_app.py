@@ -63,6 +63,9 @@ def _gpu_sample():
 def _hash(spec):
     from src.v2.rungrid import train_cfg
     from src.v2.train import cfg_hash
+    if spec.get("task") == "cls":
+        from src.v2.classify import cfg_hash as cls_hash
+        return cls_hash(spec)
     s = train_cfg(spec)
     return cfg_hash({**s, "steps": 0} if spec["family"].startswith("ots_") else s)
 
@@ -74,8 +77,9 @@ def schedule(specs: list[dict], parallel: int, budget_usd: float, tag: str, max_
     status_dir = Path("/vol/status"); status_dir.mkdir(parents=True, exist_ok=True)
     if max_steps is not None:
         specs = [{**sp, "steps": max_steps} for sp in specs]
-    order = sorted(range(len(specs)), key=lambda i: LONG_FIRST.index(specs[i]["family"]) if specs[i]["family"] in LONG_FIRST else 99)
-    rows = {i: dict(idx=i, family=specs[i]["family"], factor=specs[i].get("factor", ""), hash=_hash(specs[i]),
+    fam = lambda sp: sp.get("family", sp.get("arch", "?"))  # noqa: E731
+    order = sorted(range(len(specs)), key=lambda i: LONG_FIRST.index(fam(specs[i])) if fam(specs[i]) in LONG_FIRST else 99)
+    rows = {i: dict(idx=i, family=fam(specs[i]), factor=specs[i].get("factor", ""), hash=_hash(specs[i]),
                     state="queued", tries=0, start=None, sec=None, error="") for i in order}
     queue, procs, t0, util, mem = list(order), {}, time.time(), [], []
     spent = lambda: (time.time() - t0) * USD_PER_S  # noqa: E731

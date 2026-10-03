@@ -40,7 +40,7 @@ def stage_c(top3: list[dict], best: dict, batches=("Batch_1", "Batch_2", "Batch_
 
 
 TRAIN_KEYS = ("family", "view", "input", "train_set", "aug", "vae_mask", "mae_mask", "harmonise", "seed",
-              "steps", "batch_size", "lr", "fold", "n_folds", "lobo", "kpi_commit", "kpi_set")
+              "steps", "batch_size", "lr", "fold", "n_folds", "lobo", "kpi_commit", "kpi_set", "baseline")
 
 
 def train_cfg(run: dict) -> dict:

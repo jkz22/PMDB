@@ -13,7 +13,6 @@ from torch.utils.data import Dataset
 from src.v2.common import CROP, SEED, STRIDE_TRAIN, grid, load_half_raw, manifest
 
 VIEWS = {"stack": (0, 1, 2), "BSE": (0, 0, 0), "Inlens": (1, 1, 1), "SE_type": (2, 2, 2)}
-BASELINE = "Batch_1"
 HELDOUT_FRAC = 0.2
 
 

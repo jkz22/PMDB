@@ -28,6 +28,13 @@ def _std_kpis(kpi_norm, cols):
 
 
 def main(run_spec: dict):
+    if run_spec.get("task") == "cls":
+        from src.v2.classify import run_cls
+        try:
+            run_cls(run_spec)
+        except RunLocked as e:
+            print(f"skip: {e}", flush=True)
+        return
     dev = device()
     fam = run_spec["family"]
     if fam.startswith("ots_"):

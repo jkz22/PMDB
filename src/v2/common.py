@@ -54,3 +54,6 @@ def git_hash(path: Path = REPO) -> str:
 
 def config_hash(cfg: dict) -> str:
     return hashlib.sha1(json.dumps(cfg, sort_keys=True).encode()).hexdigest()[:12]
+
+# Approved baseline batch (user, 2026-10-03: Batch_3 is the pure baseline; Batch_1/2 contain outliers).
+BASELINE = os.environ.get("PMDB_BASELINE", "Batch_3")

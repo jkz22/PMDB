@@ -17,11 +17,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.v2.common import OUT
+from src.v2.common import BASELINE, OUT
 from src.v2.evaluate import IMG_STATS, image_id_ratio, probe_r2
 from src.v2.kpi_adapter import GATED_COLS
 
-BASELINE = "Batch_1"
 IMG_R2_LIMIT, IMAGE_ID_LIMIT = 0.5, 2.0  # brief: round 2 triggers
 
 

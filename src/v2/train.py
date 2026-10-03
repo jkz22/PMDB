@@ -17,7 +17,8 @@ import torch
 
 from src.v2.augment import ForwardRanges, augment
 from src.v2.common import OUT, SEED
-from src.v2.data import BASELINE, CropDataset, FieldStore, GPUCropLoader, grouped_folds, heldout_split
+from src.v2.common import BASELINE
+from src.v2.data import CropDataset, FieldStore, GPUCropLoader, grouped_folds, heldout_split
 from src.v2.kpi_adapter import crop_kpi_frame, kpi_cols
 from src.v2.models import build
 
@@ -37,6 +38,8 @@ def full_cfg(cfg: dict) -> dict:
     c = {**DEFAULTS, **cfg}
     if c["lr"] is None:
         c["lr"] = LR.get(c["family"].split("_")[0], 0.0)
+    if c["train_set"] == "baseline":  # which batch is the baseline is part of the config identity
+        c.setdefault("baseline", BASELINE)
     return c
 
 
@@ -54,7 +57,7 @@ def train_fields(c: dict) -> pd.DataFrame:
     if c["lobo"] is not None:
         f = f[f.batch != c["lobo"]]
     if c["train_set"] == "baseline":
-        f = f[f.batch == BASELINE]
+        f = f[f.batch == c.get("baseline", BASELINE)]
     return f
 
 

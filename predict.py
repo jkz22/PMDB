@@ -1,4 +1,4 @@
-"""Incoming-batch QC against the approved baseline (Batch_1).
+"""Incoming-batch QC against the approved baseline (BASELINE, default Batch_3).
 
 KPI verdict (default): gated teammate KPIs per field at 50 nm/px, compared with the baseline
 field distribution (z-score and baseline range) -> PASS / REVIEW per field and KPI.
@@ -25,9 +25,8 @@ import numpy as np
 import pandas as pd
 
 from src.v2 import kpi_adapter as K
-from src.v2.common import CROP, NM_HALF, OUT, grid, load_half_raw, manifest
+from src.v2.common import BASELINE, CROP, NM_HALF, OUT, grid, load_half_raw, manifest
 
-BASELINE = "Batch_1"
 Z_REVIEW = 3.0
 
 
