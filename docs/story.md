@@ -96,6 +96,12 @@ columns agree on the first and are too weak to vote on the other two — but the
 Batch 3), swelling past the graphite into free space, the functional twin of the two high-Si
 Batch 1 fields; the other two sit inside the Batch 3 range on every functional column
 (`docs/functional.md` §2.5).
+The functional layer inherits the first link of the chain directly: the segmenter is anchored on
+each image's own p1/p50/p99, so the Batch 3 affine artefact does not reach it — segmenting the
+hybrid-harmonised BSE instead of the raw one gives Si masks with IoU ≥ 0.992 on the four
+strong-offset fields (`71vgq3fw`, `kbdh4tri`, `9luzk4jm`, and high-Si `4ih2ggld` as control) and
+moves the constrained share and pore loss by ≤ 0.003.
+
 A random-relocation null (same Si objects, same graphite, random arrangement) shows the
 Si-on-graphite preference is real and universal — every field has ~0.25 more K15 contact and half
 the pore loss of its null — but the *excess* is the same in every batch (p = 0.56): the batch
