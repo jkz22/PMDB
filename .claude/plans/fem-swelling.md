@@ -76,6 +76,16 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 - D17 (user, 2026-10-03: "this is a hackathon, not a scientific paper") SCOPE CUT: D13 SiOx full run and D14 robustness
   sweeps are REMOVED. Only the default pure-Si configuration runs (34 sites × 2 foil orientations). D13/D14 above are
   superseded; no SiOx gate (G4x), no sweep config/mode, no Spearman robustness filter. Prefer pragmatic scope.
+- D18 (user, 2026-10-03) CLASSIFIER ARCHITECTURE:
+  - Input: curated summaries, ~10-20 physically meaningful scalars per tile from tile_curves (e.g. swelling @50%/100%
+    SOC, pore area left @100%, first pore-closure SOC, p95 Si von Mises @100%, interface stress, curve slopes 0-25% and
+    25-100%), orientation `sym`. No full-curve PCA, no time-series or image models.
+  - Task structure: two-stage vs the Batch_3 baseline. Stage 1: Batch_3 vs not-Batch_3. Stage 2 (non-B3 only):
+    Batch_1 vs Batch_2. Each stage pools tiles by mean tile probability (D10). Site confidence = product of stage probs.
+  - Model: random forest (fixed hyperparameters, class-balanced, no tuning on 31 sites), one per stage.
+  - Explanation vs Batch_3: RF feature importance + per-feature z-scores of the site vs the Batch_3 distribution.
+  - Ablation (LOSO, bootstrap CIs): KPI-tiles-only vs FEM-only vs KPI+FEM, same two-stage RF; check-3 logistic R1/R4
+    numbers kept as external reference.
 - D16 (user, "modal-only", 2026-10-03) No local FEniCSx. All dolfinx code (unit tests, resolution check, smoke window,
   benchmark, production) runs on Modal in the official dolfinx Docker image (version pinned), with pure-Python deps
   added via `uv pip install`. Reason: local conda solve on this Intel (osx-64) Mac stalled; no Docker locally;
