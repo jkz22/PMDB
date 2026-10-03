@@ -40,25 +40,25 @@
  },
  "anchors": {
   "BSE": {
-   "D": 4.195632419757747,
-   "D_se": 0.025043428706477723,
+   "D": 4.195652369447053,
+   "D_se": 0.025043417456177792,
    "D_method": "tobit",
    "D_n": 892319,
    "D_frac_zero": 0.4248872880662633,
    "D_mode": 0.0,
    "D_median": 3.9001777172088623,
-   "G_level": 49.18039194742838,
+   "G_level": 49.180372873942055,
    "G_coef": [
-    47.96560948319612,
-    3.188040213336523,
-    -10.830172997210209,
-    0.47488917006268083,
-    -4.716364377015915,
-    15.611288450217518
+    47.96559040865957,
+    3.1880402155406204,
+    -10.830172994649029,
+    0.47488916931785097,
+    -4.716364378871845,
+    15.611288448584022
    ],
    "G_blocks": 3483,
-   "G_ptp_rel": 0.1376143842935562,
-   "si_graphite_ratio": 2.226834774017334,
+   "G_ptp_rel": 0.1376144140958786,
+   "si_graphite_ratio": 2.2268354892730713,
    "grey_levels_used": 122,
    "grey_step": 2
   },
@@ -72,12 +72,12 @@
    "D_median": 52.61921310424805,
    "G_level": 131.31256103515625,
    "G_coef": [
-    121.6238877500778,
-    67.91158247258531,
-    16.920618578372785,
-    -37.51292141772412,
-    -43.335619783601636,
-    -36.248922967526106
+    121.62388775007764,
+    67.91158247258551,
+    16.920618578373276,
+    -37.51292141772428,
+    -43.33561978360184,
+    -36.24892296752622
    ],
    "G_blocks": 3483,
    "G_ptp_rel": 0.489402711391449,
@@ -86,24 +86,24 @@
    "grey_step": 2
   },
   "SE_type": {
-   "D": -2.2651437781884605,
-   "D_se": 0.023245687783848883,
+   "D": -2.265154284257118,
+   "D_se": 0.02324569585090757,
    "D_method": "tobit",
    "D_n": 892319,
    "D_frac_zero": 0.5752146934000061,
    "D_mode": 0.0,
    "D_median": 0.0,
-   "G_level": 77.66916402180989,
+   "G_level": 77.66917165120442,
    "G_coef": [
-    79.75619917978646,
-    -2.162385340055943,
-    -9.852301963681777,
-    0.39185224384721185,
-    -1.2901929696362306,
-    10.896721009111454
+    79.75620681128704,
+    -2.1623853476831685,
+    -9.852301963949698,
+    0.3918522465930856,
+    -1.2901929631918143,
+    10.896721006143608
    ],
    "G_blocks": 3483,
-   "G_ptp_rel": 0.07329865545034409,
+   "G_ptp_rel": 0.07329874485731125,
    "si_graphite_ratio": 1.681532859802246,
    "grey_levels_used": 189,
    "grey_step": 1
@@ -115,28 +115,28 @@
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.3630381759748325,
-   "edge_10_90_nm": 87.337391830994,
-   "edge_n_kept": 1286,
-   "noise_alpha": 0.035775062382245225,
-   "noise_beta": 0.01312273369293164,
-   "noise_sigma_graphite": 0.2211284605725298
+   "sigma_e_px": 1.364887539318059,
+   "edge_10_90_nm": 87.45589076506072,
+   "edge_n_kept": 1284,
+   "noise_alpha": 0.035780089098613924,
+   "noise_beta": 0.013115021369638259,
+   "noise_sigma_graphite": 0.22112238798514314
   },
   "Inlens": {
-   "sigma_e_px": 1.234222477838221,
-   "edge_10_90_nm": 79.08345786168746,
-   "edge_n_kept": 2658,
-   "noise_alpha": 0.006653605370085767,
+   "sigma_e_px": 1.2342746311014048,
+   "edge_10_90_nm": 79.08679960960197,
+   "edge_n_kept": 2657,
+   "noise_alpha": 0.006653605370085768,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.08156963509839778
+   "noise_sigma_graphite": 0.08156963509839779
   },
   "SE_type": {
-   "sigma_e_px": 1.4754452644520724,
-   "edge_10_90_nm": 94.53993546033632,
+   "sigma_e_px": 1.4754452302535528,
+   "edge_10_90_nm": 94.53993326904809,
    "edge_n_kept": 1418,
-   "noise_alpha": 0.009001517097216692,
+   "noise_alpha": 0.009032821991458238,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.09487632527251828
+   "noise_sigma_graphite": 0.09504115945977426
   }
  },
  "material": {
@@ -232,45 +232,45 @@
  "batch": "Batch_3",
  "site": "pl8uabbv",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_3/img_pl8uabbv_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_3/img_pl8uabbv_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_3/img_pl8uabbv_ETD.tif"
+  "BSE": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_pl8uabbv_BSE.tif",
+  "Inlens": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_pl8uabbv_Inlens.tif",
+  "SE_type": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_pl8uabbv_ETD.tif"
  },
- "seconds_norm": 35.8,
+ "seconds_norm": 88.0,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.3630381759748325,
-   "sigma_t_px": 1.3962085795872072,
-   "sigma_k_px": 0.302531533146759,
+   "sigma_e_px": 1.364887539318059,
+   "sigma_t_px": 1.3955730649632416,
+   "sigma_k_px": 0.2910432694036919,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.360099408538643,
+   "sigma_e_after_px": 1.4033667690549523,
    "noise_before": {
-    "alpha": 0.03475940810967915,
-    "beta": 0.012323684770796265
+    "alpha": 0.0349759238417574,
+    "beta": 0.012821592888528337
    },
    "noise_target": {
-    "alpha": 0.04507331353571918,
-    "beta": 0.02134361435082474
+    "alpha": 0.04506658986444896,
+    "beta": 0.021315812431302882
    },
    "noise_after": {
-    "alpha": 0.04462605619692908,
-    "beta": 0.021333480341863987
+    "alpha": 0.044844181747246324,
+    "beta": 0.020926425188417693
    },
-   "noise_sigma_graphite_after": 0.25682588759467584,
-   "noise_sigma_graphite_target": 0.25771481891141595,
+   "noise_sigma_graphite_after": 0.25645780732054935,
+   "noise_sigma_graphite_target": 0.25764782610329134,
    "noise_within_10pct": true,
-   "d_alpha": 0.010313905426040028,
-   "d_beta": 0.009019929580028476,
+   "d_alpha": 0.010090666022691562,
+   "d_beta": 0.008494219542774545,
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.234222477838221,
-   "sigma_t_px": 1.2140094207959984,
+   "sigma_e_px": 1.2342746311014048,
+   "sigma_t_px": 1.2142698479797196,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.234222477838221,
+   "sigma_e_after_px": 1.2342746311014048,
    "noise_before": {
-    "alpha": 0.006653605370085767,
+    "alpha": 0.006653605370085768,
     "beta": 0.0
    },
    "noise_target": {
@@ -284,53 +284,53 @@
    "noise_sigma_graphite_after": 0.12130001042795949,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.007749409725514414,
+   "d_alpha": 0.007749409725514412,
    "d_beta": 0.0,
    "added": true
   },
   "SE_type": {
-   "sigma_e_px": 1.4754452644520724,
-   "sigma_t_px": 1.250251553827863,
+   "sigma_e_px": 1.4754452302535528,
+   "sigma_t_px": 1.2511406818415192,
    "sigma_k_px": 0.0,
    "resolution_outlier": true,
-   "sigma_e_after_px": 1.4754452644520724,
+   "sigma_e_after_px": 1.4754452302535528,
    "noise_before": {
-    "alpha": 0.009001517097216692,
+    "alpha": 0.009032821991458238,
     "beta": 0.0
    },
    "noise_target": {
-    "alpha": 0.012456698059181634,
+    "alpha": 0.0124496511569676,
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.012389671852911859,
+    "alpha": 0.012395290305404127,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.11130890284659112,
-   "noise_sigma_graphite_target": 0.11160957870712367,
+   "noise_sigma_graphite_after": 0.11133413809521375,
+   "noise_sigma_graphite_target": 0.11157800480815025,
    "noise_within_10pct": true,
-   "d_alpha": 0.003455180961964942,
+   "d_alpha": 0.003416829165509361,
    "d_beta": 0.0,
    "added": true
   }
  },
  "targets": {
   "sigma_t": {
-   "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
-   "SE_type": 1.250251553827863
+   "BSE": 1.3955730649632416,
+   "Inlens": 1.2142698479797196,
+   "SE_type": 1.2511406818415192
   },
   "noise": {
    "BSE": {
-    "alpha": 0.04507331353571918,
-    "beta": 0.02134361435082474
+    "alpha": 0.04506658986444896,
+    "beta": 0.021315812431302882
    },
    "Inlens": {
     "alpha": 0.01440301509560018,
     "beta": 0.0
    },
    "SE_type": {
-    "alpha": 0.012456698059181634,
+    "alpha": 0.0124496511569676,
     "beta": 0.0
    }
   },
@@ -341,5 +341,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 31.6
+ "seconds_harm": 55.7
 }
