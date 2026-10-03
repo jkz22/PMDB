@@ -1,0 +1,15 @@
+{
+  "git_commit": "f48ecc8df9165b8ea5208ce476c33794b88e743e",
+  "started_utc": "2026-10-03T21:15:46Z",
+  "elapsed_seconds": 939.4,
+  "n_perm_done": 10000,
+  "n_perm_target": 10000,
+  "seed": 0,
+  "observed_accuracy": 0.6774193548387096,
+  "p_value": 0.0024997500249975004,
+  "null_mean": 0.3725225806451613,
+  "null_sd": 0.10583572173481685,
+  "null_p95": 0.5483870967741935,
+  "null_max": 0.7419354838709677,
+  "n_null_ge_observed": 24
+}
