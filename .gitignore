@@ -10,3 +10,8 @@ __pycache__/
 # macOS
 .DS_Store
 outputs/modal/
+
+# physical clean pipeline: full-resolution arrays are rebuilt with scripts/build_clean.py
+outputs/clean*/**/*.tif
+outputs/clean*/**/preview.png
+outputs/clean*/qc_report.html
