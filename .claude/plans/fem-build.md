@@ -583,3 +583,15 @@ Dispatcher items:
 - P12 amended (approved, physics-neutral): `petsc_options` gains `"snes_stol": 0.0`; each substep record stores `fnorm` (SNES function norm) and `error` (repr of any caught exception, else None). Applied during Step 7.
 - Tests: bilayer interface-row assertions added; T4 map shape fixed to (7, 9).
 - Step 7: `run_case` catches GIF render failure on NaN frames as `gif_error`.
+
+### Round 4 (2026-10-04, dispatcher decision under delegated physics judgment) — trigger: Step 7 deviation report (`fem-build.implementer-s7.md`)
+Finding: Stage-3 non-convergence is physical, not numerical: the soft-void pore (E = 1e-4·E_binder, neo-Hookean ln J) has no stiffness until J ≈ 0, Si (Jλ up to 3.24) crushes adjacent pores to J → 0 and Newton cannot cross it. Ladder rungs 1-3 reach only s ≈ 0.024-0.075; rung 4 would leave 1-2 frames. The predictor NaN (reason -4) is already fixed by the fallback in e517e32.
+Decision P30 — **pore compaction barrier** (PORE phase only): ψ_pore = ψ_NH(E_pore = 1e-4·E_binder, ν 0.3) + ψ_c, with
+  ψ_c = conditional(J < J_c, (κ/2)·(ln(J/J_c))², 0),  J = det F (total), J_c = 0.3, κ = E_binder = 500 MPa.
+  C1 at J = J_c (value and slope 0); barrier → ∞ as J → 0, so closed pores cannot invert. Physical reading: a pore squeezed
+  below 30% of its area behaves like compacted binder (walls in contact). Weighted the same way as ψ_NH (det Fλ = 1 for pores).
+  Pore-closure flag threshold (closure_J = 0.1) unchanged. Rung 2 (pore E 1e-3) NOT adopted; rung 1 (ds_min/8) and the
+  predictor fallback stay. Config: `pore: {..., compaction_Jc: 0.3, compaction_kappa_MPa: 500.0}`; remediation entry added.
+Fallback if the window still fails before s = 1: J_c 0.5 and κ = 5000 MPa (one run), then rung 4 (accept NaN frames).
+Unit test: 1-cell pore under prescribed compression — energy and stress identical to plain NH for J ≥ J_c, finite and
+  increasing for J < J_c; and test_t6_soft_pores must still pass (its frame-1 assertions at J ≥ 0.43 are unaffected).
