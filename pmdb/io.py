@@ -497,11 +497,9 @@ def get_clean_root(clean_root: str | Path | None = None, heldout: bool = False) 
 def downsample_clean(z: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """2×2 mask-aware mean of a cleaned array (even H/W crop, as :func:`downsample_to_half`).
 
-    Only pixels valid for KPIs enter the mean, and the half-resolution mask word is the OR of the
-    mask words of those contributing pixels, so a block with at least one valid parent stays valid
-    (and keeps informational bits such as clipping or crack from them). A block without any valid
-    parent gets the plain mean of its four values and the OR of all four mask words, i.e. stays
-    invalid. The output is NaN-free.
+    Only pixels valid for KPIs enter the mean; a half-resolution pixel keeps the OR of the four
+    mask words so no flag is lost (KPI-invalid bits are cleared when any parent is valid), and is NaN-free (a fully-masked block keeps the plain mean of
+    its four values, flagged invalid by its mask).
     """
     from pmdb import clean as _clean
 
@@ -517,10 +515,11 @@ def downsample_clean(z: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, np.nd
     mean_all = s.mean(axis=(1, 3))
     out = np.where(n_ok > 0, mean_ok, mean_all).astype(np.float32)
     m4 = mm.reshape(He // 2, 2, We // 2, 2)
-    m_all = m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1]
-    m_ok = np.bitwise_or.reduce(np.where(o.astype(bool), m4, 0).reshape(He // 2, 2 * 2 * (We // 2))
-                                .reshape(He // 2, 2, We // 2, 2), axis=(1, 3))
-    mask_half = np.where(n_ok > 0, m_ok, m_all).astype(np.uint16)
+    mask_half = (m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1]).astype(np.uint16)
+    # validity comes from the contributing parents: keep the informational flags of masked parents, but
+    # a block with at least one valid parent is valid (its mean uses only those parents)
+    keep = (n_ok > 0)
+    mask_half = np.where(keep, mask_half & ~np.uint16(_clean.INVALID_KPI), mask_half).astype(np.uint16)
     return out, mask_half
 
 

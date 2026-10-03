@@ -451,9 +451,10 @@ def correct_scan_bands(img_dq: np.ndarray, d: float, g_rows: np.ndarray) -> np.n
 # ----------------------------------------------------------------------------------------------
 # Field-of-view intrusions (3.2)
 # ----------------------------------------------------------------------------------------------
-def _edge_connected(flag: np.ndarray, top: bool) -> np.ndarray:
+def _edge_connected(flag: np.ndarray, top: bool, edge_row: int | None = None) -> np.ndarray:
     lab, _ = ndimage.label(flag)
-    edge_row = 0 if top else flag.shape[0] - 1
+    if edge_row is None:
+        edge_row = 0 if top else flag.shape[0] - 1
     ids = np.unique(lab[edge_row])
     ids = ids[ids > 0]
     return np.isin(lab, ids)
@@ -473,15 +474,15 @@ def detect_collector(bse_raw: np.ndarray, valid: np.ndarray, sat_dn: int = 250, 
                      col_frac: float = 0.5, dilate_px: int = DILATE_HALF_UM_PX) -> tuple[np.ndarray, dict]:
     """Copper current collector: a saturated BSE band connected to the top or bottom edge."""
     h, w = bse_raw.shape
-    # edge connectivity is tested on the raw saturation: ``valid`` already excludes the border rows, so a
-    # band touching the image edge would otherwise never reach row 0 / h-1; only fully-invalid columns
-    # (colour markers) are excluded
-    sat = (bse_raw >= sat_dn) & valid.any(axis=0)[None, :]
+    sat = (bse_raw >= sat_dn) & valid
     sat = ndimage.binary_opening(sat, structure=np.ones((3, 9)))
     out = np.zeros((h, w), dtype=bool)
     info: dict = {"found": False}
+    # the border mask removes the outermost rows from ``valid``: connect to the innermost valid row
+    vrows = np.flatnonzero(valid.mean(axis=1) > 0.5)
     for top in (True, False):
-        band = _edge_connected(sat, top)
+        edge_row = None if vrows.size == 0 else int(vrows[0] if top else vrows[-1])
+        band = _edge_connected(sat, top, edge_row)
         if band.sum() < min_rows * 0.05 * w:
             continue
         cols = band.any(axis=0)
@@ -784,20 +785,20 @@ def harmonise_resolution(z: np.ndarray, sigma_e: float, sigma_t: float,
                          valid: np.ndarray | None = None) -> tuple[np.ndarray, float]:
     """Blur to the target edge width with sigma_k = sqrt(sigma_t² - sigma_e²); never sharpen.
 
-    With ``valid`` the blur is a normalised convolution over the valid pixels only, so masked
-    content (marker columns, bad scan rows, charging) cannot bleed into its valid neighbours;
-    invalid pixels keep their input value.
+    With ``valid`` the blur is a normalised convolution so masked pixels do not bleed into valid ones;
+    pixels with no valid input in their neighbourhood keep their value (and stay masked by the caller).
     """
-    z = np.asarray(z, dtype=np.float32)
     if not np.isfinite(sigma_e) or sigma_e >= sigma_t:
-        return z, 0.0
+        return np.asarray(z, dtype=np.float32), 0.0
     sk = float(np.sqrt(sigma_t**2 - sigma_e**2))
+    zz = np.asarray(z, dtype=np.float32)
     if valid is None:
-        return ndimage.gaussian_filter(z, sk).astype(np.float32), sk
-    w = valid.astype(np.float32)
-    num = ndimage.gaussian_filter(z * w, sk)
+        return ndimage.gaussian_filter(zz, sk).astype(np.float32), sk
+    # mask-aware normalised convolution: blur(z*w) / blur(w), w = valid
+    w = np.asarray(valid, dtype=np.float32)
+    num = ndimage.gaussian_filter(np.where(w > 0, zz, 0.0).astype(np.float32) * w, sk)
     den = ndimage.gaussian_filter(w, sk)
-    out = np.where(valid & (den > 1e-3), num / np.maximum(den, 1e-6), z)
+    out = np.where(den > 1e-3, num / np.maximum(den, 1e-3), zz)
     return out.astype(np.float32), sk
 
 
@@ -1084,7 +1085,7 @@ def harmonise_site(res: CleanResult, targets: Targets, seed: int = SEED, nm_per_
         v = valid_for_stats(res.mask[d])
         fp = res.params["fingerprint"][d]
         sig_e, sig_t = fp["sigma_e_px"], targets.sigma_t[d]
-        z, sk = harmonise_resolution(res.norm[d], sig_e, sig_t, valid=valid_for_kpis(res.mask[d]))
+        z, sk = harmonise_resolution(res.norm[d], sig_e, sig_t, valid_for_kpis(res.mask[d]))
         ew_after = edge_width(z, ph.pore, v, rng=rng, nm_per_px=nm_per_px) if sk > 0 else None
         nm_before = noise_model(z, ph, v, rng=rng)
         z, ninfo = harmonise_noise(z, nm_before, targets.noise[d], rng)
