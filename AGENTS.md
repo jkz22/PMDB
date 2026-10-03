@@ -53,4 +53,4 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
 
 ## Held-back Test Sites (`data_heldout/`)
 
-3 unlabelled sites (`3e122cbj`, `fn0mhxef`, `xrv9xvzb`) released by the organisers for scoring. Read-only, never train on them. Batch 3 is the supplier baseline; every held-back site must be assigned to a batch with a confidence and an explanation of how it differs from Batch 3. See [`data_heldout/README.md`](data_heldout/README.md).
+3 unlabelled sites (`3e122cbj`, `fn0mhxef`, `xrv9xvzb`) released by the organisers for scoring. Raw TIFFs in `data_heldout/Batch_heldout/`, processed half-res cache in `cache_heldout/half/` (load with `load_site("Batch_heldout", site, resolution="half", data_root="data_heldout", cache_root="cache_heldout")`). Read-only, never train on them. Batch 3 is the supplier baseline; every held-back site must be assigned to a batch with a confidence and an explanation of how it differs from Batch 3. See [`data_heldout/README.md`](data_heldout/README.md).

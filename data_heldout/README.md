@@ -12,7 +12,24 @@ never enter training or `list_sites()` (which only scans `data/Batch_*`). Treat 
 | fn0mhxef | BSE, Inlens, ETD | 2048 × 7000 |
 | xrv9xvzb | BSE, Inlens, ETD | 2088 × 7000 |
 
-Same format as `data/`: uint8, R == G == B, 25 nm/px.
+Same format as `data/`: uint8, R == G == B, 25 nm/px. Raw TIFFs live in
+`data_heldout/Batch_heldout/` (the `Batch_` prefix lets the existing pipeline index them).
+
+## Processed cache (`cache_heldout/half/`)
+
+Built with the same pipeline as the labelled sites (4-px border crop, 2×2 local mean → 50 nm/px):
+
+```bash
+python3 scripts/build_cache.py --data-root data_heldout --cache-root cache_heldout --outputs-dir outputs/heldout
+```
+
+Full-res intensity stats: `outputs/heldout/raw_intensity_stats.csv`.
+
+```python
+from pmdb.io import load_site
+site = load_site("Batch_heldout", "3e122cbj", resolution="half",
+                 data_root="data_heldout", cache_root="cache_heldout")
+```
 
 ## Task framing (organiser clarification)
 
