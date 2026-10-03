@@ -107,7 +107,7 @@ def run(cfg: dict, status_cb=None) -> Path:
     if ck.exists():
         s = torch.load(ck, map_location=dev, weights_only=False)
         model.load_state_dict(s["model"]); opt.load_state_dict(s["opt"]); sched.load_state_dict(s["sched"])
-        step = s["step"]; g.set_state(s["gen"])
+        step = s["step"]; g.set_state(s["gen"].cpu())
     gen = torch.Generator(device=dev).manual_seed(c["seed"] + step)
     log = open(d / "train_log.jsonl", "a")
     t0 = time.time()
