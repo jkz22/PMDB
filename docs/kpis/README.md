@@ -4,6 +4,8 @@
 **Machine-readable list:** [`kpi_catalogue.csv`](kpi_catalogue.csv). This file is the single source of truth for KPI IDs, definitions and output column names.
 **Background reading:** [`literature-review.md`](literature-review.md) covers the geometry and topology methods behind these KPIs, with references.
 
+**Screening / submitting new KPIs:** [screening.md](screening.md) ([one-page summary](screening-summary.md)).
+
 ---
 
 ## 1. The question the KPIs answer

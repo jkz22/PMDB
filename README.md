@@ -49,6 +49,7 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
 - **`outputs/raw_intensity_stats.csv`**: Baseline intensity percentiles (`p0_5`, `p1`, `p50`, `p99`, `p99_5`, `mean`, `std`) across all 93 detector channels. (Note: Batch 3 exhibits a known BSE brightness offset where `p1` averages ~7.18 vs 0 in Batches 1 & 2).
 - **`outputs/qc_contact_sheet.png`**: Contact sheet visualization of all 31 sites across all 3 detectors.
 - **`outputs/raw_stats_by_batch.png`**: QC strip plot of intensity percentiles across batches.
+- **`docs/kpis/screening.md`**: KPI screening tool (`python -m pmdb.screen`) and the KPI submission contract.
 
 ## Testing & Pipeline Execution
 
