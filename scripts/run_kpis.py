@@ -3,8 +3,13 @@
 Writes outputs/kpis/{site_kpis,tile_kpis,curves,sensitivity}.csv, run_log.json and
 outputs/overlays/<batch>__<site>.png. A full run writes fresh tables. `--sites` merges the
 recomputed sites into the existing tables (all rows of each recomputed site are replaced, and
-rows stay in manifest order). If any site fails, no tables are written, run_log.json is still
-written, and the exit status is non-zero (D-018: no fill values).
+rows stay in manifest order).
+
+run_log.json describes the published tables: `sites` maps every site to the entry in `runs`
+(commit, command, parameters, package versions) that produced its rows, so rows retained by a
+`--sites` merge keep their original provenance. If any site fails, or the merge fails, no tables
+and no run_log.json are written; the attempt is logged to run_attempt.json instead and the exit
+status is non-zero (D-018: no fill values). A successful run removes a stale run_attempt.json.
 
     python scripts/run_kpis.py --jobs 8
     python scripts/run_kpis.py --sites Batch_1/4ih2ggld Batch_3/kbdh4tri
@@ -78,6 +83,10 @@ def dump_run_log(run_log: dict) -> str:
 
 
 TABLES = ("site_kpis.csv", "tile_kpis.csv", "curves.csv", "sensitivity.csv")
+RUN_LOG = "run_log.json"
+ATTEMPT_LOG = "run_attempt.json"
+LOG_SCHEMA = 2
+UNKNOWN_RUN = "unknown"
 EXTRA_SORT = {"tile_kpis.csv": ("tile",)}
 
 
@@ -118,6 +127,72 @@ def merge_table(existing: pd.DataFrame | None, new: pd.DataFrame, order: list[tu
     out["_rank"] = [rank.get(k, len(order)) for k in zip(out["batch"].astype(str), out["site"].astype(str))]
     out = out.sort_values(["_rank", *extra_sort], kind="stable").drop(columns="_rank")
     return out.reset_index(drop=True)
+
+
+def run_id(record: dict) -> str:
+    return f"{record.get('started_utc', 'unknown-time')}_{str(record.get('git_commit', 'unknown'))[:12]}"
+
+
+def unique_run_id(record: dict, existing) -> str:
+    """run_id(record), suffixed if it collides with an existing run (same second and commit)."""
+    base = rid = run_id(record)
+    n = 1
+    while rid in existing or rid == UNKNOWN_RUN:
+        n += 1
+        rid = f"{base}-{n}"
+    return rid
+
+
+def read_provenance(path: Path) -> tuple[dict[str, dict], dict[str, dict], str | None]:
+    """(runs, sites, problem) from an existing run log; legacy single-run logs are converted.
+
+    ``problem`` explains why no provenance could be read (missing, invalid or failed-run log).
+    """
+    if not path.exists():
+        return {}, {}, f"{path.name} not found"
+    try:
+        log = json.loads(path.read_text())
+    except (OSError, ValueError) as e:
+        return {}, {}, f"{path.name} unreadable: {e}"
+    if not isinstance(log, dict) or not isinstance(log.get("sites"), dict):
+        return {}, {}, f"{path.name} has no per-site entries"
+    if "runs" in log:
+        if not isinstance(log["runs"], dict):
+            return {}, {}, f"{path.name} has malformed runs"
+        return dict(log["runs"]), dict(log["sites"]), None
+    if log.get("tables_written") is False:
+        return {}, {}, f"{path.name} records a failed run that wrote no tables"
+    record = {k: v for k, v in log.items() if k != "sites"}
+    rid = run_id(record)
+    sites = {k: {"run": rid, **v} for k, v in log["sites"].items() if v.get("status") == "ok"}
+    return {rid: record}, sites, None
+
+
+def merge_provenance(runs: dict[str, dict], sites: dict[str, dict], new_run_id: str, new_run: dict,
+                     new_sites: dict[str, dict], table_keys: list[str],
+                     problem: str | None = None) -> tuple[dict[str, dict], dict[str, dict]]:
+    """Provenance for the merged tables: recomputed sites point at the new run, retained sites keep
+    their old entry, and retained sites without one point at an explicit 'unknown' run. Each unknown
+    site records its own ``reason``, which later merges keep."""
+    old_unknown_reason = runs.get(UNKNOWN_RUN, {}).get("reason")
+    merged: dict[str, dict] = {}
+    for key in table_keys:
+        if key in new_sites:
+            merged[key] = {"run": new_run_id, **new_sites[key]}
+        elif key in sites and sites[key].get("run") in runs:
+            merged[key] = dict(sites[key])
+            if merged[key]["run"] == UNKNOWN_RUN and "reason" not in merged[key]:
+                merged[key]["reason"] = old_unknown_reason or "unrecorded"
+        else:
+            merged[key] = {"run": UNKNOWN_RUN, "status": "retained",
+                           "reason": problem or "site missing from previous run log"}
+    used = {v["run"] for v in merged.values()}
+    out_runs = {rid: rec for rid, rec in runs.items()
+                if rid in used and rid not in (new_run_id, UNKNOWN_RUN)}
+    out_runs[new_run_id] = new_run
+    if UNKNOWN_RUN in used:
+        out_runs[UNKNOWN_RUN] = {"note": "rows retained from tables without provenance; see each site's reason"}
+    return out_runs, merged
 
 
 def _read_existing(path: Path) -> pd.DataFrame | None:
@@ -229,38 +304,47 @@ def main(argv=None) -> int:
             except ValueError as e:
                 table_error = f"cannot merge into existing tables in {out}: {e}"
                 frames = {}
-    tables_written = bool(frames)
 
-    run_log = {
+    record = {
         "git_commit": git_commit(),
         "command": " ".join([Path(sys.argv[0]).name] + (argv if argv is not None else sys.argv[1:])),
         "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t_start)),
         "total_seconds": round(total, 1),
         "jobs": args.jobs,
         "mode": "subset" if subset else "full",
-        "tables_written": tables_written,
         "n_sites": len(sites),
         "n_ok": len(ok),
         "failed": failed,
         "segmenter_version": segment_mod.SEGMENTER_VERSION,
         "parameters": kpi_parameters(),
         "packages": {p: _version(p) for p in PACKAGES} | {"python": platform.python_version()},
-        "sites": {k: log[k] for k in sorted(log)},
     }
-    if table_error:
-        run_log["table_error"] = table_error
-    text = dump_run_log(run_log)
-    for name in TABLES:
-        if name in frames:
-            _atomic_write_csv(frames[name], out / name)
-    _atomic_write_text(out / "run_log.json", text)
     print(f"done: {len(ok)}/{len(sites)} sites ok in {total / 60:.1f} min -> {out}")
-    if failed:
-        print("FAILED: no tables written (existing files untouched); failed sites:", ", ".join(failed))
+    if failed or table_error:
+        attempt = {**record, "tables_written": False, "sites": {k: log[k] for k in sorted(log)}}
+        if table_error:
+            attempt["table_error"] = table_error
+        _atomic_write_text(out / ATTEMPT_LOG, dump_run_log(attempt))
+        if failed:
+            print("FAILED: no tables written (existing files untouched); failed sites:", ", ".join(failed))
+        else:
+            print("ERROR:", table_error, "- no tables written", file=sys.stderr)
+        print(f"attempt logged to {out / ATTEMPT_LOG}; {RUN_LOG} untouched")
         return 1
-    if table_error:
-        print("ERROR:", table_error, "- no tables written", file=sys.stderr)
-        return 1
+
+    site_df = frames["site_kpis.csv"]
+    table_keys = [f"{b}/{s}" for b, s in zip(site_df["batch"].astype(str), site_df["site"].astype(str))]
+    old_runs, old_sites, problem = read_provenance(out / RUN_LOG) if subset else ({}, {}, None)
+    rid = unique_run_id(record, old_runs)
+    runs, prov = merge_provenance(old_runs, old_sites, rid, record, log, table_keys, problem)
+    text = dump_run_log({"schema": LOG_SCHEMA, "latest_run": rid, "runs": runs, "sites": prov})
+    for name in TABLES:
+        _atomic_write_csv(frames[name], out / name)
+    _atomic_write_text(out / RUN_LOG, text)
+    (out / ATTEMPT_LOG).unlink(missing_ok=True)
+    if any(v["run"] == UNKNOWN_RUN for v in prov.values()):
+        print(f"WARNING: retained rows without provenance ({problem or 'missing from previous log'})",
+              file=sys.stderr)
     if subset:
         print(f"merged {len(ok)} site(s) into existing tables in {out}")
     return 0
