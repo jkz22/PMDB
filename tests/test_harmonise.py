@@ -13,6 +13,8 @@ from pmdb import harmonise as H
 NM = 50.0
 PORE, GRAPHITE, SI = 0, 57, 112
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def _synthetic_site(rng: np.random.Generator, size: int = 600) -> np.ndarray:
     """Three-phase BSE-like image (pores, graphite matrix, Si discs) on three channels."""
@@ -189,3 +191,39 @@ def test_real_data_lut_coverage() -> None:
     if heldout.exists():
         with np.load(heldout) as z:
             assert len(z.files) == 3
+
+
+@pytest.mark.data
+@pytest.mark.parametrize("root", ["cache", "cache_heldout"])
+def test_materialised_manifest_paths_resolve(root):
+    man = REPO_ROOT / root / "harmonised" / "hybrid" / "half" / "manifest.csv"
+    if not man.exists():
+        pytest.skip("hybrid cache not materialised")
+    df = pd.read_csv(man)
+    for _, r in df.iterrows():
+        assert not Path(r.path).is_absolute(), r.path
+        assert (REPO_ROOT / r.path).is_file(), r.path
+        assert Path(r.path).name == f"{r.batch}__{r.site}.npz"
+
+
+def test_materialise_external_cache_root(tmp_path, clean_and_reference):
+    from scripts import build_harmonised as B
+
+    sites, ref = clean_and_reference
+    bad = _distort(sites[0], 0.78, 20.0)
+    half = tmp_path / "half"
+    half.mkdir()
+    np.savez_compressed(half / "Batch_9__abc.npz", image=bad)
+    pd.DataFrame([{"batch": "Batch_9", "site": "abc", "se_detector": "ETD", "path": "/elsewhere/x.npz"}]).to_csv(
+        half / "manifest.csv", index=False
+    )
+    a, hist = H.estimate_anchors(bad, NM)
+    lut, params = H.fit_lut("affine2", a, hist, ref)
+    H.save_luts(tmp_path, "affine2", {H.lut_key("Batch_9", "abc"): lut}, params, ref)
+
+    B._materialise(tmp_path, "affine2")  # tmp_path is outside the repo: must not raise
+    man = pd.read_csv(tmp_path / "harmonised" / "affine2" / "half" / "manifest.csv")
+    out = Path(man.path[0])
+    assert out.is_absolute() and out.is_file() and out.name == "Batch_9__abc.npz"
+    assert np.array_equal(np.load(out)["image"], H.apply_lut(bad, lut))
+    assert B._portable_path(REPO_ROOT / "cache" / "x.npz") == "cache/x.npz"
