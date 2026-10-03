@@ -1,0 +1,225 @@
+{
+ "univariate": [
+  {
+   "kpi": "si_psd_span",
+   "name": "Si size span (d90-d10)/d50",
+   "eta2": 0.19800081322851723,
+   "kw_p": 0.051302684516011166,
+   "max_abs_d": 0.964725641573405,
+   "d_signed": 0.964725641573405,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_d90_um",
+   "name": "Si particle d90 (\u00b5m)",
+   "eta2": 0.19133911629167802,
+   "kw_p": 0.05669400848020006,
+   "max_abs_d": 1.0632857326151244,
+   "d_signed": 1.0632857326151244,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "inlens_edge_binder",
+   "name": "Inlens edge strength in graphite/binder (relative)",
+   "eta2": 0.13772024939007868,
+   "kw_p": 0.12671640247848445,
+   "max_abs_d": 0.8464507588161788,
+   "d_signed": -0.8464507588161788,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "inlens_texture",
+   "name": "Inlens fine texture (relative)",
+   "eta2": 0.1375914882081865,
+   "kw_p": 0.1269613812867584,
+   "max_abs_d": 0.8565022886264684,
+   "d_signed": -0.8565022886264684,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_clark_evans",
+   "name": "Si Clark-Evans ratio (<1 clustered)",
+   "eta2": 0.13233938736785036,
+   "kw_p": 0.13736813907869888,
+   "max_abs_d": 0.5477984371573322,
+   "d_signed": -0.5477984371573322,
+   "batch": "Batch_3",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_nn_um",
+   "name": "Si nearest-neighbour distance (\u00b5m)",
+   "eta2": 0.10100298183789644,
+   "kw_p": 0.21979835358199531,
+   "max_abs_d": 0.5771240546343882,
+   "d_signed": 0.5771240546343882,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_frac",
+   "name": "Si area fraction",
+   "eta2": 0.09644890214150176,
+   "kw_p": 0.23533775717902625,
+   "max_abs_d": 1.1847553030668367,
+   "d_signed": 1.1847553030668367,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_count_per_1000um2",
+   "name": "Si particles per 1000 \u00b5m\u00b2",
+   "eta2": 0.08717809704526973,
+   "kw_p": 0.2704490764109485,
+   "max_abs_d": 0.7113882567020509,
+   "d_signed": 0.7113882567020509,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_solidity",
+   "name": "Si particle solidity (0-1)",
+   "eta2": 0.08707644348061803,
+   "kw_p": 0.27086177266143274,
+   "max_abs_d": 1.130586260796099,
+   "d_signed": -1.130586260796099,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_cluster_size",
+   "name": "Si cluster size (particles, gap <1 \u00b5m)",
+   "eta2": 0.06721333694768229,
+   "kw_p": 0.3648751443418887,
+   "max_abs_d": 0.6644800335206579,
+   "d_signed": -0.6644800335206579,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_d10_um",
+   "name": "Si particle d10 (\u00b5m)",
+   "eta2": 0.053888948198759265,
+   "kw_p": 0.4455997181080381,
+   "max_abs_d": 0.2645297810968878,
+   "d_signed": 0.2645297810968878,
+   "batch": "Batch_3",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "porosity__ls_um",
+   "name": "Pore patch size, GP lengthscale (\u00b5m)",
+   "eta2": 0.03518568717809706,
+   "kw_p": 0.5899099931685907,
+   "max_abs_d": 0.6419485498625981,
+   "d_signed": 0.6419485498625981,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_aspect_ratio",
+   "name": "Si aspect ratio (median)",
+   "eta2": 0.03287476280834915,
+   "kw_p": 0.6107170977799437,
+   "max_abs_d": 0.43069347899985816,
+   "d_signed": -0.43069347899985816,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_anomalous_per_1000um2",
+   "name": "Anomalous Si per 1000 \u00b5m\u00b2 (>8 \u00b5m or AR>3)",
+   "eta2": 0.029023630428371434,
+   "kw_p": 0.6470352806138999,
+   "max_abs_d": 0.27479646355561727,
+   "d_signed": -0.27479646355561727,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_frac__ls_um",
+   "name": "Si patch size, GP lengthscale (\u00b5m)",
+   "eta2": 0.01949037679587966,
+   "kw_p": 0.7465029935192986,
+   "max_abs_d": 0.29647263538323265,
+   "d_signed": -0.29647263538323265,
+   "batch": "Batch_2",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "porosity",
+   "name": "Porosity (area fraction)",
+   "eta2": 0.01949037679587966,
+   "kw_p": 0.7465029935192986,
+   "max_abs_d": 0.429923693926811,
+   "d_signed": -0.429923693926811,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_cracked_frac",
+   "name": "Cracked/irregular Si fraction",
+   "eta2": 0.01320818650040663,
+   "kw_p": 0.8202691199508091,
+   "max_abs_d": 0.40422104301641926,
+   "d_signed": 0.40422104301641926,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "interface_um_per_um2",
+   "name": "Phase-boundary density (\u00b5m/\u00b5m\u00b2)",
+   "eta2": 0.00525210084033614,
+   "kw_p": 0.9242418375779514,
+   "max_abs_d": 0.19641055052140458,
+   "d_signed": -0.19641055052140458,
+   "batch": "Batch_3",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_d50_um",
+   "name": "Si particle median diameter (\u00b5m)",
+   "eta2": 0.003090268365410681,
+   "kw_p": 0.9547039128430965,
+   "max_abs_d": 0.11498423829330805,
+   "d_signed": 0.11498423829330805,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  },
+  {
+   "kpi": "si_circularity",
+   "name": "Si circularity (median, 0-1)",
+   "eta2": 0.00205340200596368,
+   "kw_p": 0.9696684887356443,
+   "max_abs_d": 0.6195400860136662,
+   "d_signed": -0.6195400860136662,
+   "batch": "Batch_1",
+   "kw_p_holm": 1.0
+  }
+ ],
+ "model": {
+  "cv_balanced_accuracy": 0.42444444444444435,
+  "chance": 0.3333333333333333,
+  "null_mean": 0.3386111111111111,
+  "null_95": 0.4088055555555554,
+  "p": 0.06451612903225806
+ },
+ "site_top": {
+  "B1 4ih2ggld": {
+   "si_frac": 6.1,
+   "si_solidity": 4.5,
+   "si_cracked_frac": 3.8,
+   "si_circularity": 3.6
+  },
+  "B1 5n1q8atc": {
+   "si_frac": 10.3,
+   "si_solidity": 6.8,
+   "si_circularity": 4.8,
+   "si_cluster_size": 4.3
+  }
+ }
+}
