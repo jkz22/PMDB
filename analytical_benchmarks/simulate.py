@@ -91,6 +91,11 @@ def up(a, shape):
 
 
 # ---------------- loading ----------------
+def site_name(spec):
+    """Output key of an input: site ID of 'Batch/site', or the file stem of an image path."""
+    return os.path.splitext(os.path.basename(spec))[0]
+
+
 def load_labels(spec, nm_per_px=25.0):
     if os.path.exists(spec):                       # any BSE image
         import imagecodecs, tifffile  # noqa: F401
@@ -102,10 +107,10 @@ def load_labels(spec, nm_per_px=25.0):
             im = im[:H, :W].reshape(H // k, k, W // k, k).mean((1, 3))
         else:
             from skimage.transform import rescale; im = rescale(im, 1 / f, preserve_range=True)
-        lab, _ = segment(np.clip(im, 0, 255).astype(np.uint8)); name = os.path.splitext(os.path.basename(spec))[0]
+        lab, _ = segment(np.clip(im, 0, 255).astype(np.uint8)); name = site_name(spec)
     else:
         from pmdb.io import load_site
-        b, s = spec.split("/"); lab, _ = segment(load_site(b, s, resolution="half", normalise="none").image[..., 0]); name = s
+        b, s = spec.split("/"); lab, _ = segment(load_site(b, s, resolution="half", normalise="none").image[..., 0]); name = site_name(spec)
     return lab[::2, ::2].copy(), name               # 50 nm -> 0.1 µm
 
 
@@ -121,7 +126,7 @@ def kpis_of(lab):
     kp, _ = particles(L2, PX); area = lab.size * PX * PX
     comp = measure.label(np.isin(lab, (2, 4))); n_all = comp.max()
     return dict(porosity=(lab == 0).mean(), si_frac=np.isin(lab, (2, 4)).mean(), si_active_frac=(lab == 2).mean(),
-                sei_frac=(lab == 3).mean(), si_d50_um=kp["si_d50_um"], si_d90_um=kp["si_d90_um"],
+                sei_px_frac=(lab == 3).mean(), si_d50_um=kp["si_d50_um"], si_d90_um=kp["si_d90_um"],
                 si_count_per_1000um2=kp["si_count_per_1000um2"], si_solidity=kp["si_solidity"],
                 si_circularity=kp["si_circularity"], si_cracked_frac=kp["si_cracked_frac"], si_clark_evans=kp["si_clark_evans"],
                 si_fragments_per_1000um2=(n_all - kp["si_count_per_1000um2"] * area / 1000) / area * 1000)
@@ -163,6 +168,8 @@ def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
         if n == 1:
             extra = dict(li_mid=np.where(act, erfc(d_si / (2 * np.sqrt(PAR["D_si"] * T / 2))), np.nan),
                          s1_map=up(s1, lab.shape), lab1=lab.copy())
+        # sei_acc is the film area (µm²) including sub-pixel film: it sets li_lost and sei_frac; pores within the
+        # film thickness also become SEI pixels (sei_px_frac).
         # SEI on all active Si surfaces (electrolyte also reaches Si through the binder/carbon); it locks Li
         # and fills adjacent pores. Crack faces are new surfaces with fresh, fast-growing SEI.
         bnd = act & ndi.binary_dilation(lab != 2, S4)
@@ -195,14 +202,14 @@ def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
             touch = ndi.maximum(ndi.binary_dilation(lab == 1, S4).astype(int), L, ids) > 0
             dead = ids[(sz < PAR["a_min"]) | ~touch]; lab[np.isin(L, dead)] = 4
         sim = blocks((lab == 2).astype(float)) > 0.5
-        rows.append(dict(cycle=n, capacity_mAh_cm3=cap, reversible_mAh_cm3=rev, li_lost_sei_mAh_cm3=li_lost,
+        rows.append(dict(cycle=n, capacity_mAh_cm3=cap, reversible_mAh_cm3=rev, li_lost_sei_mAh_cm3=li_lost, sei_frac=sei_acc / (area * PX * PX),
                          si_utilisation=float((c_end - c_dis)[act].mean()) if act.any() else np.nan,
-                         thickness_charged_pct=100 * full["thick"], thickness_irrev_pct=100 * crack_px / W / H,
+                         thickness_charged_pct=100 * full["thick"], crack_area_pct=100 * crack_px / W / H,
                          sigma1_p95_si=float(np.percentile(s1[sim], 95)) if sim.any() else np.nan,
                          n_cracks=n_cracks, **kpis_of(lab)))
         if snap: snaps.append((n, lab.copy()))
     t = pd.DataFrame(rows); t["retention_pct"] = 100 * t.capacity_mAh_cm3 / t.capacity_mAh_cm3.iloc[0]
-    k0 = kpis_of(lab0); t0 = {**{k: np.nan for k in t.columns}, **k0, "cycle": 0}
+    k0 = kpis_of(lab0); t0 = {**{k: np.nan for k in t.columns}, **k0, "sei_frac": 0.0, "cycle": 0}
     t = pd.concat([pd.DataFrame([t0]), t], ignore_index=True)
     return dict(traj=t, within=pd.DataFrame(within), snaps=snaps, **extra)
 
@@ -216,8 +223,8 @@ def _job(a):
 
 # ---------------- outputs ----------------
 TRAJ = [("retention_pct", "Capacity retention (%)"), ("thickness_charged_pct", "Thickness swelling when charged (%)"),
-        ("thickness_irrev_pct", "Irreversible thickening from cracks (%)"), ("porosity", "Porosity"),
-        ("sei_frac", "SEI area fraction"), ("si_active_frac", "Active Si area fraction"), ("si_d50_um", "Si d50 (µm)"),
+        ("crack_area_pct", "Cumulative crack area (% of crop)"), ("porosity", "Porosity"),
+        ("sei_frac", "SEI volume fraction (film, incl. sub-pixel)"), ("si_active_frac", "Active Si area fraction"), ("si_d50_um", "Si d50 (µm)"),
         ("si_d90_um", "Si d90 (µm)"), ("si_solidity", "Si solidity"), ("si_fragments_per_1000um2", "Si fragments <1 µm per 1000 µm²"),
         ("n_cracks", "Cracks (cumulative)"), ("sigma1_p95_si", "Peak tensile stress in Si, p95 (GPa, elastic)")]
 
@@ -277,7 +284,10 @@ if __name__ == "__main__":
     ap.add_argument("--seeds", type=int, default=3); ap.add_argument("--width", type=float, default=58.0, help="crop width, µm")
     ap.add_argument("--x0", type=float, default=None, help="crop start, µm (default: centre)")
     ap.add_argument("--out", default="sim"); ap.add_argument("--jobs", type=int, default=8)
-    a = ap.parse_args(); specs = a.inputs + a.image; os.makedirs(a.out, exist_ok=True)
+    a = ap.parse_args(); specs = a.inputs + a.image
+    names = [site_name(s) for s in specs]; dup = sorted({n for n in names if names.count(n) > 1})
+    if dup: ap.error(f"inputs share a site name ({', '.join(dup)}); outputs are keyed by it, run them separately")
+    os.makedirs(a.out, exist_ok=True)
     jobs = [(s, k, a.cycles, a.crate, a.width, a.x0, a.nm_per_px) for s in specs for k in range(a.seeds)]
     with Pool(min(a.jobs, len(jobs))) as p: done = p.map(_job, jobs)
     res = {}

@@ -1,4 +1,4 @@
-import os, sys
+import os, subprocess, sys
 import numpy as np
 import pytest
 
@@ -44,3 +44,22 @@ def test_deterministic_per_seed():
     a = S.simulate(disc_lab(2), cycles=3, seed=1, snap=False)["traj"]
     b = S.simulate(disc_lab(2), cycles=3, seed=1, snap=False)["traj"]
     assert a.drop(columns="cycle").fillna(-1).equals(b.drop(columns="cycle").fillna(-1))
+
+
+def test_sei_frac_is_the_film_that_locks_li_and_crack_area_tracks_cracks():
+    t = S.simulate(disc_lab(4), cycles=4, seed=0, snap=False)["traj"]
+    c = t[t.cycle > 0]
+    assert "thickness_irrev_pct" not in t.columns and t.sei_frac.iloc[0] == 0
+    assert np.allclose(c.li_lost_sei_mAh_cm3, c.sei_frac * S.PAR["q_sei"])
+    assert (c.sei_frac > 0).all()                      # Li lost from cycle 1 <=> SEI present from cycle 1
+    assert (np.diff(c.sei_px_frac) >= 0).all()
+    assert ((c.crack_area_pct > 0) == (c.n_cracks > 0)).all() and (np.diff(c.crack_area_pct) >= 0).all()
+
+
+def test_duplicate_site_names_are_rejected(tmp_path):
+    here = os.path.join(os.path.dirname(__file__), "..", "analytical_benchmarks")
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join([os.path.abspath(here), os.path.abspath(os.path.join(here, ".."))])}
+    out = tmp_path / "o"
+    p = subprocess.run([sys.executable, "simulate.py", "Batch_1/abc", "Batch_2/abc", "--out", str(out)],
+                       cwd=here, env=env, capture_output=True, text=True)
+    assert p.returncode == 2 and "abc" in p.stderr and not out.exists()

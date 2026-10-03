@@ -40,7 +40,7 @@ Caveats: these are textbook-constant estimates, not measurements. They are almos
   - Capacity = reversible Li in active Si and graphite, limited by the Li inventory left after SEI.
 - **KPIs:** recomputed on every evolved image with the same particle code as the QC pipeline.
 
-Outputs in `sim/`: `traj_<site>.csv` (per cycle and seed), `within_<site>.csv` (cycle 1 and last cycle), `fig_sim_<site>.png`, `anim_<site>.gif`, `fig_sim_compare.png` and `sim.json`.
+Outputs in `sim/`: `traj_<site>.csv` (per cycle and seed), `within_<site>.csv` (cycle 1 and last cycle), `fig_sim_<site>.png`, `anim_<site>.gif`, `fig_sim_compare.png` and `sim.json`. Columns: `sei_frac` is the SEI volume implied by the film growth (including sub-pixel film; `li_lost_sei_mAh_cm3` = `sei_frac` × 1500 mAh/cm³), `sei_px_frac` the part resolved as SEI pixels in the evolved image, and `crack_area_pct` the cumulative Si area removed by cracks (% of the crop; not a thickness change).
 
 Limits:
 - Parameters are from the literature, not calibrated, so compare sites with each other rather than reading the numbers as predictions.
