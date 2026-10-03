@@ -1,0 +1,51 @@
+﻿baseline: Batch_3 (17 images, 8 KPIs)
+
+=== Batch_1: INVESTIGATE (multivariate p=0.0500) ===
+                kpi  effect_size  p_value  baseline_mean  batch_mean
+   mat_graphite_d10    -3.287002 0.053495      84.023708   73.667855
+mat_bright_fraction     2.957162 0.018098       0.056056    0.080775
+   mat_rim_coverage     2.773743 0.012299       0.173865    0.317028
+       mat_porosity    -0.957419 0.038796       0.092453    0.079853
+   mat_graphite_d90    -0.778657 0.222678     291.166037  278.404653
+
+=== Batch_2: ACCEPT (multivariate p=0.8921) ===
+                kpi  effect_size  p_value  baseline_mean  batch_mean
+   mat_graphite_d90     0.472927 0.319068     291.166037  298.916831
+   mat_graphite_d50     0.315067 0.571043     150.404812  152.316952
+       mat_porosity    -0.189996 0.669833       0.092453    0.089953
+mat_active_fraction     0.169361 0.707729       0.904004    0.906158
+   mat_rim_coverage     0.139887 0.768223       0.173865    0.181085
+
+--- within-batch CV (per KPI) ---
+batch                Batch_1  Batch_2  Batch_3
+kpi                                           
+mat_active_fraction    0.024    0.011    0.014
+mat_bright_fraction    0.471    0.209    0.149
+mat_crack_fraction     0.208    0.118    0.118
+mat_graphite_d10       0.293    0.040    0.037
+mat_graphite_d50       0.118    0.066    0.040
+mat_graphite_d90       0.123    0.064    0.056
+mat_porosity           0.159    0.105    0.142
+mat_rim_coverage       0.651    0.339    0.297
+
+--- leave-one-out false alarms on baseline ---
+           image     verdict  p_multivariate  max_abs_effect
+img_0grcilhi_BSE investigate        0.033966        6.678396
+img_71vgq3fw_BSE      accept        0.874126        1.484609
+img_9luzk4jm_BSE      accept        0.651349        0.977772
+img_cfe5vt7s_BSE      accept        0.803197        1.131190
+img_hawkfj64_BSE investigate        0.277722        1.905780
+img_hzumfsms_BSE investigate        0.385614        2.085813
+img_kbdh4tri_BSE      accept        0.226773        1.417917
+img_mgxahqnk_BSE investigate        0.561439        1.928673
+img_pl8uabbv_BSE      accept        0.981019        0.857096
+img_ptg8lmto_BSE investigate        0.480519        2.361318
+img_tuy3zymq_BSE investigate        0.110889        1.974345
+img_ufdvpb81_BSE investigate        0.328671        3.367339
+img_utfgcjfa_BSE      accept        0.639361        1.383900
+img_vc2whyaq_BSE      accept        0.906094        1.410797
+img_x77cy643_BSE investigate        0.465534        1.889276
+img_x7u69zsw_BSE investigate        0.183816        3.204256
+img_xgj4xftb_BSE      accept        0.745255        1.317510
+
+9/17 baseline images would be flagged (this number goes on a slide)
