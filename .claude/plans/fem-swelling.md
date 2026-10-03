@@ -115,6 +115,20 @@ committing and pushing to branch fem-sim (PR #18 merged 2026-10-03; new PR from 
   outside the literature bands (docs/fem/literature-review.md validation targets); solver non-convergence on many
   sites (> 3 of 34 before 100% SOC in the default run); or the cap would be exceeded.
 - Never: merge the PR, write to data/ or data_heldout/, train on held-out sites.
+- FULL AUTONOMY (user, 2026-10-03, supersedes the stop-and-wait gates above): run everything unattended until the
+  classifier results for the 3 held-out sites exist ("I don't want to wake up and see the simulation was aborted").
+  The ONLY hard stop is the $180 Modal cap. No stop point requires the user; the classifier plan does not need user
+  sign-off (architecture fixed by D18). Every former gate becomes fix-and-continue, logged in the run report:
+  * Analytic/unit test failure -> it is a bug: fresh implementer fixes it (code-reviewer if non-trivial), re-run.
+  * Swelling outside [3%, 39%] -> treat as a bug: investigate (sign, eigenstretch applied, BC), fix, re-run window.
+    If no bug is found after one investigation round, proceed and flag the result in docs/fem/results.md.
+  * Solver non-convergence -> remediation ladder, applied globally and logged: (1) finer adaptive substeps,
+    (2) pore ersatz stiffness 1e-4 -> 1e-3 × E_binder, (3) line search basic <-> bt, (4) accept NaN frames after the
+    failure SOC (classifier imputes in-fold). Never abort the run for convergence; >3 failures is reported, not a stop.
+  * Modal infra errors / timeouts -> retry once per case with 1.5× timeout; then record as failed and continue.
+  * Cost: re-project before each chunk; if the projection exceeds the cap, drop orientation `top` (bottom-only), then
+    the 50 nm resolution check, before stopping. Stop only if even that exceeds $180.
+  * Long runs use `modal run --detach`; progress polled from the volume.
 - SWELLING GATE (user-amended "ok gate", 2026-10-03): the literature band [9%, 39%] is REPORTED as a comparison only.
   The STOP condition is swelling < 3% or > 39% (bug-level: eigenstrain not applied / wrong sign / runaway).
   Reason: a dense 2D elastic model cannot capture particle rearrangement, binder deformation and SEI growth that
