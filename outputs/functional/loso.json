@@ -1,0 +1,164 @@
+{
+  "n_perm": 300,
+  "majority_baseline": 0.5483870967741935,
+  "functional_only": {
+    "features": [
+      "F01_si_pore_dist_p50_um",
+      "F01_si_pore_access_frac",
+      "F01_pore_chord_anisotropy",
+      "F01_pore_clusters_per_1000um2",
+      "F02_soc100_into_graphite",
+      "F02_soc100_pore_loss",
+      "F02_soc100_si_objects_ratio"
+    ],
+    "loo": {
+      "n": 31,
+      "accuracy": 0.45161290322580644,
+      "recall": {
+        "Batch_1": 0.2857142857142857,
+        "Batch_2": 0.2857142857142857,
+        "Batch_3": 0.5882352941176471
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 2,
+          "Batch_2": 4,
+          "Batch_3": 1
+        },
+        "Batch_2": {
+          "Batch_1": 1,
+          "Batch_2": 2,
+          "Batch_3": 4
+        },
+        "Batch_3": {
+          "Batch_1": 1,
+          "Batch_2": 6,
+          "Batch_3": 10
+        }
+      }
+    },
+    "permutation": {
+      "observed_accuracy": 0.45161290322580644,
+      "null_mean": 0.3453763440860215,
+      "null_p95": 0.5161290322580645,
+      "p_value": 0.17940199335548174,
+      "n_perm": 300,
+      "seed": 0
+    }
+  },
+  "fingerprint_only": {
+    "features": [
+      "si_depth_rel_band0",
+      "si_depth_rel_band1",
+      "si_depth_rel_band2",
+      "si_depth_rel_band3",
+      "si_depth_rel_band4",
+      "si_depth_slope",
+      "si_depth_mid_dip",
+      "gx_0.5_2.0",
+      "gx_2.0_4.0",
+      "gx_4.0_7.0",
+      "gx_7.0_10.0",
+      "gz_0.5_2.0",
+      "gz_2.0_4.0",
+      "gz_4.0_7.0",
+      "gz_7.0_10.0",
+      "k15_contact_tilestd"
+    ],
+    "loo": {
+      "n": 31,
+      "accuracy": 0.6774193548387096,
+      "recall": {
+        "Batch_1": 0.7142857142857143,
+        "Batch_2": 0.42857142857142855,
+        "Batch_3": 0.7647058823529411
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 5,
+          "Batch_2": 0,
+          "Batch_3": 2
+        },
+        "Batch_2": {
+          "Batch_1": 3,
+          "Batch_2": 3,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 2,
+          "Batch_2": 2,
+          "Batch_3": 13
+        }
+      }
+    },
+    "permutation": {
+      "observed_accuracy": 0.6774193548387096,
+      "null_mean": 0.37483870967741933,
+      "null_p95": 0.5806451612903226,
+      "p_value": 0.0033222591362126247,
+      "n_perm": 300,
+      "seed": 0
+    }
+  },
+  "fingerprint_plus_functional": {
+    "features": [
+      "si_depth_rel_band0",
+      "si_depth_rel_band1",
+      "si_depth_rel_band2",
+      "si_depth_rel_band3",
+      "si_depth_rel_band4",
+      "si_depth_slope",
+      "si_depth_mid_dip",
+      "gx_0.5_2.0",
+      "gx_2.0_4.0",
+      "gx_4.0_7.0",
+      "gx_7.0_10.0",
+      "gz_0.5_2.0",
+      "gz_2.0_4.0",
+      "gz_4.0_7.0",
+      "gz_7.0_10.0",
+      "k15_contact_tilestd",
+      "F01_si_pore_dist_p50_um",
+      "F01_si_pore_access_frac",
+      "F01_pore_chord_anisotropy",
+      "F01_pore_clusters_per_1000um2",
+      "F02_soc100_into_graphite",
+      "F02_soc100_pore_loss",
+      "F02_soc100_si_objects_ratio"
+    ],
+    "loo": {
+      "n": 31,
+      "accuracy": 0.7096774193548387,
+      "recall": {
+        "Batch_1": 0.42857142857142855,
+        "Batch_2": 0.5714285714285714,
+        "Batch_3": 0.8823529411764706
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 3,
+          "Batch_2": 1,
+          "Batch_3": 3
+        },
+        "Batch_2": {
+          "Batch_1": 2,
+          "Batch_2": 4,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 1,
+          "Batch_2": 1,
+          "Batch_3": 15
+        }
+      }
+    },
+    "permutation": {
+      "observed_accuracy": 0.7096774193548387,
+      "null_mean": 0.38333333333333336,
+      "null_p95": 0.5500000000000004,
+      "p_value": 0.0033222591362126247,
+      "n_perm": 300,
+      "seed": 0
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "git_commit": "8d48f9e92b9c7ca0515f300c679486fc9ac8f6fc",
+  "functional_version": "f1",
+  "segmenter_version": "v0r1",
+  "si_vol_expansion": 2.8,
+  "perturb": 0.0,
+  "heldout": true,
+  "n_sites": 3,
+  "n_tiles": 12,
+  "elapsed_seconds": 3.2,
+  "seconds_per_site": {
+    "Batch_heldout/3e122cbj": 3.2,
+    "Batch_heldout/fn0mhxef": 2.6,
+    "Batch_heldout/xrv9xvzb": 2.6
+  }
+}

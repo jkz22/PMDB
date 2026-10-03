@@ -66,6 +66,8 @@ valid = clean.valid_for_kpis(mask)  # never compute statistics/KPIs on masked pi
 - **`outputs/qc_contact_sheet.png`**: Contact sheet visualization of all 31 sites across all 3 detectors.
 - **`outputs/raw_stats_by_batch.png`**: QC strip plot of intensity percentiles across batches.
 - **`docs/kpis/screening.md`**: KPI screening tool (`python -m pmdb.screen`) and the KPI submission contract.
+- **`docs/story.md`**: the connecting narrative across every analysis layer (harmonisation → KPIs → fingerprint → GP maps → representation learning → functional morphology → FEM), with pointers to the numbers.
+- **`docs/functional.md`** / `outputs/functional/`: functional morphology (`pmdb.functional`): pore access, the Si swelling stress test (where lithiation growth lands: graphite / binder / pore), and a sites-per-batch power analysis. `python scripts/run_functional.py && python scripts/analyse_functional.py`.
 
 ## Testing & Pipeline Execution
 
