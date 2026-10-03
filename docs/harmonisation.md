@@ -159,8 +159,10 @@ python scripts/eval_harmonisation.py                     # ~8 min, regenerates o
 pytest -q tests/test_harmonise.py                        # synthetic round-trip tests + real-data checks (-m data)
 ```
 
-Materialised arrays are not committed: a LUT is applied in under a millisecond at load time and
-each materialised cache would add 280 MB to the repository.
+The materialised `hybrid` arrays are committed (`cache/harmonised/hybrid/half/*.npz`, 276 MB, plus
+`cache_heldout/harmonised/hybrid/half/`) for pipelines that read npz files directly, e.g. Modal GPU
+runs; they are byte-identical to `load_site(..., normalise="none", harmonise="hybrid").image`. Other
+methods are LUT-only (applied in < 1 ms at load time); `--materialise <method>` writes them if needed.
 
 ## 6. Limitations
 
