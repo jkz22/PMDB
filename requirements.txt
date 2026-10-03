@@ -1,0 +1,20 @@
+# PyTorch 2.2.2 is the last release with macOS Intel (x86_64) wheels; it needs NumPy 1.x
+torch==2.2.2
+torchvision==0.17.2
+torchaudio==2.2.2
+numpy<2
+
+# Data / classic ML
+pandas
+scipy
+scikit-learn
+
+# Plotting
+matplotlib
+seaborn
+
+# Notebooks & utilities
+jupyterlab
+ipykernel
+ipywidgets
+tqdm
