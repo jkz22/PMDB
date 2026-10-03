@@ -1,0 +1,18 @@
+{
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "save": true,
+  "hash": "c8389de5414d"
+}

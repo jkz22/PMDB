@@ -40,7 +40,10 @@ def main(run_spec: dict):
     if run_spec.get("task") == "cls":
         from src.v2 import classify
         try:
-            classify.run_cls(run_spec)
+            d = classify.run_cls(run_spec)
+            if run_spec.get("attrib") and not (d / "attribution_summary.json").exists():
+                from src.v2 import attribution
+                attribution.analyse(d)
         except RunLocked as e:
             print(f"skip: {e}", flush=True)
         except Exception:

@@ -1,0 +1,9 @@
+arch,harm,n,crop_acc,field_acc,f1,rec_B1,rec_B2,rec_B3
+dinov2_ft,False,2,0.605,0.619,0.543,0.5,0.25,0.833
+dinov2_ft,hybrid,2,0.627,0.619,0.539,0.5,0.25,0.833
+effb4_imnet,False,2,0.598,0.619,0.539,0.5,0.25,0.833
+effb4_imnet,hybrid,2,0.616,0.619,0.543,0.5,0.25,0.833
+effb4_micronet,False,5,0.589,0.637,0.482,0.4,0.2,0.867
+effb4_micronet,hybrid,5,0.58,0.599,0.476,0.4,0.2,0.817
+resnet18_imnet,False,2,0.616,0.619,0.543,0.5,0.25,0.833
+resnet18_imnet,hybrid,2,0.583,0.536,0.511,0.5,0.25,0.667

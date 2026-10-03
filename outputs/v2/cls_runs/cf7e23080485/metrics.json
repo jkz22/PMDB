@@ -1,0 +1,70 @@
+{
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 0,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "save": true,
+  "hash": "cf7e23080485",
+  "train_sec": 1076.9163625240326,
+  "n_train_fields": 25,
+  "n_test_fields": 6,
+  "n_test_crops": 312,
+  "test_fields": [
+    "Batch_1/4ih2ggld",
+    "Batch_1/f1vzngrs",
+    "Batch_2/r17byphk",
+    "Batch_3/hzumfsms",
+    "Batch_3/x77cy643",
+    "Batch_3/x7u69zsw"
+  ],
+  "crop_acc": 0.6506410256410257,
+  "crop_f1_macro": 0.5155718859492269,
+  "crop_logloss": 1.0439718829080813,
+  "field_acc": 0.6666666666666666,
+  "field_f1_macro": 0.5079365079365079,
+  "field_confusion": [
+    [
+      1,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      0,
+      3
+    ]
+  ],
+  "crop_confusion": [
+    [
+      53,
+      51,
+      0
+    ],
+    [
+      0,
+      2,
+      50
+    ],
+    [
+      0,
+      8,
+      148
+    ]
+  ],
+  "n_params_trained": 17549963
+}

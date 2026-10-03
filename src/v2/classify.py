@@ -4,7 +4,7 @@ Grouped k-fold over all 31 fields (every crop of a field in one fold). Train on 
 training fields (overlapping crops, aug1/aug2), test on the held-out fields' non-overlapping
 crops: crop-level and field-level (mean logit) accuracy, macro-F1, confusion matrix, log-loss.
 
-Spec keys: arch (resnet18_scratch | resnet18_imnet | effb4_imnet | dinov2_ft | dinov2_linear),
+Spec keys: arch (resnet18_scratch | resnet18_imnet | effb4_imnet | effb4_micronet | dinov2_ft | dinov2_linear),
 view, input (raw|norm), harmonise, aug, fold, n_folds, steps, batch_size, lr, seed.
 """
 from __future__ import annotations
@@ -31,8 +31,12 @@ from src.v2.train import LOCK_STALE_S, RUNS, RunLocked, device
 BATCHES = ("Batch_1", "Batch_2", "Batch_3")
 CLS_RUNS = Path(os.environ.get("PMDB_CLS_RUNS", RUNS.parent / "cls_runs"))  # beside PMDB_RUNS (/vol/runs on Modal)
 DEFAULTS = dict(task="cls", arch="resnet18_imnet", view="stack", input="raw", harmonise=False, aug="aug1",
-                fold=0, n_folds=5, split="strat", steps=1500, batch_size=64, lr=None, seed=SEED, label_smoothing=0.1)
-LR = {"resnet18_scratch": 1e-3, "resnet18_imnet": 3e-4, "effb4_imnet": 3e-4, "dinov2_ft": 5e-5, "dinov2_linear": 1e-3}
+                fold=0, n_folds=5, split="strat", steps=1500, batch_size=64, lr=None, seed=SEED, label_smoothing=0.1,
+                save=False, dequant=0.0)
+NOHASH = ("save",)  # bookkeeping flags that do not change the trained model
+NOHASH_IF_DEFAULT = ("dequant",)  # later additions: keep earlier hashes stable when left at default
+LR = {"resnet18_scratch": 1e-3, "resnet18_imnet": 3e-4, "effb4_imnet": 3e-4, "effb4_micronet": 3e-4,
+      "dinov2_ft": 5e-5, "dinov2_linear": 1e-3}
 
 
 def full_cfg(cfg: dict) -> dict:
@@ -43,7 +47,9 @@ def full_cfg(cfg: dict) -> dict:
 
 
 def cfg_hash(cfg: dict) -> str:
-    return hashlib.sha1(json.dumps(full_cfg(cfg), sort_keys=True).encode()).hexdigest()[:12]
+    c = {k: v for k, v in full_cfg(cfg).items() if k not in NOHASH}
+    c = {k: v for k, v in c.items() if not (k in NOHASH_IF_DEFAULT and v == DEFAULTS[k])}
+    return hashlib.sha1(json.dumps(c, sort_keys=True).encode()).hexdigest()[:12]
 
 
 class Classifier(nn.Module):
@@ -58,6 +64,10 @@ class Classifier(nn.Module):
         elif arch == "effb4_imnet":
             import timm
             self.m = timm.create_model("efficientnet_b4", pretrained=True, num_classes=n_cls)
+        elif arch == "effb4_micronet":  # NASA MicroNet weights (ImageNet -> MicroNet), fully fine-tuned
+            from src.v2.models import OffTheShelf
+            self.m = OffTheShelf("micronet").m.requires_grad_(True).train()
+            self.head = nn.Linear(self.m.out_channels[-1], n_cls)
         elif arch in ("dinov2_ft", "dinov2_linear"):
             from transformers import Dinov2Model
             self.bb = Dinov2Model.from_pretrained("facebook/dinov2-small")
@@ -75,6 +85,8 @@ class Classifier(nn.Module):
         if self.arch.startswith("dinov2"):
             h = self.bb(pixel_values=dino_crop(x)).last_hidden_state
             return self.head(torch.cat([h[:, 0], h[:, 1:].mean(1)], 1))
+        if self.arch == "effb4_micronet":
+            return self.head(self.m(x)[-1].mean((2, 3)))
         return self.m(x)
 
 
@@ -87,7 +99,7 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     h = cfg_hash(c)
     d = CLS_RUNS / h
     d.mkdir(parents=True, exist_ok=True)
-    if (d / "metrics.json").exists():
+    if (d / "metrics.json").exists() and (not c["save"] or (d / "final.pt").exists()):
         return d
     lock = d / "lock"
     if lock.exists() and time.time() - lock.stat().st_mtime < LOCK_STALE_S:
@@ -126,6 +138,8 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
             if step >= c["steps"]:
                 break
             x, y = augment(b["x"], c["aug"], fr, gen), y_crop[b["idx"]]
+            if c["dequant"]:  # uniform +-dequant grey levels: fills the LUT comb (missing grey levels) left by harmonisation
+                x = x + (torch.rand(x.shape, generator=gen, device=x.device) - 0.5) * (2 * c["dequant"] / 255.0)
             with torch.autocast(dev.type, dtype=torch.bfloat16, enabled=dev.type == "cuda"):
                 logits = model(x)
             loss = F.cross_entropy(logits.float(), y, weight=w, label_smoothing=c["label_smoothing"])
@@ -150,6 +164,8 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     with torch.no_grad():
         for i in range(0, len(te), 128):
             x = torch.stack([te[j]["x"] for j in range(i, min(i + 128, len(te)))]).to(dev)
+            if c["dequant"]:
+                x = x + (torch.rand(x.shape, generator=gen, device=x.device) - 0.5) * (2 * c["dequant"] / 255.0)
             with torch.autocast(dev.type, dtype=torch.bfloat16, enabled=dev.type == "cuda"):
                 logits.append(model(x).float().cpu())
     L = torch.cat(logits).numpy()
@@ -171,6 +187,8 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
            "crop_confusion": confusion_matrix(y_te, pred, labels=[0, 1, 2]).tolist(),
            "n_params_trained": sum(p.numel() for p in model.parameters() if p.requires_grad)}
     (d / "metrics.json").write_text(json.dumps(out, indent=2, default=float))
+    if c["save"]:
+        torch.save(model.state_dict(), d / "final.pt")
     lock.unlink(missing_ok=True)
     return d
 
