@@ -17,6 +17,13 @@ from pmdb.io import read_detector_image
 ROOT = Path(__file__).resolve().parents[1]
 
 
+class UnmeasurableImage(ValueError):
+    """A KPI module cannot produce a KPI vector for this image (e.g. no
+    graphite segmented). Raised by compute(); the runner flags the image
+    and continues. Configuration errors must NOT use this type — they
+    should abort the run instead of being skipped per image."""
+
+
 def load_config() -> dict:
     with open(ROOT / "config.yaml") as f:
         return yaml.safe_load(f)

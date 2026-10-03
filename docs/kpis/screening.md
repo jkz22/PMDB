@@ -19,7 +19,7 @@ This section is normative. MUST and SHOULD are used in the RFC sense.
 ### 2.1 Site CSV
 
 - A site CSV MUST have the columns `batch` and `site`, plus one numeric column per KPI.
-- It MUST contain exactly one row per site and cover all 31 sites. `batch`/`site` are read as strings.
+- It MUST contain exactly one row per site and cover all 31 sites. `batch`/`site` are read as strings. The CLI checks the first `--kpis` file against the site manifest `cache/half/manifest.csv` (written by `scripts/build_cache.py` from `pmdb.io.list_sites()`; override with `--site-manifest`), and the other files must match it.
 - Several `--kpis` files MAY be given; all MUST cover the identical site set.
 - KPI names MUST match `^[A-Za-z][A-Za-z0-9_]*$` and SHOULD follow `<ID>_<short_name>_<unit>` as in `kpi_catalogue.csv` (for example `K03_ecd_d50_um`).
 - KPI names MUST be unique across all submitted files.
@@ -27,7 +27,7 @@ This section is normative. MUST and SHOULD are used in the RFC sense.
 
 ### 2.2 Missing values
 
-- Missing means empty, NaN or +-inf.
+- Missing means an empty cell, `NaN`/`nan`, or +-inf (`inf`, `-inf`). Any other text (`NA`, `n/a`, `None`, ...) is a text value, so the column is non-numeric (see 2.1 and 2.3).
 - A sentinel value MUST be declared with `--sentinel COL=VALUE` (repeatable; several values per column allowed). Undeclared sentinels are treated as real values.
 - Example: `K08_pcf_rpeak_x_um=-1` and `K08_pcf_rpeak_z_um=-1` (no peak found). A global `-1` would corrupt signed KPIs such as `K10_cv_slope`.
 - Declared sentinels are applied in the site, replicate and sensitivity tables. `site_kpis_filtered.csv` keeps original values.
@@ -39,16 +39,19 @@ This section is normative. MUST and SHOULD are used in the RFC sense.
 |---|---|---|
 | missing `batch`/`site` column | key column absent in a file | add the columns |
 | duplicated (batch, site) keys | a site appears twice in one file | one row per site |
-| invalid KPI name | name breaks the regex (also a `.1` suffix from duplicated headers) | rename the column |
+| duplicated column header | the same header appears twice in one CSV (any input table); two or more blank headers (trailing commas) get their own message | rename or drop one |
+| invalid KPI name | name breaks the regex | rename the column |
 | KPI appears in two files | same name in more than one `--kpis` file | rename or drop one |
 | site sets differ | `--kpis` files cover different sites (message gives counts and up to 5 examples) | cover all 31 sites in every file |
+| site set differs from the site manifest | the first `--kpis` file does not cover exactly the manifest sites | cover all 31 sites, or point `--site-manifest` at the right manifest |
+| site manifest not found | `--site-manifest` path (default `cache/half/manifest.csv`) absent | pass `--site-manifest` |
 | no numeric KPI columns | a `--kpis` file has none | check the file |
 | replicates: site set differs / duplicates / missing replicate column | table does not cover exactly the site set, has duplicate (batch, site, tile) rows or no `tile` column | fix the table, or set `--replicate-col` |
 | replicates/sensitivity: KPI column not numeric | a stray text value (e.g. "n/a") in a KPI column | write missing values as empty/NaN |
 | replicates/sensitivity: unknown KPI name | column not in the site KPIs (naming typo) | use the exact site KPI name |
 | sensitivity: params missing, NaN, fewer than 2 settings, incomplete setting, duplicate rows | see 2.4 | fix the sweep |
 | `--sensitivity` without `--sensitivity-params` (or the reverse) | params are never inferred | give both |
-| covariates: site set differs, duplicates or no numeric column | see 2.4 | fix the table |
+| covariates: site set differs, duplicates, a non-numeric covariate column (e.g. a stray `NA`/`n/a`) or no numeric column | see 2.4 | fix the table |
 | `--sentinel` column is not a site KPI, or malformed item | typo, no `=`, non-numeric value | use `COL=VALUE` with a site KPI |
 
 Hard errors print `error: <message>` and exit with code 2.
@@ -81,6 +84,7 @@ cov.to_csv("outputs/kpis/screen/covariates_bse.csv", index=False)
 - **Statistic:** the batch-partial Spearman rho. Rank KPI and covariate separately on pairwise-complete sites, subtract each batch's mean rank from both, and take the Pearson correlation of the residuals. NaN if fewer than 5 complete sites or zero variance.
 - **CI:** percentile 95% CI (`--ci-level`) from a batch-stratified site bootstrap, 1000 resamples (`--n-boot-cov`).
 - **Threshold:** drop if any covariate has |rho| >= 0.5 (`--covariate-rho`) and a CI that excludes 0; the decision is `artefact:<cov>` for the qualifying covariate with the largest |rho|.
+- **Untested** when no covariate has both a finite rho and a finite CI. If the reported covariate has a finite rho but an undefined CI (fewer than half the resamples finite), the flag is `covariate_ci_undefined:<cov>` instead of `covariate_suspect:<cov>`.
 - **Batch eta-squared** (rank-based SS_between / SS_total, `batch_eta2`) is reported only. It adds the flag `high_batch_eta2` when > 0.5 (`--eta2-flag`) and never drops a KPI.
 - **Why within-batch:** the documented confound, the Batch_3 BSE p1 offset (0 in Batches 1-2, mean 7.18 in Batch 3), is almost constant within a batch. A marginal rho with it is just batch membership, and would drop exactly the KPIs that separate batches. The within-batch association is the part attributable to the covariate itself. `covariate_rho_marginal` is still reported.
 - **Order:** artefact runs before reliability, because batch artefacts are constant within a site and inflate ICC.
@@ -103,7 +107,7 @@ cov.to_csv("outputs/kpis/screen/covariates_bse.csv", index=False)
 ### 3.3 Robustness
 
 - **Measures:** whether the site ranking survives changes of an analysis parameter.
-- **Statistic:** each distinct tuple of `--sensitivity-params` values is a setting. `robustness_rho` is the minimum pairwise-complete Spearman rho over all pairs of settings. A NaN pair (constant setting) counts as 0.0 and adds the flag `robustness_constant_setting`.
+- **Statistic:** each distinct tuple of `--sensitivity-params` values is a setting. `robustness_rho` is the minimum pairwise-complete Spearman rho over pairs of settings that share at least 5 sites with finite values. A pair with fewer shared sites is not compared and adds `robustness_insufficient_overlap`. If no pair can be compared, the gate is untested. A compared pair with NaN rho (a setting constant on the shared sites) counts as 0.0 and adds the flag `robustness_constant_setting`.
 - **Threshold:** drop if `robustness_rho < 0.8` (`--robustness-min`).
 - **Why:** a KPI that depends on an arbitrary parameter choice is not a stable measurement.
 - **On failure:** justify a parameter, or report the KPI at a fixed setting and accept the dependence.
@@ -129,7 +133,7 @@ Bootstrap resamples are stratified by batch (every batch stays present). Each ga
 | `kpi` | KPI name |
 | `decision` | `keep` or `drop` |
 | `deciding_gate` | first failed gate (vocabulary below); empty if kept |
-| `untested_gates` | `;`-joined subset of `artefact;reliability;robustness` that lacked data or whose statistic was undefined (artefact: no covariate gave a finite rho; reliability: no replicates or ICC/CI undefined). Untested is not passed |
+| `untested_gates` | `;`-joined subset of `artefact;reliability;robustness` that lacked data or whose statistic was undefined (artefact: no covariate gave a finite rho with a finite CI; reliability: no replicates or ICC/CI undefined; robustness: no sweep, or no pair of settings shares 5 sites). Untested is not passed |
 | `flags` | `;`-joined warnings (vocabulary below) |
 | `rank` | 1..n for kept KPIs, empty for dropped |
 | `n_missing_frac`, `n_unique`, `mad` | gate 0 statistics |
@@ -144,7 +148,7 @@ Bootstrap resamples are stratified by batch (every batch stays present). Each ga
 | `cluster_id`, `cluster_rep` | gate 4 cluster (1..k by earliest member) and its representative; survivors only |
 
 - `deciding_gate` values: `degeneracy:missing`, `degeneracy:few_unique`, `degeneracy:zero_mad`, `artefact:<covariate>`, `reliability`, `robustness`, `redundant_with:<rep>`, empty for kept.
-- `flags` values (fixed order): `high_batch_eta2`, `covariate_suspect:<cov>` (|rho| above threshold but the CI includes 0), `icc_undefined`, `icc_ci_undefined`, `robustness_constant_setting`.
+- `flags` values (fixed order): `high_batch_eta2`, `covariate_suspect:<cov>` (|rho| above threshold, CI defined and includes 0), `covariate_ci_undefined:<cov>`, `icc_undefined`, `icc_ci_undefined`, `robustness_constant_setting`, `robustness_insufficient_overlap`.
 - Ranking: kept KPIs by `icc` descending (NaN last), then `batch_eta2` ascending (NaN last), then name.
 - `site_kpis_filtered.csv`: `batch, site` plus the kept KPIs in input order, original values, site-table row order.
 - `screen_config.json`: strict JSON with version, UTC timestamp, full config, input paths, seeds, counts and ignored columns.
