@@ -37,6 +37,10 @@ CROP_COLS = ("frac_si", "frac_graphite", "frac_pore", "frac_artefact", "K01_si_f
 
 # KPIs that pass gates G1-G3 at d23a116; K02/K03 and K04 cluster density excluded (user decision).
 GATED_COLS = ("frac_si", "frac_graphite", "frac_pore", "K01_si_frac_adm", "K04_agglom_frac")
+# fail gates G2/G3 at d23a116; used only in the opt-in kpi_set="all" track (flagged in RESULTS)
+UNGATED_COLS = ("K02_si_density_per_1000um2", "K03_ecd_d50_um", "K03_ecd_d90_um", "K03_ecd_max_um",
+                "K04_n_clusters_per_1000um2")
+ALL_COLS = GATED_COLS + UNGATED_COLS
 
 
 def kpi_commit_hash() -> str:
@@ -73,3 +77,19 @@ def crop_kpis(m: Masks, nm_per_px: float, seed_prefix: str, coords, size: int) -
         sub = m.crop(slice(y, y + size), slice(x, x + size))
         rows.append({"y": y, "x": x, **kpis_from_masks(sub, nm_per_px, f"{seed_prefix}/{y}_{x}")})
     return rows
+
+
+def kpi_cols(kpi_set: str | None) -> tuple[str, ...]:
+    return ALL_COLS if kpi_set == "all" else GATED_COLS
+
+
+def crop_kpi_frame(split: str, cols=GATED_COLS):
+    """Crop KPI table for ``split`` ("eval"/"train") with the requested columns."""
+    import pandas as pd
+    from src.v2.common import OUT
+    k = pd.read_csv(OUT / "kpis" / f"crop_kpis_{split}.csv")
+    extra = [c for c in cols if c not in k]
+    if extra:
+        u = pd.read_csv(OUT / "kpis" / f"crop_kpis_{split}_ungated.csv")
+        k = k.merge(u[["group_id", "y", "x", *extra]], on=["group_id", "y", "x"], how="left")
+    return k

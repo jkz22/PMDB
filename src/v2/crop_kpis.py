@@ -2,10 +2,14 @@
 
 Writes outputs/v2/kpis/crop_kpis_{eval,train}.csv keyed by group_id, y, x (50 nm/px,
 256 px crops; eval = non-overlapping grid, train = stride 128).
+
+    python -m src.v2.crop_kpis ungated  -> crop_kpis_{eval,train}_ungated.csv: K02, K03, K04 cluster
+        density on the eval grid. These fail gates G2/G3; probe targets only (reported, flagged).
 """
 from __future__ import annotations
 
 import json
+import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
@@ -28,6 +32,30 @@ def _site(args):
     return out
 
 
+UNGATED_COLS = K.UNGATED_COLS
+
+
+def _site_ungated(args):
+    b, s = args
+    bse = load_half_raw(b, s)[..., 0]
+    m = K.segment(bse, NM_HALF)
+    out = {}
+    for name, stride in (("eval", CROP), ("train", STRIDE_TRAIN)):
+        rows = K.crop_kpis(m, NM_HALF, f"{b}/{s}", grid(*bse.shape, CROP, stride), CROP)
+        out[name] = [{"group_id": f"{b}/{s}", **{k: r[k] for k in ("y", "x", *UNGATED_COLS)}} for r in rows]
+    return out
+
+
+def main_ungated():
+    sites = list(manifest()[["batch", "site"]].itertuples(index=False, name=None))
+    with ProcessPoolExecutor(7) as ex:
+        res = list(ex.map(_site_ungated, sites))
+    for name in ("eval", "train"):
+        df = pd.DataFrame([r for x in res for r in x[name]])
+        df.to_csv(D / f"crop_kpis_{name}_ungated.csv", index=False)
+        print(name, df.shape, df[list(UNGATED_COLS)].isna().mean().round(4).to_dict(), flush=True)
+
+
 def main():
     D.mkdir(parents=True, exist_ok=True)
     sites = manifest()[["batch", "site"]].itertuples(index=False, name=None)
@@ -42,4 +70,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_ungated() if sys.argv[1:] == ["ungated"] else main()

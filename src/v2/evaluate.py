@@ -133,15 +133,16 @@ def recon_kpi_error(model, ds: CropDataset, dev, kpi_needed: bool, n_max=256) ->
     return recon_metrics(model, ds, dev, kpi_needed, n_max)["recon_kpi_err"]
 
 
-def evaluate(model, store: FieldStore, view: str, dev, family: str, kpi_norm: dict | None = None) -> dict:
-    kpis = pd.read_csv(OUT / "kpis" / "crop_kpis_eval.csv")
+def evaluate(model, store: FieldStore, view: str, dev, family: str, kpi_norm: dict | None = None,
+             cond_cols=K.GATED_COLS) -> dict:
+    kpis = K.crop_kpi_frame("eval", cond_cols)
     kpis_std = kpis.copy()
     if kpi_norm is not None:  # same standardisation as training (VAE-B/C inputs)
-        for c in K.GATED_COLS:
+        for c in cond_cols:
             kpis_std[c] = (kpis[c] - kpi_norm["mean"][c]) / kpi_norm["std"][c]
     kpi_needed = family in ("vae_b", "vae_c")
     ds = CropDataset(store, view, stride=CROP, kpis=kpis_std if kpi_needed else None,
-                     kpi_cols=K.GATED_COLS if kpi_needed else ())
+                     kpi_cols=cond_cols if kpi_needed else ())
     meta = crop_meta(ds)
     E = embed_all(model, ds, dev, kpi_needed=kpi_needed)
     E_lift = embed_all(model, ds, dev, transform=lambda x: black_level_lift(x, LIFT), kpi_needed=kpi_needed)

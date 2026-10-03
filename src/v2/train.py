@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 from src.v2.augment import ForwardRanges, augment
 from src.v2.common import OUT, SEED
 from src.v2.data import BASELINE, CropDataset, FieldStore, grouped_folds, heldout_split
-from src.v2.kpi_adapter import GATED_COLS
+from src.v2.kpi_adapter import crop_kpi_frame, kpi_cols
 from src.v2.models import build
 
 DEFAULTS = dict(family="vae_a", view="stack", input="raw", train_set="all", aug="aug1", vae_mask=0.0,
@@ -54,11 +54,12 @@ def train_fields(c: dict) -> pd.DataFrame:
     return f
 
 
-def kpi_table(fields: pd.DataFrame):
-    k = pd.read_csv(OUT / "kpis" / "crop_kpis_train.csv")
+def kpi_table(fields: pd.DataFrame, cols=kpi_cols(None)):
+    cols = list(cols)
+    k = crop_kpi_frame("train", cols)
     tr = k[k.group_id.isin(fields.group_id)]
-    mu, sd = tr[list(GATED_COLS)].mean(), tr[list(GATED_COLS)].std().replace(0, 1)
-    k[list(GATED_COLS)] = (k[list(GATED_COLS)] - mu) / sd
+    mu, sd = tr[cols].mean(), tr[cols].std().replace(0, 1)
+    k[cols] = (k[cols] - mu) / sd
     return k, {"mean": mu.to_dict(), "std": sd.to_dict()}
 
 
@@ -85,15 +86,16 @@ def run(cfg: dict, status_cb=None) -> Path:
 
     fields = train_fields(c)
     store = FieldStore(fields, c["input"], harmonise=c["harmonise"])
-    kpis, kpi_norm = kpi_table(fields)
+    kcols = kpi_cols(c.get("kpi_set"))
+    kpis, kpi_norm = kpi_table(fields, kcols)
     cond = c["family"] in ("vae_b", "vae_c")
     ds = CropDataset(store, c["view"], random_offset=c["aug"] != "aug0", kpis=kpis if cond else None,
-                     kpi_cols=GATED_COLS if cond else ())
+                     kpi_cols=kcols if cond else ())
     g = torch.Generator().manual_seed(c["seed"])
     dl = DataLoader(ds, batch_size=c["batch_size"], shuffle=True, drop_last=True, generator=g,
                     num_workers=int(os.environ.get("PMDB_WORKERS", 4)), persistent_workers=int(os.environ.get("PMDB_WORKERS", 4)) > 0, pin_memory=dev.type == "cuda")
 
-    model = build(c["family"], n_kpi=len(GATED_COLS), vae_mask=c["vae_mask"], mae_mask=c["mae_mask"]).to(dev)
+    model = build(c["family"], n_kpi=len(kcols), vae_mask=c["vae_mask"], mae_mask=c["mae_mask"]).to(dev)
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=c["lr"], weight_decay=0.05)
     warm = max(1, c["steps"] // 20)
     sched = torch.optim.lr_scheduler.LambdaLR(
