@@ -66,6 +66,21 @@ def test_thomas_cluster(thomas_ctx):
         assert 0 < k08[f"K08_pcf_rpeak_{d}_um"] < 3.0
 
 
+def test_k06_denominator_is_all_admissible_area(thomas_ctx):
+    """K06 fractions are of all admissible area; border cells are excluded from the numerator only."""
+    adm = thomas_ctx.masks.admissible
+    areas = pointpattern.voronoi_cell_areas(thomas_ctx.centroids_rc, adm)
+    norm = areas / areas.mean()
+    assert areas.sum() < adm.sum()  # some admissible area sits in dropped border cells
+    k06 = pointpattern.k06_voronoi_regions(thomas_ctx).values
+    cluster = areas[norm < pointpattern.K06_CLUSTER_CUT].sum()
+    void = areas[norm > pointpattern.K06_VOID_CUT].sum()
+    assert cluster > 0 and void > 0
+    assert k06["K06_cluster_region_frac"] == pytest.approx(cluster / adm.sum())
+    assert k06["K06_void_region_frac"] == pytest.approx(void / adm.sum())
+    assert k06["K06_cluster_region_frac"] < cluster / areas.sum()  # strictly below the old denominator's value
+
+
 def test_k04_parameters(thomas_ctx, poisson_ctx):
     thomas = objects.k04_agglomerates(thomas_ctx, d_um=0.5, d_star_um=1.0).values
     poisson = objects.k04_agglomerates(poisson_ctx, d_um=0.5, d_star_um=1.0).values

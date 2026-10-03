@@ -1,13 +1,14 @@
 """Check that every v1 KPI column is logged for every site (spec 002, Acceptance 3).
 
-Exits non-zero on any gap: a missing column, a missing site, a site-level NaN, or a
-tile-level NaN without a ``nan_reason``.
+Exits non-zero on any gap: a missing column, a missing/duplicated/unexpected site or (site, tile) row,
+a site-level NaN, or a tile-level NaN without a ``nan_reason``.
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +20,18 @@ sys.path.insert(0, str(ROOT))
 from pmdb.kpis import N_TILES, catalogue_columns  # noqa: E402
 
 
+def key_gaps(df: pd.DataFrame, key_cols: list[str], expected: set[tuple[str, ...]], table: str) -> list[str]:
+    """Duplicated, missing and unexpected row keys of ``table``; key parts compared as strings."""
+    absent = [c for c in key_cols if c not in df]
+    if absent:
+        return [f"{table}: key column(s) missing: {', '.join(absent)}"]
+    counts = Counter(zip(*(df[c].astype(str) for c in key_cols)))
+    gaps = [f"duplicated in {table}: {'/'.join(k)} ({n} rows)" for k, n in sorted(counts.items()) if n > 1]
+    gaps += [f"missing from {table}: {'/'.join(k)}" for k in sorted(expected - counts.keys())]
+    gaps += [f"unexpected in {table}: {'/'.join(k)}" for k in sorted(counts.keys() - expected)]
+    return gaps
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--kpi-dir", default=str(ROOT / "outputs" / "kpis"))
@@ -27,23 +40,23 @@ def main(argv=None) -> int:
 
     man = pd.read_csv(args.manifest)
     expected = set(zip(man["batch"].astype(str), man["site"].astype(str)))
+    expected_tiles = {(b, s, str(t)) for b, s in expected for t in range(N_TILES)}
     n_sites = len(expected)
     site_cols, tile_cols = catalogue_columns()
     kdir = Path(args.kpi_dir)
     gaps: list[str] = []
 
-    site_df = pd.read_csv(kdir / "site_kpis.csv") if (kdir / "site_kpis.csv").exists() else pd.DataFrame()
-    tile_df = pd.read_csv(kdir / "tile_kpis.csv") if (kdir / "tile_kpis.csv").exists() else pd.DataFrame()
+    rd = {"dtype": {"batch": str, "site": str}}
+    site_df = pd.read_csv(kdir / "site_kpis.csv", **rd) if (kdir / "site_kpis.csv").exists() else pd.DataFrame()
+    tile_df = pd.read_csv(kdir / "tile_kpis.csv", **rd) if (kdir / "tile_kpis.csv").exists() else pd.DataFrame()
     if site_df.empty:
         gaps.append("site_kpis.csv missing or empty")
     else:
-        present = set(zip(site_df["batch"].astype(str), site_df["site"].astype(str)))
-        for b, s in sorted(expected - present):
-            gaps.append(f"site missing from site_kpis.csv: {b}/{s}")
-        if len(site_df) != n_sites:
-            gaps.append(f"site_kpis.csv has {len(site_df)} rows, expected {n_sites}")
-    if not tile_df.empty and len(tile_df) != n_sites * N_TILES:
-        gaps.append(f"tile_kpis.csv has {len(tile_df)} rows, expected {n_sites * N_TILES}")
+        gaps += key_gaps(site_df, ["batch", "site"], expected, "site_kpis.csv")
+    if tile_df.empty:
+        gaps.append("tile_kpis.csv missing or empty")
+    else:
+        gaps += key_gaps(tile_df, ["batch", "site", "tile"], expected_tiles, "tile_kpis.csv")
 
     reason = tile_df["nan_reason"].fillna("").astype(str) if "nan_reason" in tile_df else None
     rows = []

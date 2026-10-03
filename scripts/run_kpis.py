@@ -1,7 +1,10 @@
 """Run segmentation + all v1 KPIs on every site (spec 002).
 
 Writes outputs/kpis/{site_kpis,tile_kpis,curves,sensitivity}.csv, run_log.json and
-outputs/overlays/<batch>__<site>.png. Exits non-zero if any site fails (D-018: no fill values).
+outputs/overlays/<batch>__<site>.png. A full run writes fresh tables. `--sites` merges the
+recomputed sites into the existing tables (all rows of each recomputed site are replaced, and
+rows stay in manifest order). If any site fails, no tables are written, run_log.json is still
+written, and the exit status is non-zero (D-018: no fill values).
 
     python scripts/run_kpis.py --jobs 8
     python scripts/run_kpis.py --sites Batch_1/4ih2ggld Batch_3/kbdh4tri
@@ -11,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import os
 import platform
 import subprocess
 import sys
@@ -41,13 +46,96 @@ def all_sites() -> list[tuple[str, str]]:
     return sorted(zip(man["batch"].astype(str), man["site"].astype(str)))
 
 
+def _json_finite(v) -> bool:
+    """False if v is, or contains, a non-finite float (NaN/inf); such values are not valid JSON."""
+    if isinstance(v, float):  # includes np.float64
+        return math.isfinite(v)
+    if isinstance(v, np.ndarray):
+        return not np.issubdtype(v.dtype, np.floating) or bool(np.isfinite(v).all())
+    if isinstance(v, (tuple, list)):
+        return all(_json_finite(x) for x in v)
+    return True
+
+
 def kpi_parameters() -> dict[str, object]:
     params: dict[str, object] = {"segmenter": dict(segment_mod.V0_PARAMS), "N_TILES": N_TILES}
+    shared = vars(common)
     for mod in (common, objects, pointpattern, fields, crossphase, diagnostic):
         for k, v in vars(mod).items():
-            if k.isupper() and isinstance(v, (int, float, str, tuple, list, np.ndarray)):
-                params[f"{mod.__name__.split('.')[-1]}.{k}"] = v.tolist() if isinstance(v, np.ndarray) else v
+            if not (k.isupper() and isinstance(v, (int, float, str, tuple, list, np.ndarray))):
+                continue
+            if mod is not common and shared.get(k) is v:
+                continue  # imported from common (e.g. NAN); recorded once under common
+            if not _json_finite(v):
+                continue  # sentinels such as NAN are not parameters and are not valid JSON
+            params[f"{mod.__name__.split('.')[-1]}.{k}"] = v.tolist() if isinstance(v, np.ndarray) else v
     return params
+
+
+def dump_run_log(run_log: dict) -> str:
+    """Strict JSON (no NaN/Infinity tokens); raises ValueError on a non-finite float."""
+    return json.dumps(run_log, indent=2, default=str, allow_nan=False)
+
+
+TABLES = ("site_kpis.csv", "tile_kpis.csv", "curves.csv", "sensitivity.csv")
+EXTRA_SORT = {"tile_kpis.csv": ("tile",)}
+
+
+def build_tables(results: dict, ok: list[str]) -> dict[str, pd.DataFrame]:
+    """The four deliverable frames for the successful sites ``ok`` (keys 'batch/site', in output order)."""
+    site_cols, tile_cols = catalogue_columns()
+    meta = ["batch", "site", "se_detector", "segmenter_version"]
+    site_order = meta + [c for cols in site_cols.values() for c in cols]
+    tile_order = meta + ["tile"] + [c for cols in tile_cols.values() for c in cols] + ["nan_reason"]
+    return {
+        "site_kpis.csv": pd.DataFrame([results[k]["site_row"] for k in ok], columns=site_order),
+        "tile_kpis.csv": pd.DataFrame([r for k in ok for r in results[k]["tiles"]], columns=tile_order),
+        "curves.csv": pd.DataFrame([r for k in ok for r in results[k]["curves"]],
+                                   columns=["batch", "site", "kpi_id", "curve", "x", "value"]),
+        "sensitivity.csv": pd.DataFrame([r for k in ok for r in results[k]["sweep"]]),
+    }
+
+
+def merge_table(existing: pd.DataFrame | None, new: pd.DataFrame, order: list[tuple[str, str]],
+                extra_sort: tuple[str, ...] = ()) -> pd.DataFrame:
+    """Replace every row of each (batch, site) present in ``new``; keep all other existing rows.
+
+    Rows are stable-sorted by the site's rank in ``order`` (unknown sites last, existing order kept),
+    then by ``extra_sort``. Raises ValueError if the column sets differ.
+    """
+    if existing is None or existing.empty:
+        return new.reset_index(drop=True)
+    if new.empty:
+        return existing.reset_index(drop=True)
+    if set(existing.columns) != set(new.columns):
+        raise ValueError(f"column mismatch: existing-only {sorted(set(existing.columns) - set(new.columns))}, "
+                         f"new-only {sorted(set(new.columns) - set(existing.columns))}")
+    replaced = set(zip(new["batch"].astype(str), new["site"].astype(str)))
+    old_keys = list(zip(existing["batch"].astype(str), existing["site"].astype(str)))
+    keep = existing.loc[[k not in replaced for k in old_keys], list(new.columns)]
+    out = pd.concat([keep, new], ignore_index=True)
+    rank = {k: i for i, k in enumerate(order)}
+    out["_rank"] = [rank.get(k, len(order)) for k in zip(out["batch"].astype(str), out["site"].astype(str))]
+    out = out.sort_values(["_rank", *extra_sort], kind="stable").drop(columns="_rank")
+    return out.reset_index(drop=True)
+
+
+def _read_existing(path: Path) -> pd.DataFrame | None:
+    if not path.exists():
+        return None
+    return pd.read_csv(path, dtype={"batch": str, "site": str}, float_precision="round_trip")
+
+
+def _atomic_write_csv(df: pd.DataFrame, path: Path) -> None:
+    tmp = path.with_name(path.name + ".tmp")
+    df.to_csv(tmp, index=False)
+    os.replace(tmp, path)
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
 
 
 def process_site(batch: str, site: str, overlay_dir: str | None) -> dict:
@@ -95,7 +183,21 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     check_registry()
-    sites = [tuple(s.split("/", 1)) for s in args.sites] if args.sites else all_sites()
+    order = all_sites()
+    subset = bool(args.sites)
+    if subset:
+        known, sites, bad = set(order), [], []
+        for s in dict.fromkeys(args.sites):  # de-duplicate, keep first occurrence
+            pair = tuple(s.split("/", 1))
+            if len(pair) == 2 and pair in known:
+                sites.append(pair)
+            else:
+                bad.append(s)
+        if bad:
+            print(f"unknown site(s), expected batch/site from {MANIFEST}: {', '.join(bad)}", file=sys.stderr)
+            return 2
+    else:
+        sites = order
     overlay_dir = None if args.no_overlays else args.overlay_dir
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -114,24 +216,29 @@ def main(argv=None) -> int:
             _record(i, len(jobs), *_worker(j), results, log)
     total = time.time() - t_start
 
-    ok = [k for k in sorted(results)]
-    site_cols, tile_cols = catalogue_columns()
-    meta = ["batch", "site", "se_detector", "segmenter_version"]
-    site_order = meta + [c for cols in site_cols.values() for c in cols]
-    tile_order = meta + ["tile"] + [c for cols in tile_cols.values() for c in cols] + ["nan_reason"]
-    pd.DataFrame([results[k]["site_row"] for k in ok], columns=site_order).to_csv(out / "site_kpis.csv", index=False)
-    pd.DataFrame([r for k in ok for r in results[k]["tiles"]], columns=tile_order).to_csv(out / "tile_kpis.csv", index=False)
-    pd.DataFrame([r for k in ok for r in results[k]["curves"]],
-                 columns=["batch", "site", "kpi_id", "curve", "x", "value"]).to_csv(out / "curves.csv", index=False)
-    pd.DataFrame([r for k in ok for r in results[k]["sweep"]]).to_csv(out / "sensitivity.csv", index=False)
-
+    ok = [f"{b}/{s}" for b, s in order if f"{b}/{s}" in results]
     failed = [k for k, v in log.items() if v["status"] != "ok"]
+    frames: dict[str, pd.DataFrame] = {}
+    table_error = None
+    if not failed:
+        frames = build_tables(results, ok)
+        if subset:
+            try:
+                frames = {name: merge_table(_read_existing(out / name), df, order, EXTRA_SORT.get(name, ()))
+                          for name, df in frames.items()}
+            except ValueError as e:
+                table_error = f"cannot merge into existing tables in {out}: {e}"
+                frames = {}
+    tables_written = bool(frames)
+
     run_log = {
         "git_commit": git_commit(),
         "command": " ".join([Path(sys.argv[0]).name] + (argv if argv is not None else sys.argv[1:])),
         "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t_start)),
         "total_seconds": round(total, 1),
         "jobs": args.jobs,
+        "mode": "subset" if subset else "full",
+        "tables_written": tables_written,
         "n_sites": len(sites),
         "n_ok": len(ok),
         "failed": failed,
@@ -140,11 +247,22 @@ def main(argv=None) -> int:
         "packages": {p: _version(p) for p in PACKAGES} | {"python": platform.python_version()},
         "sites": {k: log[k] for k in sorted(log)},
     }
-    (out / "run_log.json").write_text(json.dumps(run_log, indent=2, default=str))
+    if table_error:
+        run_log["table_error"] = table_error
+    text = dump_run_log(run_log)
+    for name in TABLES:
+        if name in frames:
+            _atomic_write_csv(frames[name], out / name)
+    _atomic_write_text(out / "run_log.json", text)
     print(f"done: {len(ok)}/{len(sites)} sites ok in {total / 60:.1f} min -> {out}")
     if failed:
-        print("FAILED (no values written for these sites):", ", ".join(failed))
+        print("FAILED: no tables written (existing files untouched); failed sites:", ", ".join(failed))
         return 1
+    if table_error:
+        print("ERROR:", table_error, "- no tables written", file=sys.stderr)
+        return 1
+    if subset:
+        print(f"merged {len(ok)} site(s) into existing tables in {out}")
     return 0
 
 
