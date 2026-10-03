@@ -130,3 +130,53 @@ def test_merge_rejects_column_mismatch():
     existing = _rows([("a", 1)]).assign(w=0)
     with pytest.raises(ValueError, match="column mismatch"):
         run_kpis.merge_table(existing, _rows([("b", 2)]), ORDER)
+
+
+def _fake_result(batch, site, value):
+    site_cols, tile_cols = catalogue_columns()
+    meta = {"batch": batch, "site": site, "se_detector": "ETD", "segmenter_version": "t"}
+    return {
+        "site_row": {**meta, **{c: value for cs in site_cols.values() for c in cs}},
+        "tiles": [{**meta, "tile": t, **{c: value for cs in tile_cols.values() for c in cs}, "nan_reason": ""}
+                  for t in range(N_TILES)],
+        "curves": [{"batch": batch, "site": site, "kpi_id": "K", "curve": "c", "x": 0.0, "value": value}],
+        "sweep": [{"batch": batch, "site": site, "param": 1.0, "val": value}],
+        "seconds": 0.0, "segmentation": {}, "n_si_objects": 0,
+    }
+
+
+def test_run_kpis_main_failure_and_subset(tmp_path, monkeypatch):
+    good, bad = SITES
+    monkeypatch.setattr(run_kpis, "all_sites", lambda: list(SITES))
+
+    def worker(args):
+        b, s, _ = args
+        if (b, s) == bad:
+            return b, s, None, "RuntimeError: boom\ntraceback"
+        return b, s, _fake_result(b, s, 2.0), None
+
+    base = {f"{b}/{s}": _fake_result(b, s, 1.0) for b, s in SITES}
+    for name, df in run_kpis.build_tables(base, list(base)).items():
+        df.to_csv(tmp_path / name, index=False)
+    before = {n: (tmp_path / n).read_bytes() for n in run_kpis.TABLES}
+    common_args = ["--out-dir", str(tmp_path), "--no-overlays"]
+    monkeypatch.setattr(run_kpis, "_worker", worker)
+
+    # (a) full run with one failing site: exit 1, tables untouched, run_log still written
+    assert run_kpis.main(common_args) == 1
+    assert {n: (tmp_path / n).read_bytes() for n in run_kpis.TABLES} == before
+    log = json.loads((tmp_path / "run_log.json").read_text())
+    assert log["tables_written"] is False and log["failed"] == [f"{bad[0]}/{bad[1]}"]
+
+    # (b) subset of the good site: exit 0, only that site's values replaced
+    assert run_kpis.main([*common_args, "--sites", f"{good[0]}/{good[1]}"]) == 0
+    site_df = pd.read_csv(tmp_path / "site_kpis.csv", dtype={"batch": str, "site": str})
+    col = next(iter(catalogue_columns()[0].values()))[0]
+    assert site_df.loc[site_df["site"] == good[1], col].tolist() == [2.0]
+    assert site_df.loc[site_df["site"] == bad[1], col].tolist() == [1.0]
+    tile_df = pd.read_csv(tmp_path / "tile_kpis.csv", dtype={"batch": str, "site": str})
+    assert len(tile_df) == 2 * N_TILES
+    assert json.loads((tmp_path / "run_log.json").read_text())["tables_written"] is True
+
+    # (c) unknown site: exit 2
+    assert run_kpis.main([*common_args, "--sites", "Batch_9/nope"]) == 2

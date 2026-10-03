@@ -65,7 +65,7 @@ def kpi_parameters() -> dict[str, object]:
             if not (k.isupper() and isinstance(v, (int, float, str, tuple, list, np.ndarray))):
                 continue
             if mod is not common and shared.get(k) is v:
-                continue  # imported from common (e.g. NAN); recorded once under common
+                continue  # imported from common (e.g. NAN); dropped by the non-finite filter below
             if not _json_finite(v):
                 continue  # sentinels such as NAN are not parameters and are not valid JSON
             params[f"{mod.__name__.split('.')[-1]}.{k}"] = v.tolist() if isinstance(v, np.ndarray) else v
