@@ -13,8 +13,7 @@ BATCHES = ["Batch_1", "Batch_2", "Batch_3"]
 HELDOUT_BATCH = "Batch_heldout"
 TILE_ID = ["batch", "site", "tile"]
 N_FEM_TILES = 6
-FEM_TILE_COL = ("tile", "region")
-FEM_CONFIG = "si"
+FEM_TILE_COL = "tile"
 FEM_ORIENTATION = "sym"
 FEM_FRAMES = 11
 FEM_REQUIRED_METRICS = (
@@ -90,17 +89,12 @@ def _as_bool(s: pd.Series) -> pd.Series:
 def load_fem_tile_curves(path: str | Path) -> pd.DataFrame:
     """The only code that knows the FEM tile_curves.csv schema (C3). Returns long sym rows."""
     df = pd.read_csv(path)
-    tile_col = next((c for c in FEM_TILE_COL if c in df.columns), None)
-    need = ["batch", "site", "heldout", "orientation", "frame", "s", "tile_x0_um", "tile_x1_um",
-            *FEM_REQUIRED_METRICS]
-    missing = [c for c in need if c not in df.columns] + ([] if tile_col else ["tile|region"])
+    need = ["batch", "site", "heldout", "orientation", FEM_TILE_COL, "frame", "s", "tile_x0_um",
+            "tile_x1_um", *FEM_REQUIRED_METRICS]
+    missing = [c for c in need if c not in df.columns]
     if missing:
         raise ValueError(f"FEM table {path} missing columns: {missing}")
-    if "config" in df.columns:
-        df = df[df["config"] == FEM_CONFIG]
     df = df[df["orientation"] == FEM_ORIENTATION].copy()
-    if tile_col != "tile":
-        df = df.rename(columns={tile_col: "tile"})
     df["heldout"] = _as_bool(df["heldout"])
     df["tile"] = df["tile"].astype(int)
     df["frame"] = df["frame"].astype(int)

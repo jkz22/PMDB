@@ -51,3 +51,20 @@ def test_kpi_tiles6_table():
     for site, g in df.groupby("site"):
         t0 = g[g.tile == 0].iloc[0]
         assert t0.tile_x0_um == pytest.approx(fem_grid_slices(int(widths[site]))[0].start * 0.05)
+
+
+def test_outputs_consistent():
+    ls = pd.read_csv(OUT / "loso_site_predictions.csv")
+    hp = pd.read_csv(OUT / "heldout_predictions.csv")
+    mt = pd.read_csv(OUT / "metrics.csv")
+    arms = sorted(mt.arm.unique())
+    for arm in arms:
+        a = ls[ls.arm == arm]
+        assert a.site.nunique() == 31 and len(a) == 31 and "Batch_heldout" not in set(a.batch)
+        h = hp[hp.arm == arm]
+        assert sorted(h.site) == ["3e122cbj", "fn0mhxef", "xrv9xvzb"]
+        assert ((h.confidence > 0) & (h.confidence <= 1)).all()
+        assert sorted(mt[mt.arm == arm].level) == ["end_to_end", "stage1", "stage2"]
+    fin = hp[hp.final.astype(str) == "True"]
+    assert fin.arm.nunique() == 1 and len(fin) == 3
+    assert fin.explanation.fillna("").str.len().gt(0).all()

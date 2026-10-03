@@ -1,0 +1,10 @@
+arm,true,predicted,n
+KPI,Batch_1,Batch_1,2
+KPI,Batch_1,Batch_2,0
+KPI,Batch_1,Batch_3,5
+KPI,Batch_2,Batch_1,0
+KPI,Batch_2,Batch_2,1
+KPI,Batch_2,Batch_3,6
+KPI,Batch_3,Batch_1,0
+KPI,Batch_3,Batch_2,2
+KPI,Batch_3,Batch_3,15
