@@ -2,8 +2,8 @@
 
 Mirrors pmdb.fingerprint.permutation_test exactly (same observed statistic, same rng
 sequence for a given seed, same p-value estimator) but runs in chunks with a JSON
-checkpoint after each chunk, so progress is visible and a crash resumes cheaply by
-re-running. Model code and defaults are untouched.
+checkpoint after each chunk, so progress is visible and a crash resumes from the last chunk by
+re-running (rng is seeded per chunk). Model code and defaults are untouched.
 
     .venv/Scripts/python scripts/overnight_permutation.py --n-perm 10000
 
@@ -15,6 +15,7 @@ Writes to outputs/overnight/permutation/:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -35,6 +36,25 @@ def git_commit() -> str:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     except Exception:
         return "unknown"
+
+
+def resume_state(out: Path, meta: dict, n_perm: int, chunk: int):
+    """Saved null prefix (ndarray) if the checkpoint matches `meta`, else None."""
+    jp, cp = out / "permutation_10k.json", out / "null_accuracies.csv"
+    if not (jp.exists() and cp.exists()):
+        return None
+    try:
+        saved = json.loads(jp.read_text())
+        null = pd.read_csv(cp)["accuracy"].to_numpy(dtype=float)
+    except Exception:
+        return None
+    keys = ("seed", "n_perm_target", "chunk", "inputs_sha")
+    if any(saved.get(k) != meta.get(k) for k in keys):
+        return None
+    done = saved.get("n_perm_done")
+    if done != len(null) or done % chunk != 0 or done > n_perm:
+        return None
+    return null
 
 
 def main(argv=None) -> int:
@@ -61,36 +81,62 @@ def main(argv=None) -> int:
     observed = float((fp._loo_assignments(x, codes, n_batches) == codes).mean())
     print(f"{len(X)} sites, observed LOO accuracy {observed:.4f}", flush=True)
 
-    rng = np.random.default_rng(args.seed)
+    meta = {"seed": args.seed, "n_perm_target": args.n_perm, "chunk": args.chunk,
+            "inputs_sha": hashlib.sha256(x.tobytes() + codes.tobytes()).hexdigest()}
+    prev = resume_state(out, meta, args.n_perm, args.chunk)
+    existing_done = 0
+    if prev is None:
+        jp = out / "permutation_10k.json"
+        if jp.exists():
+            try:
+                existing_done = int(json.loads(jp.read_text()).get("n_perm_done", 0))
+            except Exception:
+                existing_done = 0
+            print(f"NOTE: existing checkpoint does not match; starting fresh "
+                  f"(not overwriting it until it is exceeded)", file=sys.stderr)
+        prev = np.empty(0)
     null = np.empty(args.n_perm)
-    for k in range(args.n_perm):
-        cp = rng.permutation(codes)
-        null[k] = (fp._loo_assignments(x, cp, n_batches) == cp).mean()
-        done = k + 1
-        if done % args.chunk == 0 or done == args.n_perm:
-            d = null[:done]
-            p = (1.0 + float((d >= observed).sum())) / (done + 1.0)
-            result = {
-                "git_commit": git_commit(),
-                "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t_start)),
-                "elapsed_seconds": round(time.time() - t_start, 1),
-                "n_perm_done": done,
-                "n_perm_target": args.n_perm,
-                "seed": args.seed,
-                "observed_accuracy": observed,
-                "p_value": p,
-                "null_mean": float(d.mean()),
-                "null_sd": float(d.std(ddof=1)) if done > 1 else None,
-                "null_p95": float(np.percentile(d, 95)),
-                "null_max": float(d.max()),
-                "n_null_ge_observed": int((d >= observed).sum()),
-            }
+    null[:len(prev)] = prev
+    start = len(prev)
+    if start:
+        print(f"resuming from {start}/{args.n_perm} permutations", flush=True)
+    result = None
+    for c0 in range(start, args.n_perm, args.chunk):
+        c1 = min(c0 + args.chunk, args.n_perm)
+        rng = np.random.default_rng([args.seed, c0 // args.chunk])
+        for k in range(c0, c1):
+            cp = rng.permutation(codes)
+            null[k] = (fp._loo_assignments(x, cp, n_batches) == cp).mean()
+        done = c1
+        d = null[:done]
+        p = (1.0 + float((d >= observed).sum())) / (done + 1.0)
+        result = {
+            "git_commit": git_commit(),
+            "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t_start)),
+            "elapsed_seconds": round(time.time() - t_start, 1),
+            "n_perm_done": done,
+            "n_perm_target": args.n_perm,
+            "seed": args.seed,
+            "chunk": args.chunk,
+            "inputs_sha": meta["inputs_sha"],
+            "observed_accuracy": observed,
+            "p_value": p,
+            "null_mean": float(d.mean()),
+            "null_sd": float(d.std(ddof=1)) if done > 1 else None,
+            "null_p95": float(np.percentile(d, 95)),
+            "null_max": float(d.max()),
+            "n_null_ge_observed": int((d >= observed).sum()),
+        }
+        if done > existing_done:
             (out / "permutation_10k.json").write_text(json.dumps(result, indent=2))
             pd.DataFrame({"perm": np.arange(done), "accuracy": d}).to_csv(
                 out / "null_accuracies.csv", index=False)
-            print(f"  {done}/{args.n_perm} perms, p = {p:.5f} "
-                  f"({time.time() - t_start:.0f}s)", flush=True)
+        print(f"  {done}/{args.n_perm} perms, p = {p:.5f} "
+              f"({time.time() - t_start:.0f}s)", flush=True)
 
+    if result is None:
+        print(f"already complete: {start} permutations in {out}")
+        return 0
     print(f"done: p = {result['p_value']:.5f} after {args.n_perm} permutations "
           f"in {(time.time() - t_start) / 60:.1f} min -> {out}")
     return 0
