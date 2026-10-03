@@ -66,6 +66,13 @@ python scripts/qc_overview.py
 
 ## Running on Modal
 
+Each person uses their own Modal account; no credentials live in the repo. One-time login (stores a token in `~/.modal.toml`):
+
+```bash
+pip install modal
+modal token new
+```
+
 One-time upload of the half-resolution cache to a Modal Volume (only `cache/half` is uploaded, never `data/`):
 
 ```bash
