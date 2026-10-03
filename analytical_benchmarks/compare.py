@@ -1,3 +1,4 @@
+import collections
 """Baseline-free batch comparison on per-site KPIs (site_kpis.csv).
 
 For each batch B: B vs all other sites pooled (leave-one-batch-out), plus all pairs.
@@ -20,6 +21,17 @@ KPI_INFO = {
     "si_d90_um": ("Si particle d90 (µm)", "coarse Si / agglomerates"),
     "si_count_per_1000um2": ("Si particles per 1000 µm²", "Si loading / dispersion"),
     "si_solidity": ("Si particle solidity (0-1)", "Si particle shape / fracture"),
+    "si_d10_um": ("Si particle d10 (µm)", "fine Si fraction / milling"),
+    "si_psd_span": ("Si size span (d90-d10)/d50", "breadth of the Si size distribution"),
+    "si_aspect_ratio": ("Si aspect ratio (median)", "elongated / flake-like / broken particles"),
+    "si_circularity": ("Si circularity (median, 0-1)", "particle roundness vs angularity"),
+    "si_nn_um": ("Si nearest-neighbour distance (µm)", "Si spacing / dispersion"),
+    "si_clark_evans": ("Si Clark-Evans ratio (<1 clustered)", "Si agglomeration vs random"),
+    "si_cluster_size": ("Si cluster size (particles, gap <1 µm)", "Si agglomeration"),
+    "si_cracked_frac": ("Cracked/irregular Si fraction", "particle fracture in processing"),
+    "si_anomalous_per_1000um2": ("Anomalous Si per 1000 µm² (>8 µm or AR>3)", "oversized / elongated particles"),
+    "inlens_texture": ("Inlens fine texture (relative)", "surface roughness / binder & carbon black"),
+    "inlens_edge_binder": ("Inlens edge strength in graphite/binder (relative)", "binder / carbon-black texture"),
 }
 KPIS = list(KPI_INFO)
 RNG = np.random.default_rng(0)
@@ -109,8 +121,11 @@ def run(d):
         res["pairs"][f"{A} vs {B}"] = rows
     res["site_flags"] = site_flags(d); res["confounds"] = confounds(d)
     for B, v in res["loo"].items():  # a sub-population of odd sites also needs a human look
-        odd = sorted({f["site"] for f in res["site_flags"] if f["batch"] == B})
-        v["flagged_sites"] = odd
+        n_flags = collections.Counter(f["site"] for f in res["site_flags"] if f["batch"] == B)
+        v["flagged_sites"] = sorted(n_flags)
+        # with ~20 KPIs single flags occur by chance; a site is "unusual" only if flagged on >=2 KPIs
+        odd = sorted(s for s, n in n_flags.items() if n >= 2)
+        v["unusual_sites"] = odd
         if len(odd) >= 2 and v["verdict"] == "consistent":
             v["verdict"] = "investigate"
     return res

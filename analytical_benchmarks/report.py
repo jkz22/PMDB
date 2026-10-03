@@ -10,7 +10,8 @@ B = sorted(D.batch.unique()); E = html.escape
 VLABEL = {"consistent": "Consistent", "investigate": "Investigate", "outlier": "Outlier"}
 VSTATE = {"consistent": "done", "investigate": "at-risk", "outlier": "blocked"}
 
-def kname(k): return KPI_INFO.get(k, (k, ""))[0]
+EXTRA = {"si_n_cracked": "Cracked/irregular Si (count)", "si_n_anomalous": "Anomalous Si (count)"}
+def kname(k): return KPI_INFO.get(k, (EXTRA.get(k, k), ""))[0]
 def fmt(x, k=""):
     if x is None or (isinstance(x, float) and np.isnan(x)): return "–"
     a = abs(x)
@@ -47,7 +48,7 @@ for b in B:
     L = R["loo"][b]
     o.append(f'<div class="a-metric"><div class="a-metric__label">{E(b)} · {L["n_sites"]} sites</div>'
              f'<div class="a-metric__value">{VLABEL[L["verdict"]]}</div>'
-             f'<div class="a-metric__delta">{len(L["flagged_sites"])} unusual site(s)</div></div>')
+             f'<div class="a-metric__delta">{len(L.get("unusual_sites", []))} unusual site(s), {len(L["flagged_sites"])} with any flag</div></div>')
 o.append('</div><div class="a-prose">')
 for b in B:
     L = R["loo"][b]
@@ -55,7 +56,7 @@ for b in B:
 o.append('</div><details class="a-disclosure"><summary>How the verdict is decided</summary><ul class="a-prose">'
          '<li><strong>Outlier</strong>: a KPI differs with Holm-adjusted permutation p&lt;0.01 <em>and</em> effect size |d|≥0.8.</li>'
          '<li><strong>Investigate</strong>: adjusted p&lt;0.05, or the batch is significantly more variable (spread p&lt;0.01), '
-         'or at least 2 sites are individually unusual (robust z&gt;3.5 vs all other sites).</li>'
+         'or at least 2 sites are unusual on 2 or more KPIs each (robust z&gt;3.5 vs all other sites). A single flag on one KPI is listed but expected by chance with 20 KPIs.</li>'
          '<li><strong>Consistent</strong>: none of the above. This means “no evidence of change”, which is weaker with few sites.</li>'
          '</ul></details></section>')
 
@@ -108,13 +109,19 @@ o.append('<section class="a-section"><h2 class="a-section__title">Site-level KPI
          f'<figure class="a-panel">{img("fig_kpis.png", "Strip plots of nine KPIs, one dot per site, grouped by batch")}</figure>')
 o.append('<h3>Spatial GP maps</h3><p class="a-prose">Left: segmentation. Middle: GP mean of the KPI over the image (bright = high). '
          'Right: GP standard deviation (bright = less certain). Blob size is the GP lengthscale.</p>'
+         '<h3>Si particle size and shape distributions</h3><p class="a-prose">All Si particles of at least 1 µm pooled per batch. Shifts in these curves show changes in milling, supplier PSD or particle breakage.</p>'
+         f'<figure class="a-panel">{img("fig_psd.png", "Histograms of Si particle diameter, aspect ratio and circularity per batch")}</figure>'
+         '<h3>Cracked and anomalous particle examples</h3><p class="a-prose">The crack rule is simple (internal gaps of at least 2% of the particle area, or solidity below 0.8). Check these crops by eye before trusting the counts.</p>'
+         f'<figure class="a-panel">{img("fig_particles.png", "BSE crops of particles flagged as cracked or anomalous")}</figure>'
          f'<figure class="a-panel">{img("fig_gpmaps.png", "Segmentation, GP mean and GP uncertainty maps for three sites")}</figure>')
 o.append('<h3>Segmentation check</h3><p class="a-prose">Blue = pore, orange = bright phase (likely Si), grey = graphite/binder. '
          'Every KPI depends on this; it needs confirmation by a materials expert.</p>'
          f'<figure class="a-panel">{img("overlays_small.jpg", "Segmentation overlays for six sites across all batches")}</figure></section>')
 
 # 5. full site table
-cols = [("porosity", True), ("si_frac", True), ("interface_um_per_um2", True), ("porosity__ls_um", False),
+cols = [("porosity", True), ("si_frac", True), ("interface_um_per_um2", True), ("inlens_texture", True), ("porosity__ls_um", False),
+        ("si_d10_um", False), ("si_aspect_ratio", False), ("si_circularity", False), ("si_nn_um", False), ("si_clark_evans", False),
+        ("si_cluster_size", False), ("si_n_cracked", False), ("si_cracked_frac", False), ("si_n_anomalous", False), ("inlens_edge_binder", False),
         ("si_frac__ls_um", False), ("si_d50_um", False), ("si_d90_um", False), ("si_count_per_1000um2", False), ("si_solidity", False)]
 o.append('<section class="a-section"><h2 class="a-section__title">All sites</h2>'
          '<label>Batch <select data-a-filter="#site-table" data-a-filter-key="batch"><option value="">All</option>'

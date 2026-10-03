@@ -1,36 +1,69 @@
 
-Batch_1 (7 sites) vs all other sites -> INVESTIGATE  flagged sites: ['4ih2ggld', '5n1q8atc']
-  si_solidity            0.8909 vs 0.9052  diff -0.0143 [-0.0335, +0.00483]  d=-1.13  p=0.013 p_holm=0.117  spread p=0.048  -> consistent
-  si_frac                0.07357 vs 0.05242  diff +0.0211 [-0.0107, +0.053]  d=+1.18  p=0.015 p_holm=0.118  spread p=0.028  -> consistent
-  si_d90_um              5.135 vs 4.534  diff +0.601 [-0.0289, +1.23]  d=+1.06  p=0.018 p_holm=0.128  spread p=0.564  -> consistent
-  si_count_per_1000um2   8.492 vs 7.557  diff +0.935 [-0.607, +2.48]  d=+0.71  p=0.099 p_holm=0.595  spread p=0.249  -> consistent
-  porosity__ls_um        2.164 vs 1.994  diff +0.17 [-0.162, +0.503]  d=+0.64  p=0.139 p_holm=0.693  spread p=0.076  -> consistent
+Batch_1 (7 sites) vs all other sites -> INVESTIGATE  flagged sites: ['4ih2ggld', '5n1q8atc', 'iv6g2oq0']
+  si_solidity            0.8909 vs 0.9052  diff -0.0143 [-0.0335, +0.00483]  d=-1.13  p=0.013 p_holm=0.260  spread p=0.048  -> consistent
+  si_frac                0.07357 vs 0.05242  diff +0.0211 [-0.0107, +0.053]  d=+1.18  p=0.015 p_holm=0.279  spread p=0.028  -> consistent
+  si_d90_um              5.135 vs 4.534  diff +0.601 [-0.0289, +1.23]  d=+1.06  p=0.018 p_holm=0.329  spread p=0.564  -> consistent
+  si_psd_span            1.791 vs 1.553  diff +0.238 [+0.0103, +0.466]  d=+0.96  p=0.032 p_holm=0.548  spread p=0.773  -> consistent
+  si_count_per_1000um2   8.492 vs 7.557  diff +0.935 [-0.607, +2.48]  d=+0.71  p=0.099 p_holm=1.000  spread p=0.249  -> consistent
+  porosity__ls_um        2.164 vs 1.994  diff +0.17 [-0.162, +0.503]  d=+0.64  p=0.139 p_holm=1.000  spread p=0.076  -> consistent
+  si_circularity         0.5632 vs 0.5862  diff -0.023 [-0.0819, +0.0358]  d=-0.62  p=0.143 p_holm=1.000  spread p=0.027  -> consistent
+  si_cluster_size        1.723 vs 1.567  diff +0.155 [-0.34, +0.65]  d=+0.46  p=0.308 p_holm=1.000  spread p=0.068  -> consistent
   porosity               0.05955 vs 0.06565  diff -0.0061 [-0.0202, +0.00803]  d=-0.43  p=0.326 p_holm=1.000  spread p=0.885  -> consistent
+  si_cracked_frac        0.161 vs 0.1329  diff +0.0281 [-0.0729, +0.129]  d=+0.40  p=0.361 p_holm=1.000  spread p=0.212  -> consistent
+  si_clark_evans         1.067 vs 1.038  diff +0.0285 [-0.0332, +0.0901]  d=+0.38  p=0.379 p_holm=1.000  spread p=0.611  -> consistent
+  si_nn_um               5.846 vs 6.027  diff -0.181 [-0.709, +0.348]  d=-0.28  p=0.522 p_holm=1.000  spread p=0.376  -> consistent
+  inlens_texture         0.1045 vs 0.1016  diff +0.00288 [-0.00841, +0.0142]  d=+0.28  p=0.526 p_holm=1.000  spread p=0.770  -> consistent
   si_frac__ls_um         2.615 vs 2.55  diff +0.0645 [-0.257, +0.385]  d=+0.25  p=0.571 p_holm=1.000  spread p=0.324  -> consistent
+  si_anomalous_per_1000um2 1.267 vs 1.206  diff +0.061 [-0.438, +0.56]  d=+0.15  p=0.725 p_holm=1.000  spread p=0.210  -> consistent
   interface_um_per_um2   0.4872 vs 0.4817  diff +0.00551 [-0.0404, +0.0514]  d=+0.13  p=0.752 p_holm=1.000  spread p=0.609  -> consistent
   si_d50_um              2.197 vs 2.168  diff +0.0284 [-0.118, +0.175]  d=+0.11  p=0.785 p_holm=1.000  spread p=0.009  -> consistent
+  si_d10_um              1.188 vs 1.197  diff -0.00894 [-0.0807, +0.0628]  d=-0.11  p=0.787 p_holm=1.000  spread p=0.464  -> consistent
+  si_aspect_ratio        1.957 vs 1.943  diff +0.0141 [-0.0718, +0.0999]  d=+0.11  p=0.792 p_holm=1.000  spread p=0.539  -> consistent
+  inlens_edge_binder     0.04971 vs 0.04996  diff -0.000248 [-0.00514, +0.00464]  d=-0.05  p=0.909 p_holm=1.000  spread p=0.976  -> consistent
 
-Batch_2 (7 sites) vs all other sites -> CONSISTENT  flagged sites: []
-  si_count_per_1000um2   7.328 vs 7.897  diff -0.569 [-1.69, +0.549]  d=-0.43  p=0.329 p_holm=1.000  spread p=0.492  -> consistent
-  porosity__ls_um        1.958 vs 2.054  diff -0.0961 [-0.293, +0.101]  d=-0.36  p=0.415 p_holm=1.000  spread p=0.338  -> consistent
-  si_frac__ls_um         2.505 vs 2.583  diff -0.0776 [-0.289, +0.134]  d=-0.30  p=0.496 p_holm=1.000  spread p=0.669  -> consistent
-  si_solidity            0.905 vs 0.901  diff +0.00402 [-0.00501, +0.013]  d=+0.32  p=0.512 p_holm=1.000  spread p=0.383  -> consistent
-  si_frac                0.05258 vs 0.05854  diff -0.00596 [-0.0181, +0.00616]  d=-0.33  p=0.541 p_holm=1.000  spread p=0.708  -> consistent
-  porosity               0.06588 vs 0.0638  diff +0.00208 [-0.0116, +0.0157]  d=+0.15  p=0.734 p_holm=1.000  spread p=0.739  -> consistent
-  interface_um_per_um2   0.4875 vs 0.4816  diff +0.00593 [-0.0349, +0.0468]  d=+0.14  p=0.738 p_holm=1.000  spread p=0.902  -> consistent
-  si_d50_um              2.165 vs 2.177  diff -0.012 [-0.252, +0.228]  d=-0.05  p=0.908 p_holm=1.000  spread p=0.961  -> consistent
-  si_d90_um              4.67 vs 4.67  diff -0.000609 [-0.425, +0.424]  d=-0.00  p=0.998 p_holm=1.000  spread p=0.233  -> consistent
+Batch_2 (7 sites) vs all other sites -> CONSISTENT  flagged sites: ['3806gxp0']
+  inlens_texture         0.0956 vs 0.1042  diff -0.00864 [-0.0151, -0.00216]  d=-0.86  p=0.052 p_holm=1.000  spread p=0.149  -> consistent
+  inlens_edge_binder     0.04692 vs 0.05078  diff -0.00386 [-0.00645, -0.00127]  d=-0.85  p=0.059 p_holm=1.000  spread p=0.036  -> consistent
+  si_cluster_size        1.427 vs 1.654  diff -0.227 [-0.448, -0.0056]  d=-0.66  p=0.119 p_holm=1.000  spread p=0.367  -> consistent
+  si_nn_um               6.272 vs 5.903  diff +0.37 [-0.0804, +0.82]  d=+0.58  p=0.180 p_holm=1.000  spread p=0.232  -> consistent
+  si_aspect_ratio        1.905 vs 1.958  diff -0.0533 [-0.182, +0.0753]  d=-0.43  p=0.308 p_holm=1.000  spread p=0.669  -> consistent
+  si_count_per_1000um2   7.328 vs 7.897  diff -0.569 [-1.69, +0.549]  d=-0.43  p=0.332 p_holm=1.000  spread p=0.484  -> consistent
+  si_clark_evans         1.067 vs 1.038  diff +0.0295 [-0.0203, +0.0792]  d=+0.39  p=0.365 p_holm=1.000  spread p=0.287  -> consistent
+  porosity__ls_um        1.958 vs 2.054  diff -0.0961 [-0.293, +0.101]  d=-0.36  p=0.406 p_holm=1.000  spread p=0.340  -> consistent
+  si_cracked_frac        0.1223 vs 0.1442  diff -0.0219 [-0.0741, +0.0304]  d=-0.31  p=0.471 p_holm=1.000  spread p=0.489  -> consistent
+  si_frac__ls_um         2.505 vs 2.583  diff -0.0776 [-0.289, +0.134]  d=-0.30  p=0.492 p_holm=1.000  spread p=0.667  -> consistent
+  si_solidity            0.905 vs 0.901  diff +0.00402 [-0.00501, +0.013]  d=+0.32  p=0.509 p_holm=1.000  spread p=0.393  -> consistent
+  si_anomalous_per_1000um2 1.134 vs 1.244  diff -0.11 [-0.449, +0.229]  d=-0.27  p=0.524 p_holm=1.000  spread p=0.518  -> consistent
+  si_frac                0.05258 vs 0.05854  diff -0.00596 [-0.0181, +0.00616]  d=-0.33  p=0.533 p_holm=1.000  spread p=0.710  -> consistent
+  si_d10_um              1.179 vs 1.2  diff -0.0203 [-0.0924, +0.0519]  d=-0.26  p=0.547 p_holm=1.000  spread p=0.607  -> consistent
+  si_circularity         0.5877 vs 0.5791  diff +0.00868 [-0.02, +0.0373]  d=+0.23  p=0.610 p_holm=1.000  spread p=0.727  -> consistent
+  porosity               0.06588 vs 0.0638  diff +0.00208 [-0.0116, +0.0157]  d=+0.15  p=0.735 p_holm=1.000  spread p=0.736  -> consistent
+  interface_um_per_um2   0.4875 vs 0.4816  diff +0.00593 [-0.0349, +0.0468]  d=+0.14  p=0.736 p_holm=1.000  spread p=0.898  -> consistent
+  si_psd_span            1.618 vs 1.603  diff +0.0147 [-0.148, +0.177]  d=+0.06  p=0.904 p_holm=1.000  spread p=0.132  -> consistent
+  si_d50_um              2.165 vs 2.177  diff -0.012 [-0.252, +0.228]  d=-0.05  p=0.909 p_holm=1.000  spread p=0.962  -> consistent
+  si_d90_um              4.67 vs 4.67  diff -0.000609 [-0.425, +0.424]  d=-0.00  p=0.998 p_holm=1.000  spread p=0.239  -> consistent
 
-Batch_3 (17 sites) vs all other sites -> CONSISTENT  flagged sites: ['hzumfsms']
-  si_d90_um              4.479 vs 4.902  diff -0.424 [-0.851, +0.00423]  d=-0.75  p=0.050 p_holm=0.446  spread p=0.878  -> consistent
-  si_frac                0.05235 vs 0.06307  diff -0.0107 [-0.0265, +0.00511]  d=-0.60  p=0.129 p_holm=1.000  spread p=0.129  -> consistent
-  si_solidity            0.9052 vs 0.898  diff +0.00727 [-0.00331, +0.0178]  d=+0.57  p=0.150 p_holm=1.000  spread p=0.400  -> consistent
-  porosity               0.06555 vs 0.06271  diff +0.00284 [-0.00763, +0.0133]  d=+0.20  p=0.577 p_holm=1.000  spread p=0.604  -> consistent
-  interface_um_per_um2   0.4793 vs 0.4873  diff -0.00807 [-0.0386, +0.0224]  d=-0.20  p=0.590 p_holm=1.000  spread p=0.465  -> consistent
-  porosity__ls_um        2.009 vs 2.061  diff -0.0525 [-0.257, +0.152]  d=-0.20  p=0.603 p_holm=1.000  spread p=0.247  -> consistent
-  si_count_per_1000um2   7.652 vs 7.91  diff -0.258 [-1.28, +0.765]  d=-0.20  p=0.605 p_holm=1.000  spread p=0.356  -> consistent
-  si_d50_um              2.169 vs 2.181  diff -0.0115 [-0.184, +0.161]  d=-0.05  p=0.899 p_holm=1.000  spread p=0.046  -> consistent
-  si_frac__ls_um         2.569 vs 2.56  diff +0.00927 [-0.186, +0.205]  d=+0.04  p=0.920 p_holm=1.000  spread p=0.472  -> consistent
+Batch_3 (17 sites) vs all other sites -> CONSISTENT  flagged sites: ['71vgq3fw', 'cfe5vt7s', 'hzumfsms', 'utfgcjfa', 'vc2whyaq', 'xgj4xftb']
+  si_d90_um              4.479 vs 4.902  diff -0.424 [-0.851, +0.00423]  d=-0.75  p=0.053 p_holm=1.000  spread p=0.876  -> consistent
+  si_psd_span            1.526 vs 1.704  diff -0.178 [-0.357, +0.000564]  d=-0.72  p=0.058 p_holm=1.000  spread p=0.606  -> consistent
+  inlens_edge_binder     0.05121 vs 0.04831  diff +0.0029 [-0.000411, +0.00621]  d=+0.64  p=0.090 p_holm=1.000  spread p=0.193  -> consistent
+  si_frac                0.05235 vs 0.06307  diff -0.0107 [-0.0265, +0.00511]  d=-0.60  p=0.129 p_holm=1.000  spread p=0.134  -> consistent
+  si_clark_evans         1.026 vs 1.067  diff -0.0409 [-0.0928, +0.0109]  d=-0.55  p=0.134 p_holm=1.000  spread p=0.324  -> consistent
+  si_solidity            0.9052 vs 0.898  diff +0.00727 [-0.00331, +0.0178]  d=+0.57  p=0.146 p_holm=1.000  spread p=0.403  -> consistent
+  inlens_texture         0.1041 vs 0.1001  diff +0.00407 [-0.00357, +0.0117]  d=+0.40  p=0.286 p_holm=1.000  spread p=0.613  -> consistent
+  si_d10_um              1.204 vs 1.184  diff +0.0206 [-0.0354, +0.0766]  d=+0.26  p=0.471 p_holm=1.000  spread p=0.524  -> consistent
+  si_circularity         0.5856 vs 0.5755  diff +0.0101 [-0.02, +0.0403]  d=+0.27  p=0.475 p_holm=1.000  spread p=0.214  -> consistent
+  si_aspect_ratio        1.959 vs 1.931  diff +0.0277 [-0.0615, +0.117]  d=+0.22  p=0.551 p_holm=1.000  spread p=0.971  -> consistent
+  si_nn_um               5.926 vs 6.059  diff -0.133 [-0.595, +0.328]  d=-0.21  p=0.577 p_holm=1.000  spread p=0.214  -> consistent
+  porosity               0.06555 vs 0.06271  diff +0.00284 [-0.00763, +0.0133]  d=+0.20  p=0.584 p_holm=1.000  spread p=0.606  -> consistent
+  interface_um_per_um2   0.4793 vs 0.4873  diff -0.00807 [-0.0386, +0.0224]  d=-0.20  p=0.586 p_holm=1.000  spread p=0.461  -> consistent
+  porosity__ls_um        2.009 vs 2.061  diff -0.0525 [-0.257, +0.152]  d=-0.20  p=0.595 p_holm=1.000  spread p=0.243  -> consistent
+  si_count_per_1000um2   7.652 vs 7.91  diff -0.258 [-1.28, +0.765]  d=-0.20  p=0.605 p_holm=1.000  spread p=0.355  -> consistent
+  si_cluster_size        1.625 vs 1.575  diff +0.0505 [-0.221, +0.322]  d=+0.15  p=0.705 p_holm=1.000  spread p=0.439  -> consistent
+  si_anomalous_per_1000um2 1.235 vs 1.2  diff +0.0347 [-0.266, +0.335]  d=+0.09  p=0.809 p_holm=1.000  spread p=0.396  -> consistent
+  si_cracked_frac        0.1372 vs 0.1417  diff -0.00443 [-0.0588, +0.0499]  d=-0.06  p=0.862 p_holm=1.000  spread p=0.593  -> consistent
+  si_d50_um              2.169 vs 2.181  diff -0.0115 [-0.184, +0.161]  d=-0.05  p=0.899 p_holm=1.000  spread p=0.047  -> consistent
+  si_frac__ls_um         2.569 vs 2.56  diff +0.00927 [-0.186, +0.205]  d=+0.04  p=0.925 p_holm=1.000  spread p=0.473  -> consistent
 
 Site flags (|robust z| > 3.5):
   Batch_1 4ih2ggld si_frac = 0.1032 (z=+6.1)
@@ -38,6 +71,17 @@ Site flags (|robust z| > 3.5):
   Batch_3 hzumfsms porosity__ls_um = 2.774 (z=+3.9)
   Batch_1 4ih2ggld si_solidity = 0.8715 (z=-4.5)
   Batch_1 5n1q8atc si_solidity = 0.8545 (z=-6.8)
+  Batch_1 iv6g2oq0 si_d10_um = 1.348 (z=+3.7)
+  Batch_3 cfe5vt7s si_d10_um = 1.36 (z=+4.0)
+  Batch_3 xgj4xftb si_d10_um = 1.364 (z=+4.0)
+  Batch_3 utfgcjfa si_psd_span = 2.212 (z=+3.6)
+  Batch_2 3806gxp0 si_aspect_ratio = 1.658 (z=-3.6)
+  Batch_3 71vgq3fw si_aspect_ratio = 2.293 (z=+3.8)
+  Batch_1 4ih2ggld si_circularity = 0.4907 (z=-3.6)
+  Batch_1 5n1q8atc si_circularity = 0.4564 (z=-4.8)
+  Batch_3 vc2whyaq si_clark_evans = 0.8421 (z=-3.7)
+  Batch_1 5n1q8atc si_cluster_size = 2.764 (z=+4.3)
+  Batch_1 4ih2ggld si_cracked_frac = 0.3267 (z=+3.8)
 
 Confound checks (p<0.05 shown):
   porosity ~ BSE black-level offset (>10): p=0.027 median 0.05142 vs 0.06372
@@ -45,3 +89,6 @@ Confound checks (p<0.05 shown):
   interface_um_per_um2 ~ BSE Si/graphite contrast (si_peak): p=0.000 rho=-0.66
   porosity__ls_um ~ BSE black-level offset (>10): p=0.027 median 1.813 vs 2.008
   porosity__ls_um ~ BSE Si/graphite contrast (si_peak): p=0.042 rho=-0.37
+  inlens_texture ~ BSE black-level offset (>10): p=0.003 median 0.1185 vs 0.09821
+  inlens_edge_binder ~ BSE black-level offset (>10): p=0.000 median 0.05791 vs 0.04795
+  inlens_edge_binder ~ BSE Si/graphite contrast (si_peak): p=0.024 rho=+0.40
