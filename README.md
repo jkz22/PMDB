@@ -63,3 +63,32 @@ pytest -q -m data
 python scripts/build_cache.py
 python scripts/qc_overview.py
 ```
+
+## Running on Modal
+
+Each person uses their own Modal account; no credentials live in the repo. One-time login (stores a token in `~/.modal.toml`):
+
+```bash
+pip install modal
+modal token new
+```
+
+One-time upload of the half-resolution cache to a Modal Volume (only `cache/half` is uploaded, never `data/`):
+
+```bash
+modal volume create pmdb-data
+modal volume put pmdb-data cache/half /half
+modal volume ls pmdb-data /half
+```
+
+To refresh after a cache rebuild: `modal volume put --force pmdb-data cache/half /half`.
+
+Run (local `pmdb/` edits ship automatically on each run):
+
+```bash
+modal run modal_app.py --smoke   # 1 site
+modal run modal_app.py           # all 31 sites
+# option: --name <name>
+```
+
+Results land in `outputs/modal/<name>.csv` (gitignored), one row per site with the KPI columns from `docs/kpis/kpi_catalogue.csv` v1 plus `runner`, `elapsed_s` and `error`. If any site errors, rows go to `<name>_failed.csv` instead (an existing `<name>.csv` is left untouched) and the command exits 1.
