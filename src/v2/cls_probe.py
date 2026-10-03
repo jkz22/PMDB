@@ -45,7 +45,7 @@ def probe(X: np.ndarray, meta: pd.DataFrame, name: str, source: str) -> list[dic
         rows.append(dict(source=source, name=name, clf=clf_name, n_crops=len(y), n_fields=len(fld),
                          crop_acc=float((pred == y).mean()), crop_f1=float(f1_score(y, pred, average="macro")),
                          field_acc=float((pf == yf).mean()), field_f1=float(f1_score(yf, pf, average="macro")),
-                         **{f"field_acc_{b}": float((pf[yf == k] == k).mean()) for k, b in enumerate(BATCHES)}))
+                         **{f"field_acc_{b}": float((pf[yf == k] == k).mean()) for k, b in enumerate(BATCHES) if (yf == k).any()}))
     return rows
 
 
@@ -59,10 +59,14 @@ def imaging_features(meta: pd.DataFrame) -> np.ndarray:
     return X.drop(columns=["group_id", "y", "x"]).to_numpy(float)
 
 
-def main():
+def main(pair: tuple[str, str] | None = None):
+    """pair=('Batch_1','Batch_2'): restrict to two batches (binary, chance 0.5) -> cls_probe_<b1>_<b2>.csv"""
     rows = []
     kp = crop_kpi_frame("eval", ALL_COLS)
     meta0 = kp[["group_id", "y", "x"]].copy(); meta0["batch"] = meta0.group_id.str.split("/").str[0]
+    if pair:
+        keep = meta0.batch.isin(pair).to_numpy()
+        kp, meta0 = kp[keep].reset_index(drop=True), meta0[keep].reset_index(drop=True)
     gated = ["frac_si", "frac_graphite", "frac_pore", "K01_si_frac_adm", "K04_agglom_frac"]
     rows += probe(kp[gated].to_numpy(float), meta0, "kpi_gated5", "features")
     k_all = kp[list(ALL_COLS)].copy()
@@ -72,13 +76,17 @@ def main():
     for mp in sorted(Path(OUT / "runs").glob("*/embeddings_eval.npz")):
         c = json.loads((mp.parent / "config.json").read_text())
         E, meta = load(mp.parent)
+        if pair:
+            keep = meta.batch.isin(pair).to_numpy()
+            E, meta = E[keep], meta[keep].reset_index(drop=True)
         tag = f"{c['family']}|{c.get('view')}|{c.get('input')}|{c.get('train_set')}|{c.get('aug')}|kpi={c.get('kpi_set', 'gated')}"
         rows += probe(E, meta, tag, "embedding:" + mp.parent.name)
     df = pd.DataFrame(rows).sort_values("field_acc", ascending=False)
-    df.to_csv(OUT / "cls_probe.csv", index=False)
+    df.to_csv(OUT / ("cls_probe.csv" if not pair else f"cls_probe_{pair[0]}_{pair[1]}.csv"), index=False)
     print(df.head(25).to_string())
     return df
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(tuple(sys.argv[1:3]) if len(sys.argv) == 3 else None)
