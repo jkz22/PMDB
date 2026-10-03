@@ -1,9 +1,13 @@
 """Overnight run 3: 10,000-label-permutation test of the merged fingerprint pipeline.
 
-Mirrors pmdb.fingerprint.permutation_test exactly (same observed statistic, same rng
-sequence for a given seed, same p-value estimator) but runs in chunks with a JSON
-checkpoint after each chunk, so progress is visible and a crash resumes from the last chunk by
-re-running (rng is seeded per chunk). Model code and defaults are untouched.
+Mirrors pmdb.fingerprint.permutation_test statistically (same observed statistic,
+same p-value estimator) but runs in chunks with a JSON checkpoint after each chunk,
+so progress is visible and a crash resumes from the last chunk by re-running. The
+rng is seeded per chunk with default_rng([seed, chunk_idx]) so a resumed run is
+identical to an uninterrupted one; the permutation sequence therefore differs from
+permutation_test(seed) and from runs with a different --chunk. The committed 10k
+result was produced by the sequential-rng version of this script (see the
+git_commit field in permutation_10k.json). Model code and defaults are untouched.
 
     .venv/Scripts/python scripts/overnight_permutation.py --n-perm 10000
 

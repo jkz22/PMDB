@@ -1,8 +1,8 @@
 {
-  "git_commit": "f48ecc8df9165b8ea5208ce476c33794b88e743e",
+  "git_commit": "aa3423698ac64f904d07ec72691d7c1dd6bf6e24",
   "command": "overnight_stability.py",
-  "started_utc": "2026-10-03T21:15:44Z",
-  "total_seconds": 175.5,
+  "started_utc": "2026-10-03T21:55:15Z",
+  "total_seconds": 167.0,
   "n_jackknife_resamples": 1496,
   "n_drop3": 1000,
   "seed": 0,
