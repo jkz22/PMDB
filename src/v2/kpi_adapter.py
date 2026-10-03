@@ -35,6 +35,9 @@ GATED_COLS = ("frac_si", "frac_graphite", "frac_pore", "K01_si_frac_adm", "K04_a
 
 
 def kpi_commit_hash() -> str:
+    f = KPI_ROOT / ".kpi_commit"  # shipped alongside the code where there is no .git (Modal image)
+    if f.exists():
+        return f.read_text().strip()
     return subprocess.check_output(["git", "-C", str(KPI_ROOT), "rev-parse", "HEAD"], text=True).strip()
 
 

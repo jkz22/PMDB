@@ -5,6 +5,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +14,7 @@ import pandas as pd
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 OUT = REPO / "outputs" / "v2"
-CACHE = REPO / "cache" / "half"
+CACHE = Path(os.environ.get("PMDB_CACHE", REPO / "cache")) / "half"
 
 CROP = 256          # model crop size at 50 nm/px
 STRIDE_TRAIN = 128  # overlapping training windows
