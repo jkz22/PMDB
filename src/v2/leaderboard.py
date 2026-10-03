@@ -30,7 +30,7 @@ def collect(runs: Path) -> pd.DataFrame:
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", default=str(OUT / "runs"))
-    ap.add_argument("--stage", default="OTS,A,B,R2")
+    ap.add_argument("--stage", default="OTS,A,B,R2,R3")
     ap.add_argument("--kpi", choices=("gated", "all"), default="gated",
                     help="all: rank on kpi_r2_all (adds K02/K03/K04 cluster density, which fail gates G2/G3)")
     a = ap.parse_args(argv)

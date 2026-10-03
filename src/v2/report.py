@@ -9,7 +9,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from src.v2.common import OUT
+from src.v2.common import OUT, harm_method
 from src.v2.leaderboard import collect
 
 M = ["kpi_r2", "img_r2", "image_id_ratio", "lift_shift", "recon_kpi_err", "psnr", "ssim", "knn_batch_acc"]
@@ -19,7 +19,7 @@ CFG = ["family", "view", "input", "train_set", "aug", "vae_mask", "mae_mask", "h
 def md(df: pd.DataFrame, nd=3, index=False) -> str:
     """GitHub markdown table without the optional ``tabulate`` dependency."""
     d = df.round(nd).reset_index() if index else df.round(nd)
-    cells = [[("" if pd.isna(v) else str(v)) for v in row] for row in d.itertuples(index=False)]
+    cells = [[("" if np.isscalar(v) and pd.isna(v) else str(v)) for v in row] for row in d.itertuples(index=False)]
     head = [str(c) for c in d.columns]
     return "\n".join(["| " + " | ".join(head) + " |", "|" + "---|" * len(head),
                        *["| " + " | ".join(r) + " |" for r in cells]])
@@ -83,6 +83,28 @@ def extra_sections(lb: pd.DataFrame) -> list[str]:
         S += ["## Supervised 3-class batch classification (stratified grouped 5-fold by field; mean over folds)\n",
               md(c[["arch", "view", "input", "harmonise", "aug", "n_folds_done", "crop_acc", "field_acc", "field_acc_sd",
                     "field_f1", "field_acc_Batch_1", "field_acc_Batch_2", "field_acc_Batch_3", "raw_minus_harm_field_acc"]]), ""]
+    r3 = lb[lb.stage == "R3"] if "stage" in lb else lb.iloc[:0]
+    if len(r3):
+        runs = collect(OUT / "runs").set_index("hash")
+        parents = runs.loc[runs.index.intersection(r3.hash), "parent"].dropna().unique()
+        fam = pd.concat([lb[lb.hash.isin(parents)], r3]).copy()
+        fam["harmonise"] = fam.harmonise.map(harm_method)
+        cols = ["family", "harmonise", "aug", "input", "view", "train_set", "kpi_r2", "img_r2", "img_r2__p1_c0", "image_id_ratio",
+                "knn_batch_acc", "lift_shift"]
+        S += ["## Round 3: best config per family retrained on PR #16 per-site LUT harmonisation "
+              "(`none` = raw grey levels; `hybrid` = affine BSE/SE + histmatch Inlens; `affine2`; `histmatch`)\n",
+              "`gmm` is the earlier 3-peak per-image linear map (Round 2). Lower `img_r2`/`knn_batch_acc` = less grey-level shortcut.\n",
+              md(fam.sort_values(["family", "harmonise"])[[c for c in cols if c in fam]]), ""]
+    if cl.exists():
+        c = pd.read_csv(cl)
+        base = c[(c.aug == "aug1") & (c.input == "raw")]
+        if base.harmonise.nunique() > 1:
+            pv = base.pivot_table(index=["arch", "view"], columns="harmonise", values="field_acc")
+            S += ["## Classification: field accuracy by harmonisation method (raw input, aug1; chance = 0.33)\n",
+                  "If accuracy survives `hybrid`, the batch signal is not the Batch_3 black-level/gain artefact.\n",
+                  md(pv.round(3), index=True), ""]
+            pb = base.pivot_table(index=["arch", "view"], columns="harmonise", values="field_acc_Batch_3")
+            S += ["### Batch_3 field recall by harmonisation method\n", md(pb.round(3), index=True), ""]
     cp = OUT / "cls_probe.csv"
     if cp.exists():
         p = pd.read_csv(cp)
