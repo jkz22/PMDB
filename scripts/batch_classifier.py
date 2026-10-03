@@ -93,7 +93,7 @@ def feature_sets(df: pd.DataFrame) -> dict[str, list[str]]:
 
 
 def _pipe(est):
-    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), est)
+    return make_pipeline(SimpleImputer(strategy="median", add_indicator=True, keep_empty_features=True), StandardScaler(), est)
 
 
 MODELS = {
@@ -134,7 +134,7 @@ def evaluate(df, cols, model, seed=0) -> dict:
     return {
         "n_features": len(cols),
         "cv_bal_acc_mean": scores.mean(),
-        "cv_bal_acc_std": scores.std(),
+        "cv_bal_acc_fold_std": scores.std(),
         "perm_score": score,
         "null_mean": perm.mean(),
         "null_p95": np.percentile(perm, 95),
@@ -165,6 +165,18 @@ def importance(df, cols) -> pd.DataFrame:
                 "logreg_max_class": classes[coef[:, i].argmax()],
                 "rf_importance": rf[-1].feature_importances_[i],
                 "kruskal_p": p,
+            }
+        )
+    # add_indicator appends one column per feature with missing values, after the originals.
+    for j, i in enumerate(lr[0].indicator_.features_):
+        k = len(cols) + j
+        rows.append(
+            {
+                "feature": f"{cols[i]}__missing",
+                "logreg_max_abs_coef": coef[:, k].max(),
+                "logreg_max_class": classes[coef[:, k].argmax()],
+                "rf_importance": rf[-1].feature_importances_[k],
+                "kruskal_p": np.nan,
             }
         )
     return pd.DataFrame(rows).sort_values("rf_importance", ascending=False).reset_index(drop=True)

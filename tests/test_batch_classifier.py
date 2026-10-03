@@ -11,7 +11,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from batch_classifier import feature_sets, load_combined
+import batch_classifier
+from batch_classifier import MODELS, evaluate, feature_sets, load_combined
 
 
 def _keys():
@@ -77,3 +78,22 @@ def test_feature_sets(tmp_path):
     for c in ["A01_large_void_frac", "ab_porosity", "mat_porosity"]:
         assert c in fs["combined"]
         assert c not in fs["combined_no_artefact"]
+
+
+def test_evaluate_returns_string_labels(monkeypatch):
+    rng = np.random.default_rng(0)
+    df = pd.DataFrame(
+        {
+            "batch": ["Batch_1"] * 5 + ["Batch_2"] * 5 + ["Batch_3"] * 5,
+            "f1": rng.normal(size=15),
+            "f2": rng.normal(size=15),
+            "f3": rng.normal(size=15),
+        }
+    )
+    df.loc[0, "f3"] = np.nan
+    monkeypatch.setattr(
+        batch_classifier, "permutation_test_score", lambda *a, **k: (0.5, np.zeros(2), 1.0)
+    )
+    r = evaluate(df, ["f1", "f2", "f3"], MODELS["xgb"]())
+    assert set(r["loo_pred"]) <= {"Batch_1", "Batch_2", "Batch_3"}
+    assert len(r["loo_pred"]) == 15
