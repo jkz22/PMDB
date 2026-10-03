@@ -19,6 +19,11 @@ os.environ.setdefault("PMDB_DATA", str(Path(__file__).resolve().parents[2] / "da
 os.environ.setdefault("PMDB_CACHE", str(Path(__file__).resolve().parents[2] / "cache"))
 if str(KPI_ROOT) not in sys.path:
     sys.path.insert(0, str(KPI_ROOT))
+_pm = sys.modules.get("pmdb")
+if _pm is not None and not str(getattr(_pm, "__file__", "")).startswith(str(KPI_ROOT)):
+    # main-branch pmdb (no pmdb.kpis) was imported first: swap in the pinned KPI branch package
+    for _k in [k for k in sys.modules if k == "pmdb" or k.startswith("pmdb.")]:
+        del sys.modules[_k]
 
 from pmdb.kpis import REGISTRY, TooFewObjects  # noqa: E402
 from pmdb.kpis.common import KpiContext  # noqa: E402

@@ -32,7 +32,7 @@ RUNS = Path(os.environ.get("PMDB_RUNS", OUT / "runs"))
 def full_cfg(cfg: dict) -> dict:
     c = {**DEFAULTS, **cfg}
     if c["lr"] is None:
-        c["lr"] = LR[c["family"].split("_")[0]]
+        c["lr"] = LR.get(c["family"].split("_")[0], 0.0)
     return c
 
 
