@@ -14,7 +14,7 @@ from src.v2.common import OUT
 from src.v2.evaluate import selection_score
 
 KEEP = ("hash", "stage", "factor", "family", "view", "input", "train_set", "aug", "vae_mask", "mae_mask", "harmonise",
-        "seed", "fold", "lobo", "steps", "kpi_set", "kpi_r2", "kpi_r2_all", "kpi_r2_ungated", "img_r2", "image_id_ratio", "lift_shift", "recon_kpi_err", "psnr", "ssim",
+        "seed", "fold", "lobo", "steps", "kpi_set", "baseline", "kpi_r2", "kpi_r2_all", "kpi_r2_ungated", "img_r2", "image_id_ratio", "lift_shift", "recon_kpi_err", "psnr", "ssim",
         "knn_batch_acc", "n_crops", "emb_dim", "kpi_commit_full")
 
 
