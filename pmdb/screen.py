@@ -37,6 +37,7 @@ from scipy.spatial.distance import squareform
 from scipy.stats import rankdata
 
 KEY_COLS = ("batch", "site")
+MISSING_TOKENS = ("", "NaN", "nan")
 DEFAULT_IGNORE_COLS = ("se_detector", "segmenter_version", "nan_reason", "runner", "elapsed_s", "error")
 KPI_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 MIN_PAIRED_SITES = 5
@@ -44,6 +45,7 @@ STREAM_COVARIATE, STREAM_ICC, STREAM_CLUSTER = 1, 2, 3
 GATES = ("degeneracy", "artefact", "reliability", "robustness", "redundancy")
 SCREEN_VERSION = "1.0"
 DEFAULT_OUT_DIR = Path(__file__).resolve().parents[1] / "outputs" / "kpis" / "screen"
+DEFAULT_SITE_MANIFEST = Path(__file__).resolve().parents[1] / "cache" / "half" / "manifest.csv"
 
 TABLE_COLUMNS = [
     "kpi", "decision", "deciding_gate", "untested_gates", "flags", "rank",
@@ -151,12 +153,56 @@ def read_table(path: str | Path) -> pd.DataFrame:
     path : str or Path
         CSV file.
 
+    Only empty, ``NaN`` and ``nan`` cells are read as missing (``inf``/``-inf`` parse
+    as floats); any other text (``NA``, ``n/a``, ...) stays text.
+
     Returns
     -------
     pandas.DataFrame
         The table.
+
+    Raises
+    ------
+    ScreenInputError
+        If a column header is duplicated.
     """
-    return pd.read_csv(path, dtype={"batch": str, "site": str})
+    df = pd.read_csv(path, dtype={"batch": str, "site": str},
+                     keep_default_na=False, na_values=list(MISSING_TOKENS))
+    header = pd.read_csv(path, header=None, nrows=1, dtype=str,
+                         keep_default_na=False).iloc[0].tolist()
+    dups = sorted({h for h in header if header.count(h) > 1})
+    if "" in dups:
+        raise ScreenInputError(f"{path}: {header.count('')} blank column headers (trailing commas?); remove the empty columns")
+    if dups:
+        raise ScreenInputError(f"{path}: duplicated column header(s) {dups}")
+    return df
+
+
+def read_site_manifest(path: str | Path) -> set[tuple[str, str]]:
+    """Canonical (batch, site) set from a manifest CSV.
+
+    Parameters
+    ----------
+    path : str or Path
+        CSV with ``batch`` and ``site`` columns (default ``cache/half/manifest.csv``,
+        written by ``scripts/build_cache.py`` from ``pmdb.io.list_sites()``).
+
+    Returns
+    -------
+    set of tuple of str
+        The ``(batch, site)`` keys.
+
+    Raises
+    ------
+    ScreenInputError
+        If the file is missing or lacks valid keys.
+    """
+    p = Path(path)
+    if not p.is_file():
+        raise ScreenInputError(f"site manifest not found: {p} (pass --site-manifest)")
+    df = read_table(p)
+    _check_keys(df, f"site manifest {p}")
+    return _keys(df)
 
 
 def _is_numeric(s: pd.Series) -> bool:
@@ -228,7 +274,8 @@ def kpi_columns(df: pd.DataFrame, ignore_cols: Iterable[str],
 
 
 def merge_kpi_tables(frames: Sequence[pd.DataFrame], sources: Sequence[str],
-                     ignore_cols: Iterable[str] = DEFAULT_IGNORE_COLS
+                     ignore_cols: Iterable[str] = DEFAULT_IGNORE_COLS,
+                     expected_sites: set[tuple[str, str]] | None = None
                      ) -> tuple[pd.DataFrame, list[str], dict[str, list[str]]]:
     """Merge one or more site-level KPI tables on (batch, site).
 
@@ -240,6 +287,9 @@ def merge_kpi_tables(frames: Sequence[pd.DataFrame], sources: Sequence[str],
         Source names (file paths) used in messages.
     ignore_cols : iterable of str, optional
         Column names silently excluded from KPIs.
+    expected_sites : set of tuple of str, optional
+        Canonical (batch, site) set the first frame must match exactly; ``None``
+        means no manifest check.
 
     Returns
     -------
@@ -252,7 +302,8 @@ def merge_kpi_tables(frames: Sequence[pd.DataFrame], sources: Sequence[str],
     ------
     ScreenInputError
         On missing keys, duplicate keys, bad names, KPI names repeated across files,
-        differing site sets, or a file with no KPI columns.
+        differing site sets, a first file differing from ``expected_sites``, or a file
+        with no KPI columns.
     """
     ignore_cols = tuple(ignore_cols)
     kpis: list[str] = []
@@ -273,6 +324,13 @@ def merge_kpi_tables(frames: Sequence[pd.DataFrame], sources: Sequence[str],
         if ign:
             ignored[src] = ign
     base = frames[0]
+    if expected_sites is not None:
+        a = _keys(base)
+        if a != expected_sites:
+            raise ScreenInputError(
+                f"{sources[0]}: site set differs from the site manifest "
+                f"({len(a)} vs {len(expected_sites)} sites; missing: {sorted(expected_sites - a)[:5]}; "
+                f"not in manifest: {sorted(a - expected_sites)[:5]})")
     for df, src in zip(frames[1:], sources[1:]):
         a, b = _keys(base), _keys(df)
         if a != b:
@@ -461,11 +519,15 @@ def validate_covariates(cov: pd.DataFrame, site: pd.DataFrame, cfg: ScreenConfig
     Raises
     ------
     ScreenInputError
-        On missing keys, duplicates, site-set mismatch or no numeric covariate.
+        On missing keys, duplicates, site-set mismatch, a non-numeric column or no numeric covariate.
     """
     _check_keys(cov, "covariates")
     _check_same_sites(cov, site, "covariates")
-    cols = [c for c in cov.columns if c not in KEY_COLS and c not in cfg.ignore_cols and _is_numeric(cov[c])]
+    cand = [c for c in cov.columns if c not in KEY_COLS and c not in cfg.ignore_cols]
+    bad = [c for c in cand if not _is_numeric(cov[c])]
+    if bad:
+        raise ScreenInputError(f"covariates: column(s) {bad} not numeric (write missing values as empty/NaN)")
+    cols = cand
     if not cols:
         raise ScreenInputError("covariates: no numeric covariate columns")
     return cols
@@ -710,7 +772,7 @@ def icc1_bootstrap(per_site_values: Sequence[np.ndarray], site_batches: np.ndarr
     return point, lo, hi, int((counts >= 2).sum())
 
 
-def robustness_rho(sens: pd.DataFrame, kpi: str, params: Sequence[str]) -> tuple[float, int, bool]:
+def robustness_rho(sens: pd.DataFrame, kpi: str, params: Sequence[str]) -> tuple[float, int, bool, bool]:
     """Minimum pairwise Spearman rho across parameter settings.
 
     Parameters
@@ -725,15 +787,28 @@ def robustness_rho(sens: pd.DataFrame, kpi: str, params: Sequence[str]) -> tuple
     Returns
     -------
     tuple
-        ``(min off-diagonal rho with NaN pairs counted as 0.0, n_settings, had_nan_pair)``.
+        ``(min rho over pairs sharing >= MIN_PAIRED_SITES finite sites, constant pairs
+        counted as 0.0; NaN if no such pair, n_settings, had_constant_pair,
+        had_insufficient_pair)``.
     """
     wide = sens.pivot(index=list(KEY_COLS), columns=list(params), values=kpi)
-    corr = wide.corr(method="spearman").to_numpy()
-    k = corr.shape[0]
-    off = corr[np.triu_indices(k, 1)]
-    nan_pair = bool(np.isnan(off).any())
-    off = np.where(np.isnan(off), 0.0, off)
-    return float(off.min()), k, nan_pair
+    vals = wide.to_numpy(float)
+    k = vals.shape[1]
+    zeros = np.zeros(vals.shape[0])
+    rhos: list[float] = []
+    constant = insufficient = False
+    for i in range(k):
+        for j in range(i + 1, k):
+            ok = np.isfinite(vals[:, i]) & np.isfinite(vals[:, j])
+            if ok.sum() < MIN_PAIRED_SITES:
+                insufficient = True
+                continue
+            r = partial_spearman(vals[:, i], vals[:, j], zeros)
+            if np.isnan(r):
+                constant = True
+                r = 0.0
+            rhos.append(r)
+    return (float(min(rhos)) if rhos else float("nan")), k, constant, insufficient
 
 
 # ------------------------------------------------------------------- redundancy
@@ -889,6 +964,7 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
         # gate 1 statistics
         art_cov = None
         suspect = None
+        ci_undef = None
         if covmat is not None:
             covs = []
             for j, cname in enumerate(cov_cols):
@@ -901,7 +977,7 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
                 covs.append((j, cname, rho, lo, hi, qual))
             q = [c for c in covs if c[5]]
             fin = [c for c in covs if np.isfinite(c[2])]
-            if not fin:
+            if not any(np.isfinite(c[3]) and np.isfinite(c[4]) for c in fin):
                 untested.append("artefact")
             rep = max(q, key=lambda c: abs(c[2])) if q else (max(fin, key=lambda c: abs(c[2])) if fin else None)
             if rep is not None:
@@ -911,6 +987,8 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
                            covariate_rho_marginal=partial_spearman(x, covmat[:, j], np.zeros(len(x))))
                 if qual:
                     art_cov = cname
+                elif not (np.isfinite(lo) and np.isfinite(hi)):
+                    ci_undef = f"covariate_ci_undefined:{cname}"
                 elif abs(rho) >= cfg.covariate_rho:
                     suspect = f"covariate_suspect:{cname}"
         else:
@@ -935,9 +1013,11 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
         # gate 3
         rob = float("nan")
         n_set = None
-        const_flag = False
+        const_flag = short_flag = False
         if N is not None and k in sens_cols:
-            rob, n_set, const_flag = robustness_rho(N, k, cfg.sensitivity_params)
+            rob, n_set, const_flag, short_flag = robustness_rho(N, k, cfg.sensitivity_params)
+            if not np.isfinite(rob):
+                untested.append("robustness")
         else:
             untested.append("robustness")
         row.update(robustness_rho=rob, n_settings=n_set)
@@ -946,9 +1026,13 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
             flags.append("high_batch_eta2")
         if suspect:
             flags.append(suspect)
+        if ci_undef:
+            flags.append(ci_undef)
         flags += icc_flags
         if const_flag:
             flags.append("robustness_constant_setting")
+        if short_flag:
+            flags.append("robustness_insufficient_overlap")
 
         # decision: first failing gate
         gate = ""
@@ -1016,6 +1100,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="python -m pmdb.screen",
                                 description="Screen site-level KPIs for measurement quality (see docs/kpis/screening.md).")
     p.add_argument("--kpis", nargs="+", required=True, help="site-level KPI CSV file(s): batch, site, numeric KPI columns")
+    p.add_argument("--site-manifest", type=Path, default=DEFAULT_SITE_MANIFEST,
+                   help="CSV with batch, site columns: the canonical site set every --kpis file must cover "
+                        "exactly (default: cache/half/manifest.csv, 31 sites)")
     p.add_argument("--replicates", help="tile CSV for the reliability gate (gate 2)")
     p.add_argument("--replicate-col", default=d.replicate_col, help="replicate id column in --replicates")
     p.add_argument("--sensitivity", help="parameter-sweep CSV for the robustness gate (gate 3)")
@@ -1063,7 +1150,7 @@ def write_outputs(result: ScreenResult, cfg: ScreenConfig, out_dir: Path, inputs
     out_dir : Path
         Output directory (created if needed).
     inputs : mapping
-        Input paths: ``kpis`` (list), ``replicates``, ``sensitivity``, ``covariates``.
+        Input paths: ``kpis`` (list), ``site_manifest``, ``replicates``, ``sensitivity``, ``covariates``.
     ignored : mapping of str to list of str
         Ignored non-numeric columns per source file.
     """
@@ -1109,8 +1196,9 @@ def main(argv: list[str] | None = None) -> int:
             sensitivity_params=tuple(args.sensitivity_params),
             ignore_cols=tuple(DEFAULT_IGNORE_COLS) + tuple(args.ignore_cols),
         )
+        expected = read_site_manifest(args.site_manifest)
         frames = [read_table(p) for p in args.kpis]
-        site, kpis, ignored = merge_kpi_tables(frames, args.kpis, cfg.ignore_cols)
+        site, kpis, ignored = merge_kpi_tables(frames, args.kpis, cfg.ignore_cols, expected_sites=expected)
         for src, cols in ignored.items():
             print(f"warning: ignoring non-numeric column(s) in {src}: {cols}", file=sys.stderr)
         rep = read_table(args.replicates) if args.replicates else None
@@ -1120,7 +1208,8 @@ def main(argv: list[str] | None = None) -> int:
     except ScreenInputError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
-    inputs = {"kpis": [str(p) for p in args.kpis], "replicates": args.replicates,
+    inputs = {"kpis": [str(p) for p in args.kpis], "site_manifest": str(args.site_manifest),
+              "replicates": args.replicates,
               "sensitivity": args.sensitivity, "covariates": args.covariates}
     write_outputs(result, cfg, args.out_dir, inputs, ignored)
     t = result.table
