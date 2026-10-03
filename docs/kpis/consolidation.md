@@ -5,6 +5,7 @@
 ```bash
 python scripts/materials_kpis_to_csv.py
 python -m pmdb.screen --kpis outputs/kpis/site_kpis.csv outputs/kpis/materials_site_kpis.csv \
+  --site-manifest cache/half/manifest.csv \
   --replicates outputs/kpis/tile_kpis.csv \
   --sensitivity outputs/kpis/sensitivity.csv --sensitivity-params d_um d_star_um \
   --covariates outputs/kpis/screen/covariates_bse.csv \
@@ -69,5 +70,5 @@ _No existing KPI changed decision._
 
 - No replicates for mat_ KPIs -> reliability untested (see `untested_gates`). No sweep -> robustness untested too.
 - `src/kpis_geometry.py` and `src/kpis_physics.py` are not in the repo -> `mat_orientation_anisotropy`, `geo_*` and `phys_*` KPIs are absent.
-- mat_graphite_d* converted px -> um with `pixel_size_um` from `config.yaml`; monotone, so no screen statistic changes.
+- mat_graphite_d*_um come out of `src/kpis_materials.py` already in micrometres (`pixel_size_um` from `config.yaml`); the converter passes them through and rejects a legacy pixel-unit parquet.
 - n = 31 sites (7/7/17): borderline calls are fragile. See [screening.md](screening.md) section 6.

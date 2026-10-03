@@ -1,6 +1,6 @@
 {
   "screen_version": "1.0",
-  "timestamp": "2026-10-03T17:11:36+00:00",
+  "timestamp": "2026-10-03T17:34:14+00:00",
   "config": {
     "max_missing_frac": 0.2,
     "min_unique": 5,
@@ -44,6 +44,7 @@
       "outputs/kpis/site_kpis.csv",
       "outputs/kpis/materials_site_kpis.csv"
     ],
+    "site_manifest": "cache/half/manifest.csv",
     "replicates": "outputs/kpis/tile_kpis.csv",
     "sensitivity": "outputs/kpis/sensitivity.csv",
     "covariates": "outputs/kpis/screen/covariates_bse.csv"
