@@ -124,6 +124,24 @@ if os.path.exists("importance.json"):
              'model-based importances are not reported: the batches are not separable as a whole.</p>'
              f'<figure class="a-panel">{img("fig_importance.png", "Bar chart of KPI importance and heatmap of robust z per site and KPI")}</figure></section>')
 
+# 3c. where the outliers are
+if os.path.exists("spots.json"):
+    S = json.load(open("spots.json"))
+    o.append('<section class="a-section"><h2 class="a-section__title">Where the outliers are in the images</h2>'
+             '<p class="a-section__note">Red boxes: 3.2 µm tiles whose KPI is above the 99th percentile of all tiles from the other 30 sites '
+             '(about 1% of tiles would be expected for a normal site). Magenta: cracked/irregular Si particles; cyan: anomalous ones. '
+             'Numbered crops show the four strongest hotspots.</p>'
+             '<div class="a-table-scroll"><table class="a-table"><caption class="a-visually-hidden">Hotspot tiles per site</caption><thead><tr>'
+             '<th scope="col">Site</th><th scope="col">KPI</th><th scope="col" data-numeric>Hotspot tiles</th><th scope="col" data-numeric>% of tiles</th>'
+             '<th scope="col" data-numeric>Share of excess in hotspots</th><th scope="col" data-numeric>Cracked / anomalous particles</th></tr></thead><tbody>')
+    for s, v in S.items():
+        o.append(f'<tr><th scope="row">{E(v["batch"])} {E(s)}</th><td>{E(kname(v["kpi"]))}</td><td data-numeric>{v["n_hot"]} / {v["n_tiles"]}</td>'
+                 f'<td data-numeric>{v["pct_hot"]:.1f}%</td><td data-numeric>{100 * v["hot_share_of_excess"]:.0f}%</td>'
+                 f'<td data-numeric>{v["n_cracked"]} / {v["n_anomalous"]}</td></tr>')
+    o.append('</tbody></table></div>')
+    o.append(tabs([(f'{v["batch"]} {s}', f'<figure class="a-panel">{img(f"fig_spots_{s}.jpg", f"Hotspot tiles and flagged particles on {s}")}</figure>') for s, v in S.items()], "Site"))
+    o.append('</section>')
+
 # 4. figures
 o.append('<section class="a-section"><h2 class="a-section__title">Site-level KPIs</h2>'
          '<p class="a-section__note">One dot per site. Error bars are the GP 95% interval, which accounts for neighbouring tiles being correlated.</p>'
