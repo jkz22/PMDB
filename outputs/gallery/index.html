@@ -59,8 +59,9 @@ dl.kpi dd { margin: 0; font: 500 14px var(--mono); font-variant-numeric: tabular
   padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px)) }
 .lb-top { display: flex; justify-content: space-between; align-items: center; color: #e3e9ee; font: 14px var(--mono); gap: 12px }
 .lb-top button { font: 500 13px var(--ui); background: #e3e9ee; color: #0f1418; border: 0; border-radius: 999px; padding: 5px 14px; cursor: pointer }
-.lb-scroll { flex: 1; overflow: auto; margin-top: 10px; display: flex; align-items: flex-start; justify-content: center }
-.lb-scroll img { max-width: none; width: auto; height: auto }
+.lb-scroll { flex: 1; overflow: auto; margin-top: 10px; display: flex; align-items: flex-start }
+.lb[hidden] { display: none }
+.lb-scroll img { max-width: none; width: auto; height: auto; margin: 0 auto }
 .lb-scroll.fit img { max-width: 100%; max-height: 100% }
 @media (prefers-reduced-motion: no-preference) { .shot img { transition: opacity .2s } }
 </style>
