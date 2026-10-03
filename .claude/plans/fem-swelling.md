@@ -56,3 +56,14 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 - D15 Outputs: field maps on a Modal Volume (not git). Committed under outputs/fem/: tile_curves.csv, site_curves.csv,
   run log (params, solver convergence per step), 34 GIFs (<=2 MB, ~900 px wide, 11 frames, fixed colour scale).
 - Budget: ~$40-70 Modal total (2 full runs + sweeps).
+
+## Pre-approval for unattended execution (user, 2026-10-03)
+User pre-approved proceeding without intervention through: plan review, implementation, code review, local tests,
+one Modal benchmark site, the 2 full runs (Si + SiOx, 34 sites), the D14 sweeps, features, GIFs, pooling checks 3-4,
+committing and pushing to branch fem-lit-review / PR #18.
+- HARD CAP: total Modal spend <= $180 (user-set). Before every Modal launch, project cost from the measured
+  benchmark; stop and ask if cumulative actual + projected would exceed $180.
+- Stop and wait for the user only if a gate fails: synthetic analytic tests fail; simulated electrode swelling falls
+  outside the literature bands (docs/fem/literature-review.md validation targets); solver non-convergence on many
+  sites (> 3 of 34 before 100% SOC in the default run); or the cap would be exceeded.
+- Never: merge the PR, write to data/ or data_heldout/, train on held-out sites.
