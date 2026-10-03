@@ -82,10 +82,13 @@ def k05_voronoi_tile(ctx: KpiContext) -> KpiOutput:
 
 
 def k06_voronoi_regions(ctx: KpiContext) -> KpiOutput:
+    """Area fractions of *all* admissible space in non-border Voronoi cells with normalised
+    area < K06_CLUSTER_CUT (cluster) / > K06_VOID_CUT (void); border cells count in the
+    denominator only (catalogue K06, D-014)."""
     ctx.require_objects()
     areas = voronoi_cell_areas(ctx.centroids_rc, ctx.masks.admissible)
     norm = areas / areas.mean()
-    tot = areas.sum()
+    tot = float(ctx.masks.admissible.sum())
     return KpiOutput({
         "K06_cluster_region_frac": float(areas[norm < K06_CLUSTER_CUT].sum() / tot),
         "K06_void_region_frac": float(areas[norm > K06_VOID_CUT].sum() / tot),
