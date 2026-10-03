@@ -10,7 +10,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from src.v2.common import CROP, SEED, STRIDE_TRAIN, grid, load_half_raw, manifest
+from src.v2.common import CROP, SEED, STRIDE_TRAIN, grid, load_half_raw, manifest, harm_method
 
 VIEWS = {"stack": (0, 1, 2), "BSE": (0, 0, 0), "Inlens": (1, 1, 1), "SE_type": (2, 2, 2)}
 HELDOUT_FRAC = 0.2
@@ -72,15 +72,18 @@ def harmonise_params(per_image: pd.DataFrame | None = None) -> pd.DataFrame:
 
 class FieldStore:
     """All fields in RAM as float32 [0,1] (raw: /255; norm: teammate percentile).
-    ``harmonise`` applies the GMM-mean linear harmonisation to raw counts first."""
+    ``harmonise``: False/'none' raw counts; True/'gmm' this pipeline's GMM-mean linear map applied to
+    raw counts; or a pmdb.harmonise LUT method ('hybrid', 'affine2', 'histmatch', ...) read from
+    cache/harmonised/<method>/half (PR #16)."""
 
-    def __init__(self, fields: pd.DataFrame, input_mode: str = "raw", harmonise: bool = False):
+    def __init__(self, fields: pd.DataFrame, input_mode: str = "raw", harmonise=False):
         assert input_mode in ("raw", "norm")
         self.fields = fields.reset_index(drop=True)
-        hp = harmonise_params().set_index(["group_id", "channel"]) if harmonise else None
+        self.harm = harm_method(harmonise)
+        hp = harmonise_params().set_index(["group_id", "channel"]) if self.harm == "gmm" else None
         self.images = []
         for b, s, gid in self.fields[["batch", "site", "group_id"]].itertuples(index=False, name=None):
-            a = load_half_raw(b, s).astype(np.float32)
+            a = load_half_raw(b, s, self.harm).astype(np.float32)
             if hp is not None:
                 for c in range(3):
                     g, o = hp.loc[(gid, c), ["gain", "offset"]]

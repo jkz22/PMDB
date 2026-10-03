@@ -23,7 +23,8 @@ def _spec(row) -> dict:
             d[k] = int(d[k])
     for k in ("fold", "lobo"):
         d.pop(k, None)
-    d["harmonise"] = bool(d.get("harmonise", False))
+    h = d.get("harmonise", False)
+    d["harmonise"] = False if h in (False, "False", "none") else True if h in (True, "True") else h
     return d
 
 
@@ -62,5 +63,22 @@ def plan_round2():
     print(pd.DataFrame(flags).to_string(index=False), "\n", len(specs), "round-2 runs")
 
 
+def plan_round3(methods=("hybrid", "affine2", "histmatch")):
+    """Round 3: best Stage A/B config per trainable family retrained on the PR #16 per-site LUT
+    harmonised caches (cache/harmonised/<method>/half), plus the top config with hybrid + aug2."""
+    lb = pd.read_csv(OUT / "leaderboard.csv")
+    lb = lb[lb.stage.isin(TRAINED)].sort_values("selection_rank")
+    best = lb.groupby("family").head(1)
+    specs = []
+    for _, r in best.iterrows():
+        base = _spec(r)
+        for m in methods:
+            specs.append({**base, "harmonise": m, "factor": f"r3_{m}", "stage": "R3", "parent": r.hash})
+    top = _spec(best.iloc[0])
+    specs.append({**top, "harmonise": "hybrid", "aug": "aug2", "factor": "r3_hybrid_aug2", "stage": "R3", "parent": best.iloc[0].hash})
+    (OUT / "round3_specs.json").write_text(json.dumps(specs, indent=1))
+    print(len(specs), "round-3 runs:", sorted({(s["family"], s["factor"]) for s in specs}))
+
+
 if __name__ == "__main__":
-    {"stage_c": plan_stage_c, "round2": plan_round2}[sys.argv[1]]()
+    {"stage_c": plan_stage_c, "round2": plan_round2, "round3": plan_round3}[sys.argv[1]]()

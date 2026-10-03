@@ -20,14 +20,19 @@ os.environ.setdefault("PMDB_CACHE", str(Path(__file__).resolve().parents[2] / "c
 if str(KPI_ROOT) not in sys.path:
     sys.path.insert(0, str(KPI_ROOT))
 _pm = sys.modules.get("pmdb")
+_main_mods = {}
 if _pm is not None and not str(getattr(_pm, "__file__", "")).startswith(str(KPI_ROOT)):
     # main-branch pmdb (no pmdb.kpis) was imported first: swap in the pinned KPI branch package
-    for _k in [k for k in sys.modules if k == "pmdb" or k.startswith("pmdb.")]:
-        del sys.modules[_k]
+    _main_mods = {k: sys.modules.pop(k) for k in list(sys.modules) if k == "pmdb" or k.startswith("pmdb.")}
 
 from pmdb.kpis import REGISTRY, TooFewObjects  # noqa: E402
 from pmdb.kpis.common import KpiContext  # noqa: E402
 from pmdb.segment import Masks, segment_bse  # noqa: E402
+
+if _main_mods:  # hand the main-branch package back so later `import pmdb.io` etc. see the repo version
+    for _k in [k for k in sys.modules if k == "pmdb" or k.startswith("pmdb.")]:
+        del sys.modules[_k]
+    sys.modules.update(_main_mods)
 
 CROP_KPIS = ("K01", "K02", "K03", "K04")
 CROP_COLS = ("frac_si", "frac_graphite", "frac_pore", "frac_artefact", "K01_si_frac_adm",

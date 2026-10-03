@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from src.v2.common import OUT
+from src.v2.common import OUT, harm_method
 
 KEYS = ["arch", "view", "input", "harmonise", "aug"]
 
@@ -37,10 +37,15 @@ def aggregate(df: pd.DataFrame) -> pd.DataFrame:
                     "field_acc_Batch_3": cm[2, 2] / max(1, cm[2].sum()), "field_confusion": cm.tolist(),
                     "n_test_fields": int(g.n_test_fields.sum()), "train_sec_mean": g.train_sec.mean()})
     lb = pd.DataFrame(out)
-    raw = lb[(~lb.harmonise.astype(bool)) & (lb.aug == "aug1") & (lb.input == "raw")].set_index(["arch", "view"])
-    harm = lb[lb.harmonise.astype(bool) & (lb.aug == "aug1") & (lb.input == "raw")].set_index(["arch", "view"])
-    gap = (raw.field_acc - harm.field_acc).rename("raw_minus_harm_field_acc")
-    lb = lb.merge(gap.reset_index(), on=["arch", "view"], how="left")
+    lb["harmonise"] = lb.harmonise.map(harm_method)  # none | gmm | hybrid | affine2 | histmatch ...
+    base = (lb.aug == "aug1") & (lb.input == "raw")
+    raw = lb[base & (lb.harmonise == "none")].set_index(["arch", "view"]).field_acc
+    for m in sorted(set(lb.harmonise) - {"none"}):
+        h = lb[base & (lb.harmonise == m)].set_index(["arch", "view"]).field_acc
+        gap = (raw - h).rename(f"raw_minus_{m}_field_acc")
+        lb = lb.merge(gap.reset_index(), on=["arch", "view"], how="left")
+    if "raw_minus_gmm_field_acc" in lb:
+        lb["raw_minus_harm_field_acc"] = lb.raw_minus_gmm_field_acc
     return lb.sort_values(["field_acc", "crop_acc"], ascending=False).reset_index(drop=True)
 
 

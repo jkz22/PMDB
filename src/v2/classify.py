@@ -175,7 +175,7 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     return d
 
 
-def cls_grid(n_folds: int = 5) -> list[dict]:
+def cls_grid(n_folds: int = 5, harms=(False, True), aug2: bool = True) -> list[dict]:
     """Classification baselines: arch x view (stack + single detectors) x input treatment, all folds.
     Harmonised input removes the per-image brightness/gain differences (the Batch_3 black level),
     so raw-vs-harmonised is the test of 'microstructure or imaging?'."""
@@ -183,12 +183,12 @@ def cls_grid(n_folds: int = 5) -> list[dict]:
     archs = ("resnet18_scratch", "resnet18_imnet", "effb4_imnet", "dinov2_ft", "dinov2_linear")
     for a in archs:
         for v in ("stack", "BSE", "Inlens", "SE_type"):
-            for harm in (False, True):
-                if v != "stack" and a not in ("resnet18_imnet", "dinov2_ft"):
-                    continue  # single-detector sweep on two representative archs only
+            for harm in harms:
+                if v != "stack" and (a not in ("resnet18_imnet", "dinov2_ft") or harm not in (False, True, "hybrid")):
+                    continue  # single-detector sweep on two representative archs (and the recommended LUT) only
                 for k in range(n_folds):
                     runs.append(dict(task="cls", arch=a, view=v, harmonise=harm, fold=k, n_folds=n_folds, stage="CLS"))
-    for k in range(n_folds):  # aug2 nuisance-robust variant of the main arch
+    for k in range(n_folds if aug2 else 0):  # aug2 nuisance-robust variant of the main arch
         runs.append(dict(task="cls", arch="resnet18_imnet", view="stack", aug="aug2", fold=k, n_folds=n_folds, stage="CLS"))
         runs.append(dict(task="cls", arch="resnet18_imnet", view="stack", input="norm", fold=k, n_folds=n_folds, stage="CLS"))
     return runs

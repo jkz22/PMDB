@@ -31,7 +31,25 @@ def manifest() -> pd.DataFrame:
     return m
 
 
-def load_half_raw(batch: str, site: str) -> np.ndarray:
+HARM_METHODS = ("hybrid", "affine2", "histmatch", "offset", "affine3")  # PR #16 per-site LUTs, materialised uint8
+
+
+def harm_method(h) -> str:
+    """Normalise the ``harmonise`` config value: False/None/'none' -> 'none'; True -> 'gmm' (this
+    pipeline's GMM-mean linear map); otherwise a pmdb.harmonise method name (see HARM_METHODS)."""
+    if h is None or h is False or (isinstance(h, float) and np.isnan(h)) or str(h) in ("none", "False", "nan"):
+        return "none"
+    if h is True or str(h) == "True":
+        return "gmm"
+    assert h in HARM_METHODS, h
+    return str(h)
+
+
+def load_half_raw(batch: str, site: str, harm: str = "none") -> np.ndarray:
+    """uint8 (H,W,3) at 50 nm/px. ``harm`` in HARM_METHODS reads cache/harmonised/<harm>/half/
+    (byte-identical to pmdb.io.load_site(..., normalise='none', harmonise=harm))."""
+    if harm in HARM_METHODS:
+        return np.load(CACHE.parent / "harmonised" / harm / "half" / f"{batch}__{site}.npz")["image"]
     return np.load(CACHE / f"{batch}__{site}.npz")["image"]
 
 
