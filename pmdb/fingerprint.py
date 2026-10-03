@@ -33,19 +33,25 @@ scales matter because the batches differ in *dispersion* as much as location
 performs measurably worse.
 
 Confidence must mean something, so on top of the likelihood score sits
-class-conditional (Mondrian) conformal calibration: per batch, the
-leave-one-out scores of its own training sites form the calibration set, and
-a test site gets a finite-sample-valid p-value per batch (quantised to
-multiples of 1/(n_b + 1); at n_b = 7 that is coarse, and honestly so).
-Out-of-distribution falls out for free: if every batch p-value is small, the
-site is like no known batch ("reject the shipment").
+class-conditional (Mondrian) full conformal calibration. For each batch b the
+test site is provisionally added to b; every one of the n_b + 1 points is
+scored leave-one-out (against b's params refitted without it, with the pooled
+standardization re-estimated on all sites including the test site), and the
+p-value is the test site's rank among those scores. Every point is scored by
+the same rule, so the p-value is finite-sample valid, quantised to multiples
+of 1/(n_b + 1) (at n_b = 7 that is coarse, and honestly so). Assignment
+itself uses the training-only fit. Out-of-distribution falls out for free:
+if every batch p-value is small, the site is like no known batch ("reject the
+shipment").
 
-Terminology (standard conformal usage):
+Terminology:
 
 - credibility = p-value of the assigned batch (how typical the site would be
   if it truly belonged there).
-- confidence  = 1 - second-highest p-value (how firmly the alternatives are
-  excluded).
+- confidence  = 1 - highest p-value among the other batches (how firmly the
+  alternatives are excluded). Because assignment is by likelihood rather than
+  max p, this is the textbook "1 - second-highest p" only when the assigned
+  batch also has the highest p; otherwise it is lower, deliberately.
 """
 
 from __future__ import annotations
@@ -150,8 +156,9 @@ class FingerprintModel:
         scale: Per-feature pooled robust scale (standardization divisor).
         batch_center: (batch x feature) medians in standardized space.
         batch_scale: (batch x feature) shrunk robust scales in standardized space.
-        calibration: Per batch, sorted leave-one-out nonconformity scores of
-            its training sites (the conformal calibration set).
+        train_x: Raw training features (kept features, `features` order), the
+            transductive calibration data.
+        train_codes: Batch code (index into `batches`) per training row.
     """
 
     features: list[str]
@@ -160,7 +167,8 @@ class FingerprintModel:
     scale: pd.Series
     batch_center: pd.DataFrame
     batch_scale: pd.DataFrame
-    calibration: dict[str, np.ndarray] = field(repr=False)
+    train_x: np.ndarray = field(repr=False)
+    train_codes: np.ndarray = field(repr=False)
 
 
 def _robust_scale(resid: np.ndarray) -> np.ndarray:
@@ -188,22 +196,31 @@ def _scores(z: np.ndarray, mu: np.ndarray, sb: np.ndarray) -> np.ndarray:
 
     score(x, b) = mean_k [ |z_k - mu_bk| / s_bk + log s_bk ].  Lower is more
     typical of the batch. The mean (not sum) keeps scores comparable when a
-    site has missing features.
+    site has missing features. Inputs are validated complete at the pandas edge
+    (`_feature_matrix`), so a plain mean is used; a NaN can never be averaged away.
     """
     dev = np.abs(z[:, None, :] - mu[None, :, :]) / sb[None, :, :]
-    return np.nanmean(dev + np.log(sb)[None, :, :], axis=2)
+    return np.mean(dev + np.log(sb)[None, :, :], axis=2)
 
 
-def _fit_core(x: np.ndarray, codes: np.ndarray, n_batches: int,
-              with_calibration: bool = True):
-    """Numpy fit: standardization, batch params, LOO conformal calibration.
+def _loo_scores(zb: np.ndarray) -> np.ndarray:
+    """Score each row of zb against batch params re-estimated from the other rows."""
+    n = len(zb)
+    scores = np.empty(n)
+    mask = np.ones(n, dtype=bool)
+    for i in range(n):
+        mask[i] = False
+        mu_i = np.nanmedian(zb[mask], axis=0)
+        s_i = _robust_scale(zb[mask] - mu_i)
+        s_i = SCALE_SHRINK * 1.0 + (1.0 - SCALE_SHRINK) * s_i
+        s_i = np.where(s_i > 0, s_i, 1.0)
+        scores[i] = float(_scores(zb[i:i + 1], mu_i[None], s_i[None])[0, 0])
+        mask[i] = True
+    return scores
 
-    The per-batch calibration scores are leave-one-out within the batch (each
-    site scored against parameters re-estimated from its batchmates only), so
-    a test site's score is exchangeable with them. The pooled standardization
-    is computed once on the full training set; re-estimating it per left-out
-    site moves third decimals at n = 31 and is not worth the opacity.
-    """
+
+def _fit_core(x: np.ndarray, codes: np.ndarray, n_batches: int):
+    """Numpy fit: pooled robust standardization and per-batch params."""
     center = np.nanmedian(x, axis=0)
     scale = _robust_scale(x - center)
     ok = scale > 0
@@ -212,25 +229,56 @@ def _fit_core(x: np.ndarray, codes: np.ndarray, n_batches: int,
     z = np.clip((x[:, ok] - center[ok]) / scale[ok], -MAX_Z, MAX_Z)
 
     mu, sb = _batch_params(z, codes, n_batches)
+    return center, scale, ok, mu, sb
 
-    calibration = []
-    if not with_calibration:
-        return center, scale, ok, mu, sb, calibration
+
+def _full_conformal_p(train_x: np.ndarray, train_codes: np.ndarray,
+                      n_batches: int, x_new: np.ndarray) -> np.ndarray:
+    """Full (transductive) Mondrian conformal p-value per batch for one site.
+
+    The site is added to the training set; the label-free pooled
+    standardization is re-estimated on all n + 1 sites; then, for each batch
+    b, every one of the n_b + 1 batch-b points (its training sites plus the
+    new site) is scored against params fitted on the other n_b. All points
+    are scored by the same symmetric rule, so under exchangeability the rank
+    of the new site's score is uniform and
+    p_b = #{scores >= score(new)} / (n_b + 1) is finite-sample valid.
+    """
+    xa = np.vstack([train_x, x_new[None, :]])
+    center = np.nanmedian(xa, axis=0)
+    scale = _robust_scale(xa - center)
+    za = np.clip((xa - center) / scale, -MAX_Z, MAX_Z)
+    z_train, z_new = za[:-1], za[-1:]
+    p = np.empty(n_batches)
     for b in range(n_batches):
-        zb = z[codes == b]
-        n_b = len(zb)
-        scores = np.empty(n_b)
-        mask = np.ones(n_b, dtype=bool)
-        for i in range(n_b):
-            mask[i] = False
-            mu_i = np.nanmedian(zb[mask], axis=0)
-            s_i = _robust_scale(zb[mask] - mu_i)
-            s_i = SCALE_SHRINK * 1.0 + (1.0 - SCALE_SHRINK) * s_i
-            s_i = np.where(s_i > 0, s_i, 1.0)
-            scores[i] = float(_scores(zb[i:i + 1], mu_i[None], s_i[None])[0, 0])
-            mask[i] = True
-        calibration.append(np.sort(scores))
-    return center, scale, ok, mu, sb, calibration
+        s = _loo_scores(np.vstack([z_train[train_codes == b], z_new]))
+        p[b] = np.sum(s >= s[-1]) / len(s)
+    return p
+
+
+def _feature_matrix(X: pd.DataFrame, features: list[str]) -> np.ndarray:
+    """X[features] as a float array. Raises ValueError if a column is missing or
+    any value is non-finite (an incomplete fingerprint is refused, never scored
+    on the remaining features)."""
+    missing = [f for f in features if f not in X.columns]
+    if missing:
+        raise ValueError(f"input is missing feature columns: {missing}")
+    x = X[features].to_numpy(dtype=float)
+    bad = ~np.isfinite(x)
+    if bad.any():
+        detail = {str(X.index[i]): [features[j] for j in np.flatnonzero(bad[i])]
+                  for i in np.flatnonzero(bad.any(axis=1))}
+        raise ValueError(f"incomplete fingerprint, non-finite features: {detail}")
+    return x
+
+
+def _align_labels(X: pd.DataFrame, y: pd.Series) -> pd.Series:
+    """Labels reordered to X's rows by index key (never by position)."""
+    if not X.index.is_unique or not y.index.is_unique:
+        raise ValueError("X and y must have unique site keys")
+    if len(X) != len(y) or set(X.index) != set(y.index):
+        raise ValueError("y must be indexed by exactly the sites of X")
+    return y.reindex(X.index).astype(str)
 
 
 def fit(X: pd.DataFrame, y: pd.Series, features: list[str] | None = None) -> FingerprintModel:
@@ -238,19 +286,17 @@ def fit(X: pd.DataFrame, y: pd.Series, features: list[str] | None = None) -> Fin
 
     Args:
         X: Feature table (sites x features), numeric.
-        y: Batch label per site (aligned with X).
+        y: Batch label per site, indexed by the same (unique) site keys as X;
+            aligned by key, not position.
         features: Feature subset; defaults to all columns of X.
     """
     features = list(features) if features is not None else list(X.columns)
-    y = y.astype(str)
+    y = _align_labels(X, y)
     batches = sorted(y.unique())
     codes = np.asarray([batches.index(b) for b in y])
 
-    missing = [f for f in features if f not in X.columns]
-    if missing:
-        raise ValueError(f"input is missing feature columns: {missing}")
-    x = X[features].to_numpy(dtype=float)
-    center, scale, ok, mu, sb, calibration = _fit_core(x, codes, len(batches))
+    x = _feature_matrix(X, features)
+    center, scale, ok, mu, sb = _fit_core(x, codes, len(batches))
     kept = [f for f, k in zip(features, ok) if k]
 
     return FingerprintModel(
@@ -260,15 +306,13 @@ def fit(X: pd.DataFrame, y: pd.Series, features: list[str] | None = None) -> Fin
         scale=pd.Series(scale[ok], index=kept),
         batch_center=pd.DataFrame(mu, index=batches, columns=kept),
         batch_scale=pd.DataFrame(sb, index=batches, columns=kept),
-        calibration={b: calibration[i] for i, b in enumerate(batches)},
+        train_x=x[:, ok],
+        train_codes=codes,
     )
 
 
 def _standardize(model: FingerprintModel, X: pd.DataFrame) -> np.ndarray:
-    missing = [f for f in model.features if f not in X.columns]
-    if missing:
-        raise ValueError(f"input is missing feature columns: {missing}")
-    x = X[model.features].to_numpy(dtype=float)
+    x = _feature_matrix(X, model.features)
     z = (x - model.center.to_numpy()) / model.scale.to_numpy()
     return np.clip(z, -MAX_Z, MAX_Z)
 
@@ -281,17 +325,17 @@ def nonconformity(model: FingerprintModel, X: pd.DataFrame) -> pd.DataFrame:
 
 
 def conformal_p(model: FingerprintModel, X: pd.DataFrame) -> pd.DataFrame:
-    """Class-conditional conformal p-value per batch (sites x batches).
+    """Class-conditional full-conformal p-value per batch (sites x batches).
 
-    p_b = (1 + #{calibration scores of batch b >= score(x, b)}) / (n_b + 1).
+    p_b = #{augmented batch-b scores >= score(x, b)} / (n_b + 1), see
+    `_full_conformal_p`.
     """
-    score = nonconformity(model, X)
-    out = {}
-    for b in model.batches:
-        cal = model.calibration[b]
-        ge = len(cal) - np.searchsorted(cal, score[b].to_numpy(), side="left")
-        out[b] = (1.0 + ge) / (len(cal) + 1.0)
-    return pd.DataFrame(out, index=X.index)
+    x = _feature_matrix(X, model.features)
+    if len(x) == 0:
+        return pd.DataFrame(np.empty((0, len(model.batches))), index=X.index, columns=model.batches)
+    p = np.vstack([_full_conformal_p(model.train_x, model.train_codes,
+                                     len(model.batches), row) for row in x])
+    return pd.DataFrame(p, index=X.index, columns=model.batches)
 
 
 def predict(
@@ -304,14 +348,19 @@ def predict(
     Assignment is by best (lowest) likelihood score; the conformal p-values
     quantify how typical the site would be of each batch. Returns a DataFrame
     with columns: `assigned`, `credibility` (p-value of the assigned batch),
-    `confidence` (1 - highest p-value among the other batches), `ood` (True if
+    `confidence` (1 - highest p-value among the other batches; this equals the
+    textbook 1 - second-highest p only when the assigned batch has the highest
+    p, and is deliberately lower otherwise, because a rival batch that stays
+    typical is not excluded), `ood` (True if
     every batch is rejected: p below `ood_alpha` or at its achievable floor
-    1/(n_b + 1)), one `p_<batch>` and one `score_<batch>` column per batch. An
+    1/(n_b + 1)), one `p_<batch>` and one `score_<batch>` column per batch (the `score_`
+    columns are the training-fit likelihood scores used for assignment). An
     assignment is always made.
     """
     score = nonconformity(model, X)
     p = conformal_p(model, X)
-    floor = {b: 1.0 / (len(model.calibration[b]) + 1.0) for b in model.batches}
+    n_b = np.bincount(model.train_codes, minlength=len(model.batches))
+    floor = {b: 1.0 / (n_b[i] + 1.0) for i, b in enumerate(model.batches)}
 
     rows = []
     for idx in X.index:
@@ -328,7 +377,9 @@ def predict(
             **{f"p_{b}": float(pv[b]) for b in model.batches},
             **{f"score_{b}": float(sv[b]) for b in model.batches},
         })
-    return pd.DataFrame(rows, index=X.index)
+    cols = (["assigned", "credibility", "confidence", "ood"]
+            + [f"p_{b}" for b in model.batches] + [f"score_{b}" for b in model.batches])
+    return pd.DataFrame(rows, index=X.index, columns=cols)
 
 
 # ---------------------------------------------------------------------------
@@ -342,8 +393,7 @@ def _loo_assignments(x: np.ndarray, codes: np.ndarray, n_batches: int) -> np.nda
     idx = np.arange(n)
     for i in range(n):
         tr = idx != i
-        center, scale, ok, mu, sb, _ = _fit_core(x[tr], codes[tr], n_batches,
-                                                 with_calibration=False)
+        center, scale, ok, mu, sb = _fit_core(x[tr], codes[tr], n_batches)
         z = np.clip((x[i:i + 1, ok] - center[ok]) / scale[ok], -MAX_Z, MAX_Z)
         assigned[i] = int(np.argmin(_scores(z, mu, sb)[0]))
     return assigned
@@ -362,7 +412,7 @@ def loo_evaluate(
         `accuracy`, `n`, per-batch `recall`, and a `confusion` nested dict
         confusion[true][assigned] = count).
     """
-    y = y.astype(str)
+    y = _align_labels(X, y)
     preds = []
     for i in range(len(X)):
         m = fit(X.drop(X.index[i]), y.drop(y.index[i]), features=features)
@@ -400,11 +450,11 @@ def permutation_test(
     observed accuracy with the null distribution. The p-value uses the
     standard (1 + #{null >= observed}) / (n_perm + 1) estimator.
     """
-    y = y.astype(str)
+    y = _align_labels(X, y)
     features = list(features) if features is not None else list(X.columns)
     batches = sorted(y.unique())
     codes = np.asarray([batches.index(b) for b in y])
-    x = X[features].to_numpy(dtype=float)
+    x = _feature_matrix(X, features)
 
     observed = float((_loo_assignments(x, codes, len(batches)) == codes).mean())
     rng = np.random.default_rng(seed)
@@ -433,9 +483,9 @@ def explain(model: FingerprintModel, X: pd.DataFrame) -> pd.DataFrame:
     Returns a long DataFrame with columns `site_index`, `feature`, `z` (the
     site's standardized value), and per batch `center_<batch>`,
     `scale_<batch>` and `dev_<batch>` (the feature's scaled deviation
-    |z - center| / scale, its contribution to that batch's score). Sorting a
-    site's rows by the gap between `dev_` columns shows which features decided
-    the assignment.
+    |z - center| / scale). The feature's contribution to batch b's score is
+    `dev_b + log(scale_b)`; ranking a site's rows by the gap in contributions
+    shows which features decided the assignment.
     """
     z = pd.DataFrame(_standardize(model, X), index=X.index, columns=model.features)
     rows = []

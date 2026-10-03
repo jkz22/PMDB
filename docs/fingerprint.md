@@ -12,6 +12,8 @@ python scripts/plot_fingerprint.py      # demo figures
 python scripts/demo_reject.py           # live "reject a drifting batch" demo
 ```
 
+Running `run_fingerprint.py` without `--heldout-dir` deletes any held-out outputs from an earlier run in the output directory.
+
 ## 1. The finding: composition is identical, arrangement is not
 
 None of the 51 scalar site KPIs separates the batches: the best reaches
@@ -48,11 +50,7 @@ fingerprint uses segmentation-derived geometry only.
   Per-batch scales matter because the batches differ in *dispersion* as much
   as location — Batch 1 is the loose one; a nearest-centroid rule is blind to
   that and measurably worse.
-- **Confidence:** class-conditional (Mondrian) conformal p-values. Per batch,
-  the leave-one-out scores of its own training sites form the calibration
-  set; a test site's p-value is finite-sample valid, quantised to multiples
-  of 1/(n_b+1) — coarse at n_b = 7, and honestly so.
-  *Credibility* = p of the assigned batch; *confidence* = 1 − second-highest p.
+- **Confidence:** class-conditional (Mondrian) *full* conformal p-values. For each batch the site is provisionally added to it, and every one of the n_b+1 points is scored leave-one-out against that batch refitted without it (the pooled standardization is re-estimated with the site included). The p-value is the site's rank among those scores. All points are scored by the same rule, so the p-value is finite-sample valid, quantised to multiples of 1/(n_b+1), which is coarse at n_b = 7, and honestly so. *Credibility* = p of the assigned batch; *confidence* = 1 − highest p among the other batches. That is the textbook 1 − second-highest p only when the assigned batch also has the highest p; otherwise it is lower, on purpose, because a rival that stays typical is not excluded.
 - **Out-of-distribution:** a batch is rejected when its p-value is below
   α = 0.1 **or at its achievable floor** 1/(n_b+1), i.e. the site is more
   nonconforming than every labelled site of that batch. All batches rejected
@@ -99,8 +97,8 @@ Honest caveats:
 
 | site | assigned | credibility | confidence | p(B1) / p(B2) / p(B3) | reading |
 |---|---|---|---|---|---|
-| `3e122cbj` | **Batch 1** | 1.00 | 0.00 | 1.00 / 1.00 / 1.00 | the honest hard case: typical of *every* batch (all p at 1.0); Batch 1 wins on likelihood only. Confidence 0 is the model saying "this one could be anyone" — not a bug, a correctly calibrated shrug. |
-| `fn0mhxef` | **Batch 3** | 0.44 | 0.25 | 0.12 / 0.75 / 0.44 | mid-band Si at 1.18 — a region only Batch 3 occupies; every Batch 2 site is mid-depth depleted (< 0.7). Batch 1 effectively excluded (p = 0.12). |
+| `3e122cbj` | **Batch 1** | 0.88 | 0.00 | 0.88 / 0.88 / 1.00 | the honest hard case: typical of *every* batch (every p ≥ 0.88, Batch 3 highest); Batch 1 wins on likelihood only. Confidence 0 is the model saying "this one could be anyone" — not a bug, a correctly calibrated shrug. |
+| `fn0mhxef` | **Batch 3** | 0.44 | 0.12 | 0.12 / 0.88 / 0.44 | mid-band Si at 1.18 — a region only Batch 3 occupies; every Batch 2 site is mid-depth depleted (< 0.7). Batch 1 effectively excluded (p = 0.12). Confidence is low because Batch 2 stays typical overall (p = 0.88) even though it loses on likelihood. |
 | `xrv9xvzb` | **Batch 2** | 1.00 | 0.50 | 0.50 / 1.00 / 0.39 | mid-depth dip −0.72, inside the Batch 2 cluster and below every Batch 3 site; several pair-correlation bins agree. |
 
 Side-channel worth stating out loud: `xrv9xvzb` is the one held-out site with
