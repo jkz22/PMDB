@@ -1,0 +1,36 @@
+# Pipeline configuration. Everything tunable lives here.
+
+data:
+  root: data            # batches live at <root>/<batch_name>/*.tif
+  detector: BSE         # only *_<detector>.tif images are analysed
+  baseline_batch: Batch_3   # largest batch (17 images); Batch_1 excluded as
+                            # baseline due to internal heterogeneity (2/7
+                            # frames with ~2.5x bright phase, see results/
+                            # kpis_small_multiples.png)
+
+normalise:
+  p_low: 0.5            # percentile clipped to 0
+  p_high: 99.5          # percentile clipped to 255
+
+segment:
+  gaussian_sigma: 1.0
+  n_classes: 4          # pore, graphite, bright, rim (low -> high intensity)
+  rim_opening_radius: 3 # disk radius; opening removes thin rim structures
+  min_pore_px: 20       # remove pore components smaller than this
+  fill_graphite_px: 20  # fill graphite holes smaller than this
+
+instances:
+  # brief suggested ~25 but that shatters elongated flakes (1742 vs 543
+  # instances on the reference image); 50 matches visible flakes by eye,
+  # see qc/instances/compare_min_distance.png
+  watershed_min_distance: 50
+  # instance area floor: the area histogram is bimodal (~80% specks under
+  # 400 px vs real flakes over 2000 px); 400 px = 0.5x0.5 um at 25 nm/px,
+  # below any plausible feedstock particle cross-section
+  min_instance_px: 400
+
+# Confirmed in AGENTS.md: full resolution (data/) is 25.000 +/- 0.001 nm/px.
+# Consumed by the KPI modules; KPIs with a _um suffix are in micrometres.
+pixel_size_um: 0.025
+
+seed: 0

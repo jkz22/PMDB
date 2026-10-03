@@ -1,0 +1,4 @@
+batch,site,BSE_black,BSE_pore,BSE_graphite,BSE_si,Inlens_black,Inlens_pore,Inlens_graphite,Inlens_si,SE_type_black,SE_type_pore,SE_type_graphite,SE_type_si
+Batch_heldout,3e122cbj,0.0,1.0,56.0,90.0,0.0,8.0,88.0,135.0,0.0,0.0,78.0,114.0
+Batch_heldout,fn0mhxef,0.0,1.0,52.0,112.0,0.0,20.0,102.0,167.0,0.0,0.0,78.0,129.0
+Batch_heldout,xrv9xvzb,4.0,12.0,60.0,108.0,16.0,42.0,127.0,134.0,0.0,3.0,82.0,130.0

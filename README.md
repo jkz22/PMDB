@@ -41,6 +41,13 @@ bse, inlens, se_type = site.image[..., 0], site.image[..., 1], site.image[..., 2
 
 # 3. Load raw uint8 counts without percentile normalization:
 site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
+
+# 4. Load with imaging-artefact harmonisation (per-site grey-level LUT, see docs/harmonisation.md).
+#    Fixes the Batch 3 black-level / gain offset; raw data and site.raw_stats are untouched.
+#    normalise defaults to "fixed" (grey / 255, one common scale) when harmonise is set; "percentile" would cancel the LUT.
+site_h = load_site("Batch_3", "71vgq3fw", resolution="half", normalise="fixed", harmonise="hybrid")
+# methods: "none" | "offset" | "affine2" | "affine3" | "histmatch" | "hybrid" (recommended)
+# site_h.harmonised_stats: per-channel intensity stats after the LUT (site_h.raw_stats = before)
 ```
 
 ## Key Files & Outputs
@@ -49,6 +56,7 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
 - **`outputs/raw_intensity_stats.csv`**: Baseline intensity percentiles (`p0_5`, `p1`, `p50`, `p99`, `p99_5`, `mean`, `std`) across all 93 detector channels. (Note: Batch 3 exhibits a known BSE brightness offset where `p1` averages ~7.18 vs 0 in Batches 1 & 2).
 - **`outputs/qc_contact_sheet.png`**: Contact sheet visualization of all 31 sites across all 3 detectors.
 - **`outputs/raw_stats_by_batch.png`**: QC strip plot of intensity percentiles across batches.
+- **`docs/kpis/screening.md`**: KPI screening tool (`python -m pmdb.screen`) and the KPI submission contract.
 
 ## Testing & Pipeline Execution
 
@@ -63,3 +71,32 @@ pytest -q -m data
 python scripts/build_cache.py
 python scripts/qc_overview.py
 ```
+
+## Running on Modal
+
+Each person uses their own Modal account; no credentials live in the repo. One-time login (stores a token in `~/.modal.toml`):
+
+```bash
+pip install modal
+modal token new
+```
+
+One-time upload of the half-resolution cache to a Modal Volume (only `cache/half` is uploaded, never `data/`):
+
+```bash
+modal volume create pmdb-data
+modal volume put pmdb-data cache/half /half
+modal volume ls pmdb-data /half
+```
+
+To refresh after a cache rebuild: `modal volume put --force pmdb-data cache/half /half`.
+
+Run (local `pmdb/` edits ship automatically on each run):
+
+```bash
+modal run modal_app.py --smoke   # 1 site
+modal run modal_app.py           # all 31 sites
+# option: --name <name>
+```
+
+Results land in `outputs/modal/<name>.csv` (gitignored), one row per site with the KPI columns from `docs/kpis/kpi_catalogue.csv` v1 plus `runner`, `elapsed_s` and `error`. If any site errors, rows go to `<name>_failed.csv` instead (an existing `<name>.csv` is left untouched) and the command exits 1.
