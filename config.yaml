@@ -17,7 +17,10 @@ segment:
   fill_graphite_px: 20  # fill graphite holes smaller than this
 
 instances:
-  watershed_min_distance: 25
+  # brief suggested ~25 but that shatters elongated flakes (1742 vs 543
+  # instances on the reference image); 50 matches visible flakes by eye,
+  # see qc/instances/compare_min_distance.png
+  watershed_min_distance: 50
 
 pixel_size_um: null     # unknown; all KPIs in pixel units until mentors confirm
 
