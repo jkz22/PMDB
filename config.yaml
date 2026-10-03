@@ -24,6 +24,10 @@ instances:
   # instances on the reference image); 50 matches visible flakes by eye,
   # see qc/instances/compare_min_distance.png
   watershed_min_distance: 50
+  # instance area floor: the area histogram is bimodal (~80% specks under
+  # 400 px vs real flakes over 2000 px); 400 px = 0.5x0.5 um at 25 nm/px,
+  # below any plausible feedstock particle cross-section
+  min_instance_px: 400
 
 # Confirmed in AGENTS.md: full resolution (data/) is 25.000 +/- 0.001 nm/px.
 # The pipeline does not consume this value yet; committed KPI outputs remain

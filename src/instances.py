@@ -42,6 +42,14 @@ def graphite_instances(masks: dict[str, np.ndarray], cfg: dict) -> tuple[np.ndar
         extra, n_extra = ndi.label(missed)
         labels = labels + np.where(missed, extra + labels.max(), 0)
 
+    # drop sub-particle specks: an instance below min_instance_px is
+    # segmentation noise, not a feedstock particle, and would dominate
+    # the size percentiles (the pixels stay graphite for phase fractions)
+    sizes = np.bincount(labels.ravel())
+    small = sizes < cfg["instances"]["min_instance_px"]
+    small[0] = False
+    labels[small[labels]] = 0
+
     border = np.unique(np.concatenate([
         labels[0, :], labels[-1, :], labels[:, 0], labels[:, -1]
     ]))
