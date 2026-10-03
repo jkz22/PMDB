@@ -24,5 +24,9 @@ tifffile
 imagecodecs
 scikit-image
 
+# Materials-KPI pipeline (src/) and its converter
+pyarrow==25.0.1
+PyYAML==6.0.3
+
 # Testing
 pytest

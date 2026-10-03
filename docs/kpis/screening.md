@@ -170,6 +170,8 @@ python -m pmdb.screen --kpis outputs/kpis/site_kpis.csv --replicates outputs/kpi
 
 Result (outputs in `outputs/kpis/screen/`): `kept 26/43 KPIs; drops by gate: {'reliability': 6, 'robustness': 1, 'redundant_with': 2, 'degeneracy': 8}`. Degeneracy: 3 `few_unique`, 2 `missing`, 3 `zero_mad`; artefact: 0 drops. Both K04 KPIs fail: `K04_agglom_frac` at reliability and `K04_n_clusters_per_1000um2` at robustness (the gate order decides which gate is named; all statistics are reported).
 
+Combined run with the colleague materials KPIs: [consolidation.md](consolidation.md).
+
 ## 6. Limits
 
 - n = 31 sites in 3 batches, unbalanced (7/7/17): CIs are wide and borderline calls are fragile.

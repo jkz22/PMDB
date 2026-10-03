@@ -6,6 +6,8 @@
 
 **Screening / submitting new KPIs:** [screening.md](screening.md) ([one-page summary](screening-summary.md)).
 
+**Colleague materials KPIs vs ours:** [consolidation.md](consolidation.md).
+
 ---
 
 ## 1. The question the KPIs answer
