@@ -1,0 +1,62 @@
+{
+  "screen_version": "1.0",
+  "timestamp": "2026-10-03T16:47:57+00:00",
+  "config": {
+    "max_missing_frac": 0.2,
+    "min_unique": 5,
+    "eta2_flag": 0.5,
+    "covariate_rho": 0.5,
+    "ci_level": 0.95,
+    "n_boot_cov": 1000,
+    "icc_upper_min": 0.5,
+    "n_boot_icc": 1000,
+    "robustness_min": 0.8,
+    "redundancy_rho": 0.8,
+    "cocluster_frac": 0.8,
+    "n_boot_cluster": 500,
+    "seed": 0,
+    "sentinels": [
+      [
+        "K08_pcf_rpeak_x_um",
+        -1.0
+      ],
+      [
+        "K08_pcf_rpeak_z_um",
+        -1.0
+      ]
+    ],
+    "replicate_col": "tile",
+    "sensitivity_params": [
+      "d_um",
+      "d_star_um"
+    ],
+    "ignore_cols": [
+      "se_detector",
+      "segmenter_version",
+      "nan_reason",
+      "runner",
+      "elapsed_s",
+      "error"
+    ]
+  },
+  "inputs": {
+    "kpis": [
+      "outputs/kpis/site_kpis.csv"
+    ],
+    "replicates": "outputs/kpis/tile_kpis.csv",
+    "sensitivity": "outputs/kpis/sensitivity.csv",
+    "covariates": "outputs/kpis/screen/covariates_bse.csv"
+  },
+  "seeds": {
+    "seed": 0,
+    "streams": {
+      "covariate": 1,
+      "icc": 2,
+      "cluster": 3
+    }
+  },
+  "n_sites": 31,
+  "n_kpis": 43,
+  "n_kept": 26,
+  "ignored_columns": {}
+}
