@@ -13,6 +13,8 @@ from pmdb import harmonise as H
 NM = 50.0
 PORE, GRAPHITE, SI = 0, 57, 112
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def _synthetic_site(rng: np.random.Generator, size: int = 600) -> np.ndarray:
     """Three-phase BSE-like image (pores, graphite matrix, Si discs) on three channels."""
@@ -189,3 +191,16 @@ def test_real_data_lut_coverage() -> None:
     if heldout.exists():
         with np.load(heldout) as z:
             assert len(z.files) == 3
+
+
+@pytest.mark.data
+@pytest.mark.parametrize("root", ["cache", "cache_heldout"])
+def test_materialised_manifest_paths_resolve(root):
+    man = REPO_ROOT / root / "harmonised" / "hybrid" / "half" / "manifest.csv"
+    if not man.exists():
+        pytest.skip("hybrid cache not materialised")
+    df = pd.read_csv(man)
+    for _, r in df.iterrows():
+        assert not Path(r.path).is_absolute(), r.path
+        assert (REPO_ROOT / r.path).is_file(), r.path
+        assert Path(r.path).name == f"{r.batch}__{r.site}.npz"

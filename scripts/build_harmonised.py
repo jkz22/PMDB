@@ -71,6 +71,11 @@ def _materialise(cache_root: Path, method: str) -> None:
         arr = np.load(src / f"{r.batch}__{r.site}.npz")["image"]
         out = H.apply_lut(arr, H.load_lut(cache_root, method, r.batch, r.site))
         np.savez_compressed(dst / f"{r.batch}__{r.site}.npz", image=out)
+    # repo-relative paths (the source manifest may carry absolute paths from another machine)
+    manifest["path"] = [
+        (dst / f"{r.batch}__{r.site}.npz").resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+        for _, r in manifest.iterrows()
+    ]
     manifest.to_csv(dst / "manifest.csv", index=False)
     print(f"  materialised {len(manifest)} sites -> {dst}")
 
