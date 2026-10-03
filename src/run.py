@@ -43,18 +43,29 @@ def main() -> None:
     ncfg = cfg["normalise"]
     mods = kpi_modules()
 
-    rows, diags = [], []
+    rows, diags, failed = [], [], []
     for batch, paths in list_batches(cfg).items():
         for path in paths:
             norm, lo, hi = normalise(load(path), ncfg["p_low"], ncfg["p_high"])
             masks = segment(norm, cfg)
             instances, border = graphite_instances(masks, cfg)
 
-            for mod in mods:
-                for kpi, value in mod.compute(masks, instances, border).items():
-                    rows.append({"image": path.stem, "batch": batch,
-                                 "kpi": kpi, "value": value,
-                                 "tier": TIERS[kpi.split("_")[0]]})
+            try:
+                for mod in mods:
+                    for kpi, value in mod.compute(masks, instances, border).items():
+                        tier = TIERS.get(kpi.split("_")[0])
+                        if tier is None:
+                            print(f"warning: KPI {kpi!r} has no mat_/phys_/geo_ "
+                                  "prefix, tier set to 'other'")
+                            tier = "other"
+                        rows.append({"image": path.stem, "batch": batch,
+                                     "kpi": kpi, "value": value, "tier": tier})
+            except ValueError as e:
+                # unmeasurable image (e.g. no graphite segmented): flag it
+                # and keep going rather than losing the whole run
+                failed.append({"image": path.stem, "batch": batch, "error": str(e)})
+                print(f"UNMEASURABLE {batch} {path.stem}: {e}")
+                continue
             n_inst = len(np.unique(instances)) - 1
             diags.append({"image": path.stem, "batch": batch,
                           "norm_p05": lo, "norm_p995": hi,
@@ -68,6 +79,10 @@ def main() -> None:
     pd.DataFrame(diags).to_parquet(out / "diagnostics.parquet", index=False)
     print(f"\nwrote {len(rows)} KPI rows for "
           f"{len(diags)} images -> results/kpis.parquet")
+    if failed:
+        print(f"UNMEASURABLE images ({len(failed)}):")
+        for f in failed:
+            print(f"  {f['batch']} {f['image']}: {f['error']}")
 
 
 if __name__ == "__main__":

@@ -26,11 +26,17 @@ def main() -> None:
     qc_dir.mkdir(exist_ok=True)
 
     shapes: dict[tuple, list[str]] = {}
+    errors: list[str] = []
     print(f"{'batch':<10} {'image':<24} {'shape':<14} {'dtype':<6} {'mean':>7} {'std':>7}")
     for batch, paths in batches.items():
         fig, ax = plt.subplots(figsize=(10, 4))
         for path in paths:
-            img = load(path)
+            try:
+                img = load(path)
+            except ValueError as e:
+                errors.append(f"{path.name}: {e}")
+                print(f"{batch:<10} {path.stem:<24} LOAD FAILED: {e}")
+                continue
             shapes.setdefault((img.shape, str(img.dtype)), []).append(path.name)
             print(f"{batch:<10} {path.stem:<24} {str(img.shape):<14} {img.dtype} "
                   f"{img.mean():7.2f} {img.std():7.2f}")
@@ -43,13 +49,20 @@ def main() -> None:
         plt.close(fig)
 
     print()
+    dtypes = {d for (_, d) in shapes}
     if len(shapes) == 1:
         (shape, dtype), names = next(iter(shapes.items()))
         print(f"OK: all {len(names)} images share shape {shape} and dtype {dtype}")
     else:
-        print("WARNING: images differ in shape/dtype - STOP and flag before any KPI work:")
+        # heights legitimately vary (crops to coating thickness); a dtype
+        # mismatch or a load failure is a hard stop, shape spread is not
+        print("note: image shapes vary (crop heights differ):")
         for (shape, dtype), names in shapes.items():
             print(f"  {shape} {dtype}: {len(names)} images, e.g. {names[0]}")
+    if errors or len(dtypes) > 1:
+        print(f"\nFAIL: {len(errors)} load errors, {len(dtypes)} dtypes "
+              "- fix before any KPI work")
+        sys.exit(1)
 
     for batch, paths in batches.items():
         print(f"{batch}: {len(paths)} {cfg['data']['detector']} images -> qc/hist_{batch}.png")

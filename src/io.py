@@ -10,8 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-import tifffile
 import yaml
+
+from pmdb.io import read_detector_image
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,13 +35,13 @@ def list_batches(cfg: dict) -> dict[str, list[Path]]:
 
 
 def load(path: Path | str) -> np.ndarray:
-    """Load one image as a 2D uint8 array (channel 0 only)."""
-    img = tifffile.imread(path)
-    if img.ndim == 3:
-        img = img[..., 0]
-    if img.dtype != np.uint8:
-        raise ValueError(f"{path}: expected uint8, got {img.dtype}")
-    return img
+    """Load one image as a 2D uint8 array.
+
+    Delegates to pmdb.io.read_detector_image, which crops the 4-px
+    microscope border artefact columns (AGENTS.md / D-003 rev 2) and
+    asserts R == G == B before keeping one channel.
+    """
+    return read_detector_image(path)
 
 
 def normalise(img: np.ndarray, p_low: float, p_high: float) -> tuple[np.ndarray, float, float]:

@@ -23,7 +23,9 @@ N_PERMUTATIONS = 10_000
 
 def kpi_matrix(df: pd.DataFrame) -> pd.DataFrame:
     """Wide table: one row per image, one column per KPI."""
-    return df.pivot_table(index=["batch", "image"], columns="kpi", values="value")
+    # pivot (not pivot_table) so duplicate (image, kpi) rows raise instead
+    # of being silently averaged
+    return df.pivot(index=["batch", "image"], columns="kpi", values="value")
 
 
 def effect_sizes(wide: pd.DataFrame, baseline: str) -> pd.DataFrame:
@@ -67,8 +69,6 @@ def hotelling_t2_p(wide: pd.DataFrame, baseline: str, batch: str,
     permutation test keeps the p-value exact regardless.
     """
     rng = rng or np.random.default_rng(0)
-    b = wide.loc[baseline].dropna(axis=1).values
-    x = wide.loc[batch].dropna(axis=1).values
     common = wide.loc[baseline].dropna(axis=1).columns.intersection(
         wide.loc[batch].dropna(axis=1).columns)
     b = wide.loc[baseline, common].values

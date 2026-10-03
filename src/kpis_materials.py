@@ -52,6 +52,10 @@ def compute(masks: dict[str, np.ndarray], instances: np.ndarray,
             instances_border: list[int]) -> dict[str, float]:
     total = masks["pore"].size
     graphite_px = masks["graphite"].sum()
+    if graphite_px == 0:
+        # dividing by zero below would write silent NaNs; a frame with no
+        # graphite is an unmeasurable image, not a KPI vector
+        raise ValueError("no graphite pixels segmented; unmeasurable image")
 
     out = {
         # The number every QC engineer already measures from cross-section
@@ -85,12 +89,14 @@ def compute(masks: dict[str, np.ndarray], instances: np.ndarray,
         out["mat_rim_coverage"] = rim_adjacent.sum() / per_px
 
     # Degree of flake alignment produced by calendering; 1 = fully
-    # in-plane, 0 = isotropic. Needs the geometry module's orientations.
+    # aligned, 0 = isotropic. Needs the geometry module's orientations.
+    # Nematic order parameter |<exp(2i*theta)>|: the brief's |cos(2theta)|
+    # scores isotropic flakes at 2/pi and perpendicular populations at 1.
     if instance_orientations is not None:
         theta, areas = instance_orientations(instances, instances_border)
-        if len(theta):
+        theta, areas = np.asarray(theta, dtype=float), np.asarray(areas, dtype=float)
+        if len(theta) and areas.sum() > 0:
             out["mat_orientation_anisotropy"] = float(
-                np.average(np.abs(np.cos(2 * np.asarray(theta))),
-                           weights=np.asarray(areas)))
+                np.abs(np.average(np.exp(2j * theta), weights=areas)))
 
     return {k: float(v) for k, v in out.items()}

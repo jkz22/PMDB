@@ -28,10 +28,19 @@ def graphite_instances(masks: dict[str, np.ndarray], cfg: dict) -> tuple[np.ndar
         dist,
         min_distance=cfg["instances"]["watershed_min_distance"],
         labels=mask,
+        exclude_border=False,  # default excludes peaks within min_distance
+                               # of the edge, silently dropping edge flakes
     )
     markers = np.zeros(mask.shape, dtype=np.int32)
     markers[tuple(peaks.T)] = np.arange(1, len(peaks) + 1)
     labels = watershed(-dist, markers, mask=mask)
+
+    # a component whose only maxima were suppressed by min_distance gets no
+    # marker and stays 0; give each such component its own label
+    missed = mask & (labels == 0)
+    if missed.any():
+        extra, n_extra = ndi.label(missed)
+        labels = labels + np.where(missed, extra + labels.max(), 0)
 
     border = np.unique(np.concatenate([
         labels[0, :], labels[-1, :], labels[:, 0], labels[:, -1]

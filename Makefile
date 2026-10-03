@@ -4,17 +4,20 @@ ifeq ($(wildcard $(PY)),)
 PY := python
 endif
 
-.PHONY: all qc kpis stats
+.PHONY: all qc kpis stats plots
 
-all: qc kpis stats
+all: stats plots
 
 qc:
 	$(PY) scripts/qc_load.py
 	$(PY) scripts/qc_segment.py
 	$(PY) scripts/qc_instances.py
 
-kpis:
+kpis: qc
 	$(PY) src/run.py
 
-stats:
+stats: kpis
 	$(PY) src/stats.py
+
+plots: kpis
+	$(PY) scripts/plot_kpis.py
