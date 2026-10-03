@@ -50,3 +50,7 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
 1. **`data/` is Read-Only**: Never edit, move, delete, or write files to `data/`.
 2. **Use Pre-processed Cache**: For segmentation, feature extraction, and KPI calculations (e.g. Spec 002), load from `resolution="half"`.
 3. **Reproducibility**: Always run tests before completing tasks (`pytest -q -m "not data"` and `pytest -q -m data`).
+
+## Held-back Test Sites (`data_heldout/`)
+
+3 unlabelled sites (`3e122cbj`, `fn0mhxef`, `xrv9xvzb`) released by the organisers for scoring. Read-only, never train on them. Batch 3 is the supplier baseline; every held-back site must be assigned to a batch with a confidence and an explanation of how it differs from Batch 3. See [`data_heldout/README.md`](data_heldout/README.md).
