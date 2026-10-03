@@ -271,15 +271,15 @@ def compare_figure(res, out):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("inputs", nargs="*", default=["Batch_1/5n1q8atc", "Batch_1/4ih2ggld", "Batch_2/epqdaau9", "Batch_3/x77cy643"],
-                    help="Batch/site or path to a BSE .tif")
+    ap.add_argument("inputs", nargs="*", help="Batch/site or path to a BSE .tif (default: 2 flagged + 2 typical sites)")
     ap.add_argument("--image", action="append", default=[], help="BSE .tif (same as a path in inputs)")
     ap.add_argument("--nm-per-px", type=float, default=25.0, help="pixel size of --image files")
     ap.add_argument("--cycles", type=int, default=50); ap.add_argument("--crate", type=float, default=1.0)
     ap.add_argument("--seeds", type=int, default=3); ap.add_argument("--width", type=float, default=58.0, help="crop width, µm")
     ap.add_argument("--x0", type=float, default=None, help="crop start, µm (default: centre)")
     ap.add_argument("--out", default="sim"); ap.add_argument("--jobs", type=int, default=8)
-    a = ap.parse_args(); specs = a.inputs + a.image; os.makedirs(a.out, exist_ok=True)
+    a = ap.parse_args(); specs = (a.inputs + a.image) or ["Batch_1/5n1q8atc", "Batch_1/4ih2ggld", "Batch_2/epqdaau9", "Batch_3/x77cy643"]
+    os.makedirs(a.out, exist_ok=True)
     jobs = [(s, k, a.cycles, a.crate, a.width, a.x0, a.nm_per_px) for s in specs for k in range(a.seeds)]
     with Pool(min(a.jobs, len(jobs))) as p: done = p.map(_job, jobs)
     res = {}
