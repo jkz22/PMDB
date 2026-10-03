@@ -18,3 +18,11 @@ jupyterlab
 ipykernel
 ipywidgets
 tqdm
+
+# Image I/O & processing
+tifffile
+imagecodecs
+scikit-image
+
+# Testing
+pytest
