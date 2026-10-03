@@ -52,13 +52,8 @@ def run_site(batch: str, site_id: str) -> dict:
     return _run_site_impl(batch, site_id, "cpu")
 
 
-@app.function(gpu="T4", **FN_KW)
-def run_site_gpu(batch: str, site_id: str) -> dict:
-    return _run_site_impl(batch, site_id, "gpu-T4")
-
-
 @app.local_entrypoint()
-def main(name: str = "site_kpis", smoke: bool = False, gpu: bool = False):
+def main(name: str = "site_kpis", smoke: bool = False):
     import pandas as pd
     from pmdb.io import get_cache_root
 
@@ -66,13 +61,17 @@ def main(name: str = "site_kpis", smoke: bool = False, gpu: bool = False):
     if smoke:
         manifest = manifest.head(1)
         name = f"{name}_smoke"
-    fn = run_site_gpu if gpu else run_site
-    rows = list(fn.map(manifest["batch"].tolist(), manifest["site"].tolist()))
+    rows = list(run_site.map(manifest["batch"].tolist(), manifest["site"].tolist()))
+    failed = [r for r in rows if r["error"]]
     out_dir = Path(__file__).resolve().parent / "outputs" / "modal"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{name}.csv"
-    pd.DataFrame(rows).to_csv(out_path, index=False)
-    failed = [r for r in rows if r["error"]]
+    # Never overwrite a previous complete table with a partial one.
+    out_path = out_dir / (f"{name}_failed.csv" if failed else f"{name}.csv")
+    tmp_path = out_path.with_suffix(".csv.tmp")
+    pd.DataFrame(rows).to_csv(tmp_path, index=False)
+    tmp_path.replace(out_path)
     print(f"Wrote {len(rows)} rows to {out_path} ({len(failed)} errored)")
     for r in failed:
         print(f"  {r['batch']}/{r['site']}: {r['error']}")
+    if failed:
+        raise SystemExit(1)

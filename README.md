@@ -88,7 +88,7 @@ Run (local `pmdb/` edits ship automatically on each run):
 ```bash
 modal run modal_app.py --smoke   # 1 site
 modal run modal_app.py           # all 31 sites
-# options: --gpu (T4), --name <name>
+# option: --name <name>
 ```
 
-Results land in `outputs/modal/<name>.csv` (gitignored), one row per site with the KPI columns from `docs/kpis/kpi_catalogue.csv` v1 plus `runner`, `elapsed_s` and `error`.
+Results land in `outputs/modal/<name>.csv` (gitignored), one row per site with the KPI columns from `docs/kpis/kpi_catalogue.csv` v1 plus `runner`, `elapsed_s` and `error`. If any site errors, rows go to `<name>_failed.csv` instead (an existing `<name>.csv` is left untouched) and the command exits 1.
