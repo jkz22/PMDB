@@ -28,4 +28,26 @@ Batch means (Batch_1 median in brackets, because 2 sites pull its mean up). 4ih2
 
 Caveats: these are textbook-constant estimates, not measurements. They are almost linear in the Si fraction, so they carry the same segmentation uncertainty and add no independent evidence; their value is translating the Si difference into battery terms. Binder/carbon counted as graphite (capacity slightly high). 2-D area fractions are used as volume fractions (stereology, unbiased for random sections).
 
+### Simulated evolution (illustrative)
+
+`python3 simulate.py Batch_1/5n1q8atc Batch_2/epqdaau9 --cycles 50 --seeds 3` (or `--image my_bse.tif --nm-per-px 25` for any BSE image). Each image is segmented and cropped (58 µm wide, full height, 0.1 µm/px), then evolved cycle by cycle:
+
+- **Within a cycle** (1C charge then discharge, 5 time steps each): Li diffuses into each Si particle from its surface (erfc profile, D = 1e-11 cm²/s), and graphite/binder lithiates uniformly. Each pixel swells with its Li content (Si +56% linear, graphite +3.2%). A Q1 plane-strain finite-element solve on 0.2 µm elements (bottom and sides clamped, top free) gives thickness change, pore closure and the max principal stress.
+- **Each cycle:**
+  - SEI grows on active Si surfaces as δ = 0.05 µm·√(cycles since exposure). It locks Li (1500 mAh per cm³ SEI) and fills adjacent pores.
+  - Si particles crack with Weibull probability 1 − exp(−(σ₁/25 GPa)⁴) from their peak tensile stress. The crack runs normal to σ₁, becomes pore and exposes fresh surface.
+  - Fragments < 0.25 µm², or without contact with the matrix, become inactive.
+  - Capacity = reversible Li in active Si and graphite, limited by the Li inventory left after SEI.
+- **KPIs:** recomputed on every evolved image with the same particle code as the QC pipeline.
+
+Outputs in `sim/`: `traj_<site>.csv` (per cycle and seed), `within_<site>.csv` (cycle 1 and last cycle), `fig_sim_<site>.png`, `anim_<site>.gif`, `fig_sim_compare.png` and `sim.json`.
+
+Limits:
+- Parameters are from the literature, not calibrated, so compare sites with each other rather than reading the numbers as predictions.
+- Stresses are elastic: there is no plasticity of lithiated Si, and small-strain theory is used at large strain.
+- 2-D slice: there is no out-of-plane Li transport.
+- Binder is lumped with graphite.
+- Image rows are assumed to be the through-thickness direction.
+- Validation would need cycling and dilatometry data.
+
 Outputs: `site_kpis.csv`, `physics.csv`/`physics.json`/`fig_physics.png` (physics estimates), `compare.json`, `verdicts.txt`, `fig_kpis.png` (all KPIs per site), `fig_psd.png` (size/shape distributions), `fig_particles.png` (flagged particle crops), `fig_importance.png`, `importance.csv`/`importance.json` (feature importance), `fig_gpmaps.png`, `overlays.png`, `qc_report.html`.
