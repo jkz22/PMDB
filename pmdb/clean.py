@@ -473,7 +473,10 @@ def detect_collector(bse_raw: np.ndarray, valid: np.ndarray, sat_dn: int = 250, 
                      col_frac: float = 0.5, dilate_px: int = DILATE_HALF_UM_PX) -> tuple[np.ndarray, dict]:
     """Copper current collector: a saturated BSE band connected to the top or bottom edge."""
     h, w = bse_raw.shape
-    sat = (bse_raw >= sat_dn) & valid
+    # edge connectivity is tested on the raw saturation: ``valid`` already excludes the border rows, so a
+    # band touching the image edge would otherwise never reach row 0 / h-1; only fully-invalid columns
+    # (colour markers) are excluded
+    sat = (bse_raw >= sat_dn) & valid.any(axis=0)[None, :]
     sat = ndimage.binary_opening(sat, structure=np.ones((3, 9)))
     out = np.zeros((h, w), dtype=bool)
     info: dict = {"found": False}
@@ -777,12 +780,25 @@ def edge_width(z: np.ndarray, pore: np.ndarray, valid: np.ndarray, n_edges: int 
     return EdgeWidth(med, int(prof.shape[0]), int(sig.size), 2.563 * med * nm_per_px, sig)
 
 
-def harmonise_resolution(z: np.ndarray, sigma_e: float, sigma_t: float) -> tuple[np.ndarray, float]:
-    """Blur to the target edge width with sigma_k = sqrt(sigma_t² - sigma_e²); never sharpen."""
+def harmonise_resolution(z: np.ndarray, sigma_e: float, sigma_t: float,
+                         valid: np.ndarray | None = None) -> tuple[np.ndarray, float]:
+    """Blur to the target edge width with sigma_k = sqrt(sigma_t² - sigma_e²); never sharpen.
+
+    With ``valid`` the blur is a normalised convolution over the valid pixels only, so masked
+    content (marker columns, bad scan rows, charging) cannot bleed into its valid neighbours;
+    invalid pixels keep their input value.
+    """
+    z = np.asarray(z, dtype=np.float32)
     if not np.isfinite(sigma_e) or sigma_e >= sigma_t:
-        return np.asarray(z, dtype=np.float32), 0.0
+        return z, 0.0
     sk = float(np.sqrt(sigma_t**2 - sigma_e**2))
-    return ndimage.gaussian_filter(np.asarray(z, dtype=np.float32), sk).astype(np.float32), sk
+    if valid is None:
+        return ndimage.gaussian_filter(z, sk).astype(np.float32), sk
+    w = valid.astype(np.float32)
+    num = ndimage.gaussian_filter(z * w, sk)
+    den = ndimage.gaussian_filter(w, sk)
+    out = np.where(valid & (den > 1e-3), num / np.maximum(den, 1e-6), z)
+    return out.astype(np.float32), sk
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1068,7 +1084,7 @@ def harmonise_site(res: CleanResult, targets: Targets, seed: int = SEED, nm_per_
         v = valid_for_stats(res.mask[d])
         fp = res.params["fingerprint"][d]
         sig_e, sig_t = fp["sigma_e_px"], targets.sigma_t[d]
-        z, sk = harmonise_resolution(res.norm[d], sig_e, sig_t)
+        z, sk = harmonise_resolution(res.norm[d], sig_e, sig_t, valid=valid_for_kpis(res.mask[d]))
         ew_after = edge_width(z, ph.pore, v, rng=rng, nm_per_px=nm_per_px) if sk > 0 else None
         nm_before = noise_model(z, ph, v, rng=rng)
         z, ninfo = harmonise_noise(z, nm_before, targets.noise[d], rng)

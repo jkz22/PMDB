@@ -201,14 +201,25 @@ def test_load_clean_roundtrip_and_half(phantom, result, tmp_path):
     assert np.allclose(z, np.clip(result.norm["BSE"], 0, 6.5535), atol=1e-4)
     zh, mh = pio.load_clean("Batch_9", "site1", "BSE", "norm", resolution="half", clean_root=tmp_path)
     assert zh.shape == (SHAPE[0] // 2, SHAPE[1] // 2)
-    # every flag of the four parents survives in the half-resolution mask
+    # a block is valid iff one of its parents is; a fully masked block carries the OR of all flags
     m4 = m.reshape(SHAPE[0] // 2, 2, SHAPE[1] // 2, 2)
-    assert np.array_equal(mh, m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1])
-    # a block with one masked parent averages only the valid ones and keeps the flag
+    any_ok = C.valid_for_kpis(m4).any(axis=(1, 3))
+    assert np.array_equal(C.valid_for_kpis(mh), any_ok)
+    all_or = m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1]
+    assert np.array_equal(mh[~any_ok], all_or[~any_ok])
+    # a block with one masked parent averages only the valid ones and stays valid
     z4 = np.array([[1.0, 3.0], [5.0, 100.0]], dtype=np.float32)
     m4 = np.array([[0, 0], [0, C.BIT_CHARGE_LOCAL]], dtype=np.uint16)
     zh2, mh2 = pio.downsample_clean(z4, m4)
-    assert abs(zh2[0, 0] - 3.0) < 1e-6 and mh2[0, 0] == C.BIT_CHARGE_LOCAL
+    assert abs(zh2[0, 0] - 3.0) < 1e-6 and C.valid_for_kpis(mh2)[0, 0]
+    # informational bits of the contributing parents are kept, those of masked parents dropped
+    m4i = np.array([[C.BIT_CLIP_LOW, 0], [0, C.BIT_CHARGE_LOCAL | C.BIT_CRACK]], dtype=np.uint16)
+    _, mh2i = pio.downsample_clean(z4, m4i)
+    assert mh2i[0, 0] == C.BIT_CLIP_LOW
+    # a fully masked block stays invalid
+    m4f = np.full((2, 2), C.BIT_BAND_BAD, dtype=np.uint16)
+    _, mh2f = pio.downsample_clean(z4, m4f)
+    assert not C.valid_for_kpis(mh2f)[0, 0]
     # clip bits do not exclude a pixel from the KPI-valid mean
     m4c = np.array([[0, 0], [0, C.BIT_CLIP_HIGH]], dtype=np.uint16)
     zh3, _ = pio.downsample_clean(z4, m4c)
@@ -217,3 +228,27 @@ def test_load_clean_roundtrip_and_half(phantom, result, tmp_path):
 
     with pytest.raises(FileNotFoundError):
         pio.load_clean("Batch_9", "nope", clean_root=tmp_path)
+
+
+def test_collector_touching_edge_is_masked():
+    h, w = 400, 600
+    img = np.full((h, w), 50, dtype=np.uint8)
+    img[:41] = 255
+    valid = C.valid_for_kpis(C.sanitise((h, w)))
+    coll, info = C.detect_collector(img, valid)
+    assert info["found"] and info["edge"] == "top"
+    assert coll[:41].all()
+    assert not coll[41 + C.DILATE_HALF_UM_PX + 2:].any()
+
+
+def test_blur_does_not_bleed_from_masked_pixels():
+    z = np.ones((120, 120), dtype=np.float32)
+    z[:, 60] = 50.0
+    valid = np.ones_like(z, dtype=bool)
+    valid[:, 60] = False
+    out, sk = C.harmonise_resolution(z, 0.5, 1.5, valid=valid)
+    assert sk > 0
+    assert np.abs(out[valid] - 1.0).max() < 1e-4
+    assert out[0, 60] == 50.0
+    out_plain, _ = C.harmonise_resolution(z, 0.5, 1.5)
+    assert out_plain[:, 59].max() > 1.5
