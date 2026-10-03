@@ -133,6 +133,16 @@ def run_id(record: dict) -> str:
     return f"{record.get('started_utc', 'unknown-time')}_{str(record.get('git_commit', 'unknown'))[:12]}"
 
 
+def unique_run_id(record: dict, existing) -> str:
+    """run_id(record), suffixed if it collides with an existing run (same second and commit)."""
+    base = rid = run_id(record)
+    n = 1
+    while rid in existing or rid == UNKNOWN_RUN:
+        n += 1
+        rid = f"{base}-{n}"
+    return rid
+
+
 def read_provenance(path: Path) -> tuple[dict[str, dict], dict[str, dict], str | None]:
     """(runs, sites, problem) from an existing run log; legacy single-run logs are converted.
 
@@ -162,21 +172,26 @@ def merge_provenance(runs: dict[str, dict], sites: dict[str, dict], new_run_id: 
                      new_sites: dict[str, dict], table_keys: list[str],
                      problem: str | None = None) -> tuple[dict[str, dict], dict[str, dict]]:
     """Provenance for the merged tables: recomputed sites point at the new run, retained sites keep
-    their old entry, and retained sites without one point at an explicit 'unknown' run."""
+    their old entry, and retained sites without one point at an explicit 'unknown' run. Each unknown
+    site records its own ``reason``, which later merges keep."""
+    old_unknown_reason = runs.get(UNKNOWN_RUN, {}).get("reason")
     merged: dict[str, dict] = {}
     for key in table_keys:
         if key in new_sites:
             merged[key] = {"run": new_run_id, **new_sites[key]}
         elif key in sites and sites[key].get("run") in runs:
-            merged[key] = sites[key]
+            merged[key] = dict(sites[key])
+            if merged[key]["run"] == UNKNOWN_RUN and "reason" not in merged[key]:
+                merged[key]["reason"] = old_unknown_reason or "unrecorded"
         else:
-            merged[key] = {"run": UNKNOWN_RUN, "status": "retained"}
+            merged[key] = {"run": UNKNOWN_RUN, "status": "retained",
+                           "reason": problem or "site missing from previous run log"}
     used = {v["run"] for v in merged.values()}
-    out_runs = {rid: rec for rid, rec in runs.items() if rid in used and rid != new_run_id}
+    out_runs = {rid: rec for rid, rec in runs.items()
+                if rid in used and rid not in (new_run_id, UNKNOWN_RUN)}
     out_runs[new_run_id] = new_run
     if UNKNOWN_RUN in used:
-        out_runs[UNKNOWN_RUN] = {"note": "rows retained from tables without provenance",
-                                 "reason": problem or "site missing from previous run log"}
+        out_runs[UNKNOWN_RUN] = {"note": "rows retained from tables without provenance; see each site's reason"}
     return out_runs, merged
 
 
@@ -317,10 +332,10 @@ def main(argv=None) -> int:
         print(f"attempt logged to {out / ATTEMPT_LOG}; {RUN_LOG} untouched")
         return 1
 
-    rid = run_id(record)
     site_df = frames["site_kpis.csv"]
     table_keys = [f"{b}/{s}" for b, s in zip(site_df["batch"].astype(str), site_df["site"].astype(str))]
     old_runs, old_sites, problem = read_provenance(out / RUN_LOG) if subset else ({}, {}, None)
+    rid = unique_run_id(record, old_runs)
     runs, prov = merge_provenance(old_runs, old_sites, rid, record, log, table_keys, problem)
     text = dump_run_log({"schema": LOG_SCHEMA, "latest_run": rid, "runs": runs, "sites": prov})
     for name in TABLES:

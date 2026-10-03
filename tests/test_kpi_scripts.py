@@ -294,5 +294,33 @@ def test_subset_run_marks_unknown_provenance(runner, legacy):
     assert run("--sites", GOOD_KEY) == 0
     log = _log(out)
     assert log["sites"][BAD_KEY]["run"] == run_kpis.UNKNOWN_RUN
-    assert log["runs"][run_kpis.UNKNOWN_RUN]["reason"]
+    reason = log["sites"][BAD_KEY]["reason"]
+    assert reason
     assert log["sites"][GOOD_KEY]["run"] == log["latest_run"]
+
+    # a later subset run keeps the original reason for the still-unknown site
+    assert run("--sites", GOOD_KEY) == 0
+    log = _log(out)
+    assert log["sites"][BAD_KEY]["run"] == run_kpis.UNKNOWN_RUN
+    assert log["sites"][BAD_KEY]["reason"] == reason
+
+
+def test_same_second_runs_keep_distinct_provenance(runner, monkeypatch):
+    run, state, out = runner
+    monkeypatch.setattr(run_kpis, "run_id", lambda record: "same-second_same-commit")
+    assert run() == 0
+    first = _log(out)
+    state.update(value=2.0)
+    assert run("--sites", GOOD_KEY, "--jobs", "1") == 0
+    log = _log(out)
+    assert log["latest_run"] != first["latest_run"]
+    assert log["sites"][BAD_KEY]["run"] == first["latest_run"]
+    assert log["runs"][first["latest_run"]] == first["runs"][first["latest_run"]]
+    assert log["runs"][log["latest_run"]]["mode"] == "subset"
+
+
+def test_unique_run_id_suffixes_collisions():
+    rec = {"started_utc": "T", "git_commit": "c" * 40}
+    base = run_kpis.run_id(rec)
+    assert run_kpis.unique_run_id(rec, {}) == base
+    assert run_kpis.unique_run_id(rec, {base: {}, f"{base}-2": {}}) == f"{base}-3"
