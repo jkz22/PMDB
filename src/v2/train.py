@@ -26,6 +26,11 @@ DEFAULTS = dict(family="vae_a", view="stack", input="raw", train_set="all", aug=
                 fold=None, n_folds=5, lobo=None, kpi_commit="d23a116")
 LR = {"vae": 1e-3, "mae": 1.5e-4, "dino": 5e-5}
 RUNS = Path(os.environ.get("PMDB_RUNS", OUT / "runs"))
+LOCK_STALE_S = 900
+
+
+class RunLocked(RuntimeError):
+    """Another scheduler is training this config hash right now."""
 
 
 def full_cfg(cfg: dict) -> dict:
@@ -79,6 +84,10 @@ def run(cfg: dict, status_cb=None) -> Path:
     d.mkdir(parents=True, exist_ok=True)
     if (d / "done.json").exists():
         return d
+    lock = d / "lock"
+    if lock.exists() and time.time() - lock.stat().st_mtime < LOCK_STALE_S:
+        raise RunLocked(f"{h} locked by pid {lock.read_text()}")
+    lock.write_text(str(os.getpid()))
     (d / "config.json").write_text(json.dumps({**c, "hash": h}, indent=2))
     dev = device()
     torch.manual_seed(c["seed"]); np.random.seed(c["seed"])
@@ -133,7 +142,7 @@ def run(cfg: dict, status_cb=None) -> Path:
             step += 1
             if step % 50 == 0 or step == c["steps"]:
                 rec = {"step": step, "loss": loss.item(), **logs, "lr": sched.get_last_lr()[0], "sec": time.time() - t0}
-                log.write(json.dumps(rec) + "\n"); log.flush()
+                log.write(json.dumps(rec) + "\n"); log.flush(); lock.touch()
                 if status_cb:
                     status_cb(h, rec)
             if step % 500 == 0 or step == c["steps"]:
@@ -143,4 +152,5 @@ def run(cfg: dict, status_cb=None) -> Path:
     torch.save({"model": model.state_dict(), "cfg": c, "kpi_norm": kpi_norm,
                 "train_groups": fields.group_id.tolist()}, d / "final.pt")
     (d / "done.json").write_text(json.dumps({"hash": h, "steps": step, "sec": time.time() - t0}))
+    lock.unlink(missing_ok=True)
     return d

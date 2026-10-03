@@ -17,7 +17,7 @@ from src.v2.evaluate import crop_meta, embed_all, evaluate, recon_metrics
 from src.v2.kpi_adapter import crop_kpi_frame, kpi_cols, kpi_commit_hash
 from src.v2.models import build
 from src.v2.rungrid import train_cfg
-from src.v2.train import RUNS, cfg_hash, device, full_cfg, run
+from src.v2.train import RunLocked, RUNS, cfg_hash, device, full_cfg, run
 
 
 def _std_kpis(kpi_norm, cols):
@@ -37,7 +37,11 @@ def main(run_spec: dict):
         model, kpi_norm = build(fam).to(dev), None
         cols = kpi_cols(None)
     else:
-        d = run(train_cfg(run_spec))
+        try:
+            d = run(train_cfg(run_spec))
+        except RunLocked as e:  # another scheduler owns it; it will also evaluate
+            print(f"skip: {e}", flush=True)
+            return
         s = torch.load(d / "final.pt", map_location=dev, weights_only=False)
         c, kpi_norm = s["cfg"], s["kpi_norm"]
         cols = kpi_cols(c.get("kpi_set"))
