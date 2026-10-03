@@ -16,6 +16,7 @@ import imagecodecs  # noqa: F401 - Must be imported before tifffile to register 
 import tifffile
 
 from pmdb.stats import raw_intensity_stats
+from pmdb import harmonise as _harm
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DATA_ROOT = REPO_ROOT / "data"
@@ -35,8 +36,11 @@ class Site:
         se_detector: Specific detector used for the secondary electron channel ('ETD' or 'SE').
         nm_per_px: Spatial resolution in nanometres per pixel (e.g. 25.0 or 50.0).
         resolution: Resolution level loaded ('full' or 'half').
-        raw_stats: Raw intensity statistics per channel on the uint8 array at this resolution.
+        raw_stats: Raw intensity statistics per channel on the uint8 array at this resolution,
+            computed *before* any harmonisation so the imaging confound stays on the record.
         channels: Channel order tuple ('BSE', 'Inlens', 'SE_type').
+        harmonise: Harmonisation method applied ('none' if the raw grey levels were kept).
+        harmonised_stats: Intensity statistics after harmonisation (None when harmonise='none').
     """
 
     image: np.ndarray
@@ -47,6 +51,8 @@ class Site:
     resolution: Literal["full", "half"]
     raw_stats: dict[str, dict[str, float]]
     channels: tuple[str, str, str] = field(default=("BSE", "Inlens", "SE_type"))
+    harmonise: str = "none"
+    harmonised_stats: dict[str, dict[str, float]] | None = None
 
 
 def get_data_root(data_root: str | Path | None = None) -> Path:
@@ -276,6 +282,15 @@ def read_detector_image(path: str | Path) -> np.ndarray:
     return r
 
 
+def normalise_fixed(raw_uint8: np.ndarray) -> np.ndarray:
+    """Fixed scaling: grey level / 255 -> float32 in [0, 1], identical for every image.
+
+    Unlike :func:`normalise_image`, this does not re-stretch each image to its own
+    percentiles, so harmonised sites stay on one common grey scale.
+    """
+    return (raw_uint8.astype(np.float32) / 255.0).astype(np.float32)
+
+
 def normalise_image(raw_uint8: np.ndarray) -> np.ndarray:
     """Perform robust percentile scaling per image and per channel (D-005).
 
@@ -324,9 +339,10 @@ def load_site(
     batch: str,
     site: str,
     resolution: Literal["full", "half"] = "full",
-    normalise: Literal["percentile", "none"] = "percentile",
+    normalise: Literal["percentile", "fixed", "none"] = "percentile",
     data_root: str | Path | None = None,
     cache_root: str | Path | None = None,
+    harmonise: str = "none",
 ) -> Site:
     """Load an aligned, multi-detector imaging site.
 
@@ -334,9 +350,15 @@ def load_site(
         batch: Batch identifier (e.g. 'Batch_1').
         site: Site identifier (e.g. '4ih2ggld').
         resolution: 'full' or 'half'. If 'half', reads from the cache.
-        normalise: 'percentile' (float32 [0, 1]) or 'none' (uint8).
+        normalise: 'percentile' (per-image p0.5->0, p99.5->1, float32), 'fixed' (grey/255,
+            float32, the same map for every image) or 'none' (uint8).
         data_root: Path to data directory (optional).
         cache_root: Path to cache directory (optional).
+        harmonise: Grey-level harmonisation method from :data:`pmdb.harmonise.METHODS`
+            ('none', 'offset', 'affine2', 'affine3', 'histmatch', 'hybrid'). The per-site LUT is read from
+            ``<cache_root>/harmonised/<method>/luts.npz`` and applied before normalisation.
+            Use with ``normalise='fixed'`` or ``'none'``; per-image percentile normalisation
+            would re-stretch each image and undo most of the harmonisation.
 
     Returns:
         Site object.
@@ -347,8 +369,10 @@ def load_site(
     """
     if resolution not in ("full", "half"):
         raise ValueError(f"Invalid resolution '{resolution}'. Must be 'full' or 'half'.")
-    if normalise not in ("percentile", "none"):
-        raise ValueError(f"Invalid normalise '{normalise}'. Must be 'percentile' or 'none'.")
+    if normalise not in ("percentile", "fixed", "none"):
+        raise ValueError(f"Invalid normalise '{normalise}'. Must be 'percentile', 'fixed' or 'none'.")
+    if harmonise not in _harm.METHODS:
+        raise ValueError(f"Invalid harmonise '{harmonise}'. Must be one of {_harm.METHODS}.")
 
     cache_dir = get_cache_root(cache_root)
 
@@ -406,8 +430,20 @@ def load_site(
         "SE_type": raw_intensity_stats(raw_uint8[..., 2]),
     }
 
+    harmonised_stats = None
+    if harmonise != "none":
+        lut = _harm.load_lut(cache_dir, harmonise, batch, site)
+        raw_uint8 = _harm.apply_lut(raw_uint8, lut)
+        harmonised_stats = {
+            "BSE": raw_intensity_stats(raw_uint8[..., 0]),
+            "Inlens": raw_intensity_stats(raw_uint8[..., 1]),
+            "SE_type": raw_intensity_stats(raw_uint8[..., 2]),
+        }
+
     if normalise == "percentile":
         image = normalise_image(raw_uint8)
+    elif normalise == "fixed":
+        image = normalise_fixed(raw_uint8)
     else:
         image = raw_uint8
 
@@ -419,4 +455,6 @@ def load_site(
         nm_per_px=nm_per_px,
         resolution=resolution,
         raw_stats=raw_stats,
+        harmonise=harmonise,
+        harmonised_stats=harmonised_stats,
     )
