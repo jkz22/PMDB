@@ -15,6 +15,7 @@ The repository contains raw microscopy TIFFs in `data/` and **pre-processed, ali
   - Fixed 4-px border artefact columns cropped from both left and right edges (`arr[:, 4:W-4]`).
   - Downsampled 2×2 block mean to 50 nm/px (full resolution is 25 nm/px).
   - Stored as compressed numpy archives in `cache/half/<batch>__<site>.npz`.
+  - How processed arrays differ from the raw TIFFs, what normalisation costs, and what is *not* done: see [`docs/data-processing.md`](docs/data-processing.md).
 
 > **Note for Agents & Analysis Pipelines**:
 > All 31 sites are pre-processed and tracked directly in `cache/half/`.
