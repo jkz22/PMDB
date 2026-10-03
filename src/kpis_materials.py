@@ -15,6 +15,8 @@ from __future__ import annotations
 import numpy as np
 from scipy import ndimage as ndi
 
+from src.io import UnmeasurableImage
+
 try:
     # orientation is owned by the geometry module; imported, not recomputed
     from src.kpis_geometry import instance_orientations
@@ -59,7 +61,7 @@ def compute(masks: dict[str, np.ndarray], instances: np.ndarray,
     if graphite_px == 0:
         # dividing by zero below would write silent NaNs; a frame with no
         # graphite is an unmeasurable image, not a KPI vector
-        raise ValueError("no graphite pixels segmented; unmeasurable image")
+        raise UnmeasurableImage("no graphite pixels segmented")
 
     out = {
         # The number every QC engineer already measures from cross-section

@@ -23,7 +23,8 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.instances import graphite_instances
-from src.io import ROOT, list_batches, load, load_config, normalise
+from src.io import (ROOT, UnmeasurableImage, list_batches, load, load_config,
+                    normalise)
 from src.segment import segment
 
 TIERS = {"mat": "materials", "phys": "physics", "geo": "geometry"}
@@ -50,9 +51,9 @@ def process_image(path: Path, batch: str, cfg: dict) -> dict:
     masks = segment(norm, cfg)
     instances, border = graphite_instances(masks, cfg)
 
-    rows = []
-    try:
-        for mod in kpi_modules(quiet=True):
+    rows, failures = [], []
+    for mod in kpi_modules(quiet=True):
+        try:
             for kpi, value in mod.compute(masks, instances, border,
                                           cfg["pixel_size_um"]).items():
                 tier = TIERS.get(kpi.split("_")[0])
@@ -62,16 +63,19 @@ def process_image(path: Path, batch: str, cfg: dict) -> dict:
                     tier = "other"
                 rows.append({"image": path.stem, "batch": batch,
                              "kpi": kpi, "value": value, "tier": tier})
-    except ValueError as e:
-        # unmeasurable image (e.g. no graphite segmented): flag it and keep
-        # going rather than losing the whole run
-        return {"failed": {"image": path.stem, "batch": batch, "error": str(e)}}
+        except UnmeasurableImage as e:
+            # one module cannot measure this image: flag it but keep the
+            # KPIs the other modules produced (and the whole run going).
+            # Any other exception propagates and fails the run — config
+            # errors must not be skipped per image.
+            failures.append({"image": path.stem, "batch": batch,
+                             "module": mod.__name__, "error": str(e)})
     n_inst = len(np.unique(instances)) - 1
     diag = {"image": path.stem, "batch": batch,
             "norm_p05": lo, "norm_p995": hi,
             "n_graphite_instances": n_inst,
             "frac_border_instances": len(border) / max(n_inst, 1)}
-    return {"rows": rows, "diag": diag}
+    return {"rows": rows, "diag": diag, "failures": failures}
 
 
 def main() -> None:
@@ -82,6 +86,11 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg = load_config()
+    px = cfg.get("pixel_size_um")
+    if not isinstance(px, (int, float)) or px <= 0:
+        # fail fast: swallowing this per image would silently write an
+        # empty KPI table over the previous results
+        sys.exit(f"config error: pixel_size_um must be positive, got {px!r}")
     kpi_modules()  # print the skipped-module notice once, up front
 
     tasks = [(path, batch)
@@ -94,14 +103,13 @@ def main() -> None:
         for n, fut in enumerate(as_completed(futures), 1):
             path, batch = futures[fut]
             res = fut.result()
-            if "failed" in res:
-                failed.append(res["failed"])
-                print(f"[{n}/{len(tasks)}] UNMEASURABLE {batch} {path.stem}: "
-                      f"{res['failed']['error']}")
-                continue
             rows.extend(res["rows"])
             diags.append(res["diag"])
-            print(f"[{n}/{len(tasks)}] {batch} {path.stem}: done")
+            failed.extend(res["failures"])
+            status = "done" if not res["failures"] else " / ".join(
+                f"UNMEASURABLE by {f['module']}: {f['error']}"
+                for f in res["failures"])
+            print(f"[{n}/{len(tasks)}] {batch} {path.stem}: {status}")
 
     # deterministic output order regardless of completion order
     rows.sort(key=lambda r: (r["batch"], r["image"], r["kpi"]))
