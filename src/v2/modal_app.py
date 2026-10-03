@@ -131,6 +131,12 @@ def schedule(specs: list[dict], parallel: int, budget_usd: float, tag: str, max_
             "mem_frac_max": max(mem) if mem else None}
 
 
+@app.function(gpu=GPU, cpu=CPU, memory=MEM_GB * 1024, volumes={"/vol": vol}, timeout=3600)
+def bench(families: list[str]):
+    from src.v2.bench import bench as b
+    return [b(f) for f in families]
+
+
 @app.function(volumes={"/vol": vol}, timeout=600)
 def fetch(tag: str):
     import glob
@@ -151,6 +157,10 @@ def main(mode: str = "calibrate", parallel: int = 6, budget: float = 60.0, steps
                  for k in range(-(-parallel // len(TRAINABLE))) for f in TRAINABLE][:parallel]
         r = schedule.remote(specs, parallel=parallel, budget_usd=5.0, tag=f"calibrate_p{parallel}", max_steps=steps)
         print(json.dumps({k: v for k, v in r.items() if k != "util_samples"}, indent=1, default=str))
+        return
+    if mode == "bench":
+        for r in bench.remote(list(TRAINABLE)):
+            print(json.dumps(r))
         return
     if mode == "stage_ab":
         specs = [dict(family=f, stage="OTS") for f in OFF_THE_SHELF] + stage_a() + stage_b()

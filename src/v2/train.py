@@ -14,11 +14,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader
 
 from src.v2.augment import ForwardRanges, augment
 from src.v2.common import OUT, SEED
-from src.v2.data import BASELINE, CropDataset, FieldStore, grouped_folds, heldout_split
+from src.v2.data import BASELINE, CropDataset, FieldStore, GPUCropLoader, grouped_folds, heldout_split
 from src.v2.kpi_adapter import crop_kpi_frame, kpi_cols
 from src.v2.models import build
 
@@ -92,8 +91,7 @@ def run(cfg: dict, status_cb=None) -> Path:
     ds = CropDataset(store, c["view"], random_offset=c["aug"] != "aug0", kpis=kpis if cond else None,
                      kpi_cols=kcols if cond else ())
     g = torch.Generator().manual_seed(c["seed"])
-    dl = DataLoader(ds, batch_size=c["batch_size"], shuffle=True, drop_last=True, generator=g,
-                    num_workers=int(os.environ.get("PMDB_WORKERS", 4)), persistent_workers=int(os.environ.get("PMDB_WORKERS", 4)) > 0, pin_memory=dev.type == "cuda")
+    dl = GPUCropLoader(ds, c["batch_size"], dev, g)
 
     model = build(c["family"], n_kpi=len(kcols), vae_mask=c["vae_mask"], mae_mask=c["mae_mask"]).to(dev)
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=c["lr"], weight_decay=0.05)
@@ -118,7 +116,6 @@ def run(cfg: dict, status_cb=None) -> Path:
         for b in dl:
             if step >= c["steps"]:
                 break
-            b = {k: v.to(dev, non_blocking=True) if torch.is_tensor(v) else v for k, v in b.items()}
             x = b["x"]
             b["x"] = augment(x, c["aug"], fr, gen)
             if c["family"] == "dino_ft":

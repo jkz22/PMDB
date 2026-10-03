@@ -76,6 +76,39 @@ class FieldStore:
             self.images.append(normalise_percentile(a) if input_mode == "norm" else a / 255.0)
 
 
+class GPUCropLoader:
+    """Device-resident replacement for DataLoader(CropDataset, shuffle=True, drop_last=True): every
+    field is uploaded once and crops are sliced on the device, so no CPU workers or host copies.
+    Same sampling as CropDataset (epoch-wise shuffle, +-stride/2 fixed-scale offsets, no resize)."""
+
+    def __init__(self, ds: "CropDataset", batch_size: int, dev, generator: torch.Generator):
+        self.ds, self.bs, self.dev, self.g = ds, batch_size, dev, generator
+        self.images = [torch.from_numpy(np.ascontiguousarray(im.transpose(2, 0, 1))).to(dev) for im in ds.store.images]
+        self.ch = torch.tensor(ds.ch, device=dev)
+        self.idx = torch.tensor(ds.index, dtype=torch.long)
+        self.hw = torch.tensor([im.shape[:2] for im in ds.store.images], dtype=torch.long)
+        self.kpi = torch.from_numpy(ds.kpi).to(dev) if ds.kpi is not None else None
+
+    def __len__(self):
+        return len(self.ds) // self.bs
+
+    def __iter__(self):
+        S = self.ds.size
+        perm = torch.randperm(len(self.ds), generator=self.g)
+        for k in range(len(self)):
+            j = perm[k * self.bs:(k + 1) * self.bs]
+            i, y, x = self.idx[j].T
+            if self.ds.random_offset:
+                o = torch.randint(-STRIDE_TRAIN // 2, STRIDE_TRAIN // 2 + 1, (2, len(j)), generator=self.g)
+                h, w = self.hw[i].T
+                y = torch.minimum((y + o[0]).clamp_min(0), h - S); x = torch.minimum((x + o[1]).clamp_min(0), w - S)
+            xs = torch.stack([self.images[a][:, b:b + S, c:c + S] for a, b, c in zip(i.tolist(), y.tolist(), x.tolist())])
+            out = {"x": xs.index_select(1, self.ch), "idx": j.to(self.dev)}
+            if self.kpi is not None:
+                out["kpi"] = self.kpi[j.to(self.dev)]
+            yield out
+
+
 class CropDataset(Dataset):
     def __init__(self, store: FieldStore, view: str = "stack", stride: int = STRIDE_TRAIN,
                  size: int = CROP, random_offset: bool = False, kpis: pd.DataFrame | None = None,
