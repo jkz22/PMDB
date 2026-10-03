@@ -15,9 +15,9 @@ import pandas as pd
 # physical-meaning sentences, quoted verbatim in reports and Q&A
 MEANINGS = {
     "mat_porosity": "The number every QC engineer already measures from cross-section SEM; shifts with calendering pressure and slurry solids content.",
-    "mat_graphite_d10": "Feedstock particle size distribution; first thing that moves when a supplier changes milling or grade.",
-    "mat_graphite_d50": "Feedstock particle size distribution; first thing that moves when a supplier changes milling or grade.",
-    "mat_graphite_d90": "Feedstock particle size distribution; first thing that moves when a supplier changes milling or grade.",
+    "mat_graphite_d10_um": "Feedstock particle size distribution; first thing that moves when a supplier changes milling or grade.",
+    "mat_graphite_d50_um": "Feedstock particle size distribution; first thing that moves when a supplier changes milling or grade.",
+    "mat_graphite_d90_um": "Feedstock particle size distribution; first thing that moves when a supplier changes milling or grade.",
     "mat_bright_fraction": "Phase loading of the higher-Z component (e.g. silicon or SiOx content); formulation signature.",
     "mat_orientation_anisotropy": "Degree of flake alignment produced by calendering; over-alignment raises through-plane tortuosity and sheet resistance.",
     "mat_crack_fraction": "Intra-particle damage from over-calendering or weak feedstock.",

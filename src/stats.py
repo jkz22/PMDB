@@ -130,27 +130,40 @@ def main() -> None:
     out = ROOT / "results"
     eff.to_parquet(out / "effects.parquet", index=False)
 
-    print(f"baseline: {baseline} "
-          f"({len(wide.loc[baseline])} images, {wide.shape[1]} KPIs)\n")
+    # The report is written to a file alongside effects.parquet (and echoed
+    # to stdout) so it can never go stale relative to the parquets, as it
+    # did when it only existed via shell redirection.
+    lines: list[str] = []
+
+    def emit(text: str = "") -> None:
+        lines.append(text)
+        print(text)
+
+    emit(f"baseline: {baseline} "
+         f"({len(wide.loc[baseline])} images, {wide.shape[1]} KPIs)\n")
     for batch in eff.batch.unique():
         p_mv = hotelling_t2_p(wide, baseline, batch)
         sub = eff[eff.batch == batch]
         verdict, drivers = decide(sub, p_mv)
-        print(f"=== {batch}: {verdict.upper()} (multivariate p={p_mv:.4f}) ===")
-        print(sub.reindex(sub.effect_size.abs().sort_values(ascending=False).index)
-              [["kpi", "effect_size", "p_value", "baseline_mean", "batch_mean"]]
-              .head(5).to_string(index=False))
-        print()
+        emit(f"=== {batch}: {verdict.upper()} (multivariate p={p_mv:.4f}) ===")
+        emit(sub.reindex(sub.effect_size.abs().sort_values(ascending=False).index)
+             [["kpi", "effect_size", "p_value", "baseline_mean", "batch_mean"]]
+             .head(5).to_string(index=False))
+        emit()
 
-    print("--- within-batch CV (per KPI) ---")
-    print(consistency(wide).T.round(3).to_string())
+    emit("--- within-batch CV (per KPI) ---")
+    emit(consistency(wide).T.round(3).to_string())
 
-    print("\n--- leave-one-out false alarms on baseline ---")
+    emit("\n--- leave-one-out false alarms on baseline ---")
     loo = loo_false_alarms(wide, baseline, decide)
-    print(loo.to_string(index=False))
+    emit(loo.to_string(index=False))
     n_bad = (loo.verdict != "accept").sum()
-    print(f"\n{n_bad}/{len(loo)} baseline images would be flagged "
-          f"(this number goes on a slide)")
+    emit(f"\n{n_bad}/{len(loo)} baseline images would be flagged "
+         f"(this number goes on a slide)")
+
+    report = out / f"stats_baseline_{baseline}.txt"
+    report.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"\nwrote {report.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
