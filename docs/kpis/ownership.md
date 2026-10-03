@@ -45,12 +45,16 @@ K/A KPIs).
 ## Cross-lane QC check
 
 `scripts/check_cross_lane.py` joins the two lanes per site and reports
-Spearman rank correlation and median ratio for each pair above. The two
-lanes segment independently, so sustained disagreement (correlation
-below the floor in the script) is a segmentation-drift alarm that
-neither lane can raise alone. The check is report-first: it exits
-non-zero only when a pair falls below its floor, and the floors are
-provisional until enough runs exist to calibrate them.
+Spearman rank correlation for each pair above. The two lanes segment
+independently, so sustained disagreement is a segmentation-drift alarm
+that neither lane can raise alone. The check fails (non-zero exit) when
+the lanes disagree on which sites exist, when a required pair's column
+is missing, or when a required pair's pooled correlation falls below
+its floor. Per-batch correlations are reported but not enforced:
+within a homogeneous batch the true spread sits near measurement noise
+(graphite d50 in Batch_3 has CV 0.04), so rank agreement there is
+uninformative; per-batch floors need calibration against more runs
+before they can gate anything.
 
 ## Status
 
