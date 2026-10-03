@@ -41,6 +41,13 @@ bse, inlens, se_type = site.image[..., 0], site.image[..., 1], site.image[..., 2
 
 # 3. Load raw uint8 counts without percentile normalization:
 site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
+
+# 4. Load with imaging-artefact harmonisation (per-site grey-level LUT, see docs/harmonisation.md).
+#    Fixes the Batch 3 black-level / gain offset; raw data and site.raw_stats are untouched.
+#    normalise defaults to "fixed" (grey / 255, one common scale) when harmonise is set; "percentile" would cancel the LUT.
+site_h = load_site("Batch_3", "71vgq3fw", resolution="half", normalise="fixed", harmonise="hybrid")
+# methods: "none" | "offset" | "affine2" | "affine3" | "histmatch" | "hybrid" (recommended)
+# site_h.harmonised_stats: per-channel intensity stats after the LUT (site_h.raw_stats = before)
 ```
 
 ## Key Files & Outputs

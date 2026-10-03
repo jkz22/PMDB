@@ -1,0 +1,10 @@
+batch,site,channel,slope,intercept
+Batch_heldout,3e122cbj,BSE,1.0,0.0
+Batch_heldout,3e122cbj,Inlens,1.0,0.0
+Batch_heldout,3e122cbj,SE_type,1.0,0.0
+Batch_heldout,fn0mhxef,BSE,1.0,0.0
+Batch_heldout,fn0mhxef,Inlens,1.0,0.0
+Batch_heldout,fn0mhxef,SE_type,1.0,0.0
+Batch_heldout,xrv9xvzb,BSE,1.0,-4.0
+Batch_heldout,xrv9xvzb,Inlens,1.0,-16.0
+Batch_heldout,xrv9xvzb,SE_type,1.0,0.0

@@ -19,7 +19,8 @@ Only normalisation changes what pixel values *mean*. Everything else is lossless
 | 4 | Validate | Nothing is checked | Site counts per batch, detector set per site, ETD vs SE flag, equal shapes across detectors, scale of 25 ± 0.01 nm/px | A malformed future batch fails loudly rather than quietly producing wrong KPIs |
 | 5 | Attach metadata | Filenames only | `batch`, `site`, `se_detector`, `nm_per_px`, `resolution`, plus per-channel raw intensity statistics | KPIs can be reported in µm rather than pixels, and evidence of imaging confounds is kept |
 | 6 | Downsample (cache only) | 25 nm/px | 50 nm/px: 2×2 block mean, rounded to `uint8` | About 4× less data, so development iterations take seconds |
-| 7 | Normalise (at load time, never stored) | 0–255 grey levels whose meaning depends on the microscope settings | `float32` in [0, 1]. Each image and each channel is scaled so its 0.5th percentile maps to 0 and its 99.5th to 1, then clipped | Removes brightness and contrast differences between imaging sessions, e.g. the Batch_3 BSE offset |
+| 6b | Harmonise (optional, at load time, never stored) | Per-site offset/gain differences between imaging sessions (Batch_3 black level +22, gain 0.69× on four sites) | `uint8` after a per-site, per-channel monotone LUT from `cache/harmonised/<method>/` (`harmonise="hybrid"` recommended) | Removes the imaging artefact while keeping material contrast; `Site.raw_stats` keeps the pre-LUT statistics. See [`harmonisation.md`](harmonisation.md) |
+| 7 | Normalise (at load time, never stored) | 0–255 grey levels whose meaning depends on the microscope settings | `float32` in [0, 1]. `percentile` (default): each image and each channel is scaled so its 0.5th percentile maps to 0 and its 99.5th to 1, then clipped. `fixed`: grey / 255, the same for every image (use after harmonisation) | Removes brightness and contrast differences between imaging sessions, e.g. the Batch_3 BSE offset |
 
 Two consequences of where the steps happen:
 
@@ -36,7 +37,7 @@ Normalisation can therefore partly remove a genuine material difference along wi
 
 1. The raw per-file statistics are always written to `outputs/raw_intensity_stats.csv`, and `Site.raw_stats` carries them per site.
 2. Spec 001 acceptance criterion 6 requires the Batch_3 offset to stay visible in those statistics. Mean BSE p1 is about 7 in Batch_3 against 0 in Batches 1 and 2.
-3. Planned improvement: anchor normalisation on regions that should look the same in every batch, namely pore black and the graphite interior, rather than on whole-image percentiles.
+3. Anchor-based harmonisation exists: `load_site(..., harmonise="hybrid", normalise="fixed")` maps pore black and the graphite interior (regions that should look the same in every batch) onto a fixed reference with a per-site LUT, leaving Si brightness free. See [`harmonisation.md`](harmonisation.md).
 
 ### Downsampling blurs fine texture
 
