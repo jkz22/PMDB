@@ -1,0 +1,92 @@
+[
+ {
+  "family": "ots_dinov2",
+  "stage": "R3",
+  "factor": "r3_hybrid",
+  "harmonise": "hybrid",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_dinov2",
+  "stage": "R3",
+  "factor": "r3_affine2",
+  "harmonise": "affine2",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_dinov2",
+  "stage": "R3",
+  "factor": "r3_histmatch",
+  "harmonise": "histmatch",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_vitmae",
+  "stage": "R3",
+  "factor": "r3_hybrid",
+  "harmonise": "hybrid",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_vitmae",
+  "stage": "R3",
+  "factor": "r3_affine2",
+  "harmonise": "affine2",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_vitmae",
+  "stage": "R3",
+  "factor": "r3_histmatch",
+  "harmonise": "histmatch",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_micronet",
+  "stage": "R3",
+  "factor": "r3_hybrid",
+  "harmonise": "hybrid",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_micronet",
+  "stage": "R3",
+  "factor": "r3_affine2",
+  "harmonise": "affine2",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ },
+ {
+  "family": "ots_micronet",
+  "stage": "R3",
+  "factor": "r3_histmatch",
+  "harmonise": "histmatch",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1"
+ }
+]

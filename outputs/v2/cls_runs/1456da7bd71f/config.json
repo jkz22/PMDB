@@ -1,0 +1,17 @@
+{
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "input": "raw",
+  "harmonise": true,
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "1456da7bd71f"
+}

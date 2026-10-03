@@ -1,0 +1,47 @@
+[
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": "affine2",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "histmatch",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ }
+]

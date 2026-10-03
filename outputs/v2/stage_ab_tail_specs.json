@@ -1,0 +1,85 @@
+[
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug2",
+  "factor": "aug"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "vae_mask": 0.5,
+  "factor": "mask"
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "A"
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "view": "BSE",
+  "factor": "view",
+  "tag": ""
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "view": "Inlens",
+  "factor": "view",
+  "tag": ""
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "view": "SE_type",
+  "factor": "view",
+  "tag": ""
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "train_set": "baseline",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug0",
+  "factor": "aug"
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug2",
+  "factor": "aug"
+ },
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "vae_mask": 0.5,
+  "factor": "mask"
+ },
+ {
+  "family": "ots_dinov2",
+  "stage": "OTS"
+ },
+ {
+  "family": "ots_vitmae",
+  "stage": "OTS"
+ },
+ {
+  "family": "ots_micronet",
+  "stage": "OTS"
+ }
+]

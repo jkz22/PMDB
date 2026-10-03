@@ -1,0 +1,497 @@
+[
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLSH"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLSH"
+ }
+]

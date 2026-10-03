@@ -1,0 +1,16 @@
+{
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": false,
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.001,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "081193145d49"
+}

@@ -1,0 +1,8 @@
+idx,family,factor,hash,state,tries,start,sec,error
+3,mae_scratch,r3_hybrid,b7429bd09c49,running,1,0.001819610595703125,,
+5,mae_adapted,r3_hybrid,2b9feda3efde,running,1,0.004991769790649414,,
+4,dino_ft,r3_hybrid,7598e2cfc101,running,1,0.008204221725463867,,
+1,vae_b,r3_hybrid,a963f619f15b,running,1,0.011497259140014648,,
+0,vae_c,r3_hybrid,1a21dfaded41,running,1,0.014747858047485352,,
+6,vae_c,r3_hybrid_aug2,d36c5b902a41,running,1,0.0183107852935791,,
+2,vae_a,r3_hybrid,4ed6349d4d65,running,1,0.021631717681884766,,

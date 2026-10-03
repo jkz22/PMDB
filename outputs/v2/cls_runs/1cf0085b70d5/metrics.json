@@ -1,0 +1,70 @@
+{
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": true,
+  "aug": "aug1",
+  "fold": 1,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "1cf0085b70d5",
+  "train_sec": 1145.4065794944763,
+  "n_train_fields": 24,
+  "n_test_fields": 7,
+  "n_test_crops": 364,
+  "test_fields": [
+    "Batch_1/5n1q8atc",
+    "Batch_1/fzrt2k6r",
+    "Batch_2/avn74qx1",
+    "Batch_2/rxax5ozo",
+    "Batch_3/kbdh4tri",
+    "Batch_3/pl8uabbv",
+    "Batch_3/tuy3zymq"
+  ],
+  "crop_acc": 0.5631868131868132,
+  "crop_f1_macro": 0.558950651772941,
+  "crop_logloss": 1.231355371648761,
+  "field_acc": 0.5714285714285714,
+  "field_f1_macro": 0.5777777777777778,
+  "field_confusion": [
+    [
+      1,
+      1,
+      0
+    ],
+    [
+      0,
+      1,
+      1
+    ],
+    [
+      0,
+      1,
+      2
+    ]
+  ],
+  "crop_confusion": [
+    [
+      55,
+      49,
+      0
+    ],
+    [
+      12,
+      42,
+      50
+    ],
+    [
+      0,
+      48,
+      108
+    ]
+  ],
+  "n_params_trained": 17553995
+}

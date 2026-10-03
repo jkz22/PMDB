@@ -9,7 +9,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from src.v2.common import OUT, harm_method
+from src.v2.common import BASELINE, OUT, harm_method
 from src.v2.leaderboard import collect
 
 M = ["kpi_r2", "img_r2", "image_id_ratio", "lift_shift", "recon_kpi_err", "psnr", "ssim", "knn_batch_acc"]
@@ -143,7 +143,10 @@ def main():
             S += ["## Stage C: extra seeds of the best configuration\n", md(sd[["seed", *M]]), ""]
         lo = c[c.lobo.notna()] if "lobo" in c else c.iloc[:0]
         if len(lo):
-            S += ["## Stage C: leave-one-batch-out retraining of the best configuration\n", md(lo[["lobo", *M]]), ""]
+            lo = lo.copy(); lo["noop"] = (lo.train_set == "baseline") & (lo.lobo != BASELINE)
+            lo = lo.sort_values(["noop", "harmonise", "lobo"])
+            S += ["## Stage C: leave-one-batch-out retraining (`noop`: baseline-only parent never saw that batch, so the row equals the parent)\n",
+                  md(lo[["lobo", "train_set", "harmonise", "noop", *M]]), ""]
     aud = sorted((OUT / "audit").glob("*/audit.json"))
     if aud:
         rows = [json.loads(p.read_text()) for p in aud]

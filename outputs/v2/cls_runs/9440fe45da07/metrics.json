@@ -1,0 +1,70 @@
+{
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "norm",
+  "harmonise": false,
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "9440fe45da07",
+  "train_sec": 131.08432936668396,
+  "n_train_fields": 24,
+  "n_test_fields": 7,
+  "n_test_crops": 325,
+  "test_fields": [
+    "Batch_1/ffwubibz",
+    "Batch_2/3806gxp0",
+    "Batch_2/b3esycq1",
+    "Batch_3/0grcilhi",
+    "Batch_3/9luzk4jm",
+    "Batch_3/hawkfj64",
+    "Batch_3/mgxahqnk"
+  ],
+  "crop_acc": 0.7230769230769231,
+  "crop_f1_macro": 0.6861132610939112,
+  "crop_logloss": 0.7866839417411108,
+  "field_acc": 0.7142857142857143,
+  "field_f1_macro": 0.6746031746031745,
+  "field_confusion": [
+    [
+      1,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      0
+    ],
+    [
+      0,
+      1,
+      3
+    ]
+  ],
+  "crop_confusion": [
+    [
+      49,
+      3,
+      0
+    ],
+    [
+      51,
+      51,
+      2
+    ],
+    [
+      0,
+      34,
+      135
+    ]
+  ],
+  "n_params_trained": 11178051
+}

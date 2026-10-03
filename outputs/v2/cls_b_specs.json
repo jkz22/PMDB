@@ -1,0 +1,542 @@
+[
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_scratch",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "BSE",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "SE_type",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_imnet",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "BSE",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "Inlens",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": false,
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "dinov2_linear",
+  "view": "stack",
+  "harmonise": true,
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "norm",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "norm",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "norm",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "norm",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLS"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "norm",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLS"
+ }
+]

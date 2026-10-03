@@ -1,0 +1,17 @@
+{
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 4,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 5e-05,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "82b50e4f4143"
+}

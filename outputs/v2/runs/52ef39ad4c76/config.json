@@ -1,0 +1,19 @@
+{
+  "family": "vae_c",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug0",
+  "vae_mask": 0.0,
+  "mae_mask": 0.75,
+  "harmonise": "none",
+  "seed": 0,
+  "steps": 3000,
+  "batch_size": 64,
+  "lr": 0.001,
+  "fold": null,
+  "n_folds": 5,
+  "lobo": "Batch_1",
+  "kpi_commit": "d23a116",
+  "hash": "52ef39ad4c76"
+}

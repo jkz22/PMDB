@@ -29,10 +29,13 @@ from pmdb.kpis import REGISTRY, TooFewObjects  # noqa: E402
 from pmdb.kpis.common import KpiContext  # noqa: E402
 from pmdb.segment import Masks, segment_bse  # noqa: E402
 
-if _main_mods:  # hand the main-branch package back so later `import pmdb.io` etc. see the repo version
-    for _k in [k for k in sys.modules if k == "pmdb" or k.startswith("pmdb.")]:
-        del sys.modules[_k]
-    sys.modules.update(_main_mods)
+# Hand the import system back to the repo package: later `import pmdb.io` / `pmdb.harmonise` must see the
+# repo version whether or not it was imported before this module. The pinned KPI objects bound above keep
+# working (Kevin's code has no lazy in-function imports).
+for _k in [k for k in sys.modules if k == "pmdb" or k.startswith("pmdb.")]:
+    del sys.modules[_k]
+sys.modules.update(_main_mods)
+sys.path.remove(str(KPI_ROOT))
 
 CROP_KPIS = ("K01", "K02", "K03", "K04")
 CROP_COLS = ("frac_si", "frac_graphite", "frac_pore", "frac_artefact", "K01_si_frac_adm",

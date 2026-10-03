@@ -1,0 +1,70 @@
+{
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "SE_type",
+  "input": "raw",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 5e-05,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "ed844839d905",
+  "train_sec": 197.76752972602844,
+  "n_train_fields": 24,
+  "n_test_fields": 7,
+  "n_test_crops": 325,
+  "test_fields": [
+    "Batch_1/ffwubibz",
+    "Batch_2/3806gxp0",
+    "Batch_2/b3esycq1",
+    "Batch_3/0grcilhi",
+    "Batch_3/9luzk4jm",
+    "Batch_3/hawkfj64",
+    "Batch_3/mgxahqnk"
+  ],
+  "crop_acc": 0.6246153846153846,
+  "crop_f1_macro": 0.5297376278508353,
+  "crop_logloss": 1.024890845112425,
+  "field_acc": 0.7142857142857143,
+  "field_f1_macro": 0.5,
+  "field_confusion": [
+    [
+      0,
+      1,
+      0
+    ],
+    [
+      1,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      4
+    ]
+  ],
+  "crop_confusion": [
+    [
+      15,
+      33,
+      4
+    ],
+    [
+      33,
+      51,
+      20
+    ],
+    [
+      8,
+      24,
+      137
+    ]
+  ],
+  "n_params_trained": 3553539
+}

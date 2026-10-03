@@ -1,0 +1,190 @@
+[
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input"
+ },
+ {
+  "family": "mae_scratch",
+  "steps": 8000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "A",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "A",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "view": "BSE",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "view": "Inlens",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "view": "SE_type",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "train_set": "baseline",
+  "factor": "train_set",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug0",
+  "factor": "aug",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug2",
+  "factor": "aug",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "vae_mask": 0.5,
+  "factor": "mask",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "view": "BSE",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "view": "Inlens",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "view": "SE_type",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "train_set": "baseline",
+  "factor": "train_set",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug0",
+  "factor": "aug",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug2",
+  "factor": "aug",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "vae_mask": 0.5,
+  "factor": "mask",
+  "kpi_set": "all"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "input": "norm",
+  "factor": "input",
+  "kpi_set": "all"
+ }
+]

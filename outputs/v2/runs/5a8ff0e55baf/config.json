@@ -1,0 +1,20 @@
+{
+  "family": "mae_adapted",
+  "view": "stack",
+  "input": "norm",
+  "train_set": "all",
+  "aug": "aug1",
+  "vae_mask": 0.0,
+  "mae_mask": 0.75,
+  "harmonise": "affine2",
+  "seed": 0,
+  "steps": 6000,
+  "batch_size": 64,
+  "lr": 0.00015,
+  "fold": null,
+  "n_folds": 5,
+  "lobo": null,
+  "kpi_commit": "d23a116",
+  "kpi_set": "gated",
+  "hash": "5a8ff0e55baf"
+}

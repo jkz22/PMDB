@@ -1,0 +1,145 @@
+[
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "A"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "B",
+  "view": "BSE",
+  "factor": "view",
+  "tag": ""
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "B",
+  "view": "Inlens",
+  "factor": "view",
+  "tag": ""
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "B",
+  "view": "SE_type",
+  "factor": "view",
+  "tag": ""
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "B",
+  "train_set": "baseline",
+  "factor": "train_set"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug2",
+  "factor": "aug"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "A"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "view": "BSE",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "view": "Inlens",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "view": "SE_type",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "train_set": "baseline",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug0",
+  "factor": "aug"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug2",
+  "factor": "aug"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "stage": "B",
+  "vae_mask": 0.5,
+  "factor": "mask"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "A"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "view": "BSE",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "view": "Inlens",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "view": "SE_type",
+  "factor": "view",
+  "tag": "stageB_detector_vae_bc"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "train_set": "baseline",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "stage": "B",
+  "aug": "aug0",
+  "factor": "aug"
+ }
+]

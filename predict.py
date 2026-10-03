@@ -70,6 +70,24 @@ def resolve_run(rep: str) -> Path:
     return d
 
 
+def harmonise_for_run(name: str, img: np.ndarray, cfg: dict) -> np.ndarray:
+    """Return the uint8 field on the grey scale the run was trained on. PR #16 per-site LUT methods are
+    refitted from the field's own BSE anchors against the stored reference (identical to the materialised
+    cache for known sites); the earlier GMM map needs per-image stats that predict.py does not carry."""
+    from src.v2.common import HARM_METHODS, harm_method
+    h = harm_method(cfg.get("harmonise"))
+    if h == "none":
+        return img
+    if h not in HARM_METHODS:
+        raise SystemExit(f"harmonise={h!r} runs are not supported by predict.py; use a PR #16 method run")
+    from pmdb import harmonise as H
+    anchors, hist = H.estimate_anchors(img, NM_HALF)
+    luts, _ = H.fit_lut(h, anchors, hist, H.load_reference(Path("cache"), h))
+    out = H.apply_lut(img, luts)
+    print(f"  {name}: harmonised with {h} (BSE p1 {np.percentile(img[..., 0], 1):.0f} -> {np.percentile(out[..., 0], 1):.0f})")
+    return out
+
+
 def representation_novelty(name: str, img: np.ndarray, run_dir: Path) -> dict:
     import torch
 
@@ -85,8 +103,7 @@ def representation_novelty(name: str, img: np.ndarray, run_dir: Path) -> dict:
     if not fam.startswith("ots_"):
         model.load_state_dict(torch.load(run_dir / "final.pt", map_location="cpu", weights_only=False)["model"])
     model.to(dev).eval()
-    if cfg.get("harmonise"):
-        raise SystemExit("harmonised runs need per-image GMM stats of the new field; not supported here yet")
+    img = harmonise_for_run(name, img, cfg)
     x = normalise_percentile(img) if cfg["input"] == "norm" else img.astype(np.float32) / 255.0
     x = x[..., list(VIEWS[cfg["view"]])]
     crops = np.stack([x[y:y + CROP, xx:xx + CROP] for y, xx in grid(*x.shape[:2], CROP, CROP)])
@@ -106,14 +123,19 @@ def representation_novelty(name: str, img: np.ndarray, run_dir: Path) -> dict:
                 dist_to_baseline=d, conformal_p=p, verdict="REVIEW" if p <= 1 / (1 + len(loo)) else "PASS")
 
 
+def load_npz(path: str) -> np.ndarray:
+    z = np.load(path)
+    return z["img"] if "img" in z else z["image"]
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sites", nargs="*", default=[], help="batch/site ids from cache/half")
-    ap.add_argument("--npz", nargs="*", default=[], help="uint8 (H,W,3) [BSE, Inlens, SE_type] at 50 nm/px, key 'img'")
+    ap.add_argument("--npz", nargs="*", default=[], help="uint8 (H,W,3) [BSE, Inlens, SE_type] at 50 nm/px, key 'img' or 'image'")
     ap.add_argument("--representation", default=None, help="'best' or a run hash under outputs/v2/runs")
     ap.add_argument("--out", default=None, help="optional CSV path for the KPI verdict table")
     a = ap.parse_args(argv)
-    fields = [(s, load_half_raw(*s.split("/"))) for s in a.sites] + [(p, np.load(p)["img"]) for p in a.npz]
+    fields = [(s, load_half_raw(*s.split("/"))) for s in a.sites] + [(p, load_npz(p)) for p in a.npz]
     if not fields:
         ap.error("give --sites and/or --npz")
     base = baseline_kpis()

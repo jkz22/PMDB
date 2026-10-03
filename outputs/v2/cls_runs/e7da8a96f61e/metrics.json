@@ -1,0 +1,68 @@
+{
+  "task": "cls",
+  "arch": "dinov2_ft",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": true,
+  "aug": "aug1",
+  "fold": 4,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 5e-05,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "e7da8a96f61e",
+  "train_sec": 269.99310779571533,
+  "n_train_fields": 26,
+  "n_test_fields": 5,
+  "n_test_crops": 234,
+  "test_fields": [
+    "Batch_1/iv6g2oq0",
+    "Batch_2/i9jiqjwl",
+    "Batch_3/cfe5vt7s",
+    "Batch_3/utfgcjfa",
+    "Batch_3/xgj4xftb"
+  ],
+  "crop_acc": 0.49572649572649574,
+  "crop_f1_macro": 0.43517567038559407,
+  "crop_logloss": 1.2255813878929949,
+  "field_acc": 0.4,
+  "field_f1_macro": 0.4666666666666666,
+  "field_confusion": [
+    [
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      1
+    ],
+    [
+      0,
+      2,
+      1
+    ]
+  ],
+  "crop_confusion": [
+    [
+      18,
+      14,
+      7
+    ],
+    [
+      14,
+      12,
+      26
+    ],
+    [
+      7,
+      50,
+      86
+    ]
+  ],
+  "n_params_trained": 3553539
+}

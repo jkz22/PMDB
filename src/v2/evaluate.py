@@ -177,15 +177,17 @@ SELECT = {"kpi_r2": False, "img_r2": True, "image_id_ratio": True, "lift_shift":
 
 
 KPI_R2_FLOOR = 0.0
+KPI_R2_REL_FLOOR = 0.75  # eligible runs keep >= 75% of the best KPI R^2 in the table
 
 
 def selection_score(lb: pd.DataFrame) -> pd.Series:
     """Rank-average (1 = best) over available selection metrics; NaN metrics are skipped per row.
-    Runs whose embedding predicts the gated KPIs no better than their mean (kpi_r2 <= 0) carry no
-    microstructure signal and would otherwise win on the nuisance metrics, so they rank below all
-    eligible runs."""
+    The nuisance metrics only break ties among representations that carry the microstructure signal:
+    runs with kpi_r2 <= 0 or below 75% of the table's best kpi_r2 rank below every eligible run
+    (otherwise a weak-KPI embedding wins on being insensitive to everything)."""
     ranks = pd.DataFrame({m: lb[m].rank(ascending=asc) for m, asc in SELECT.items() if m in lb})
     score = ranks.mean(axis=1, skipna=True)
     if "kpi_r2" in lb:
-        score = score + np.where(lb["kpi_r2"] > KPI_R2_FLOOR, 0.0, len(lb) + 1.0)
+        floor = max(KPI_R2_FLOOR, KPI_R2_REL_FLOOR * float(lb["kpi_r2"].max()))
+        score = score + np.where(lb["kpi_r2"] > floor, 0.0, len(lb) + 1.0)
     return score

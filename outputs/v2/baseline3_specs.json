@@ -1,0 +1,68 @@
+[
+ {
+  "family": "vae_a",
+  "steps": 4000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "mae_scratch",
+  "steps": 8000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_b",
+  "steps": 4000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "kpi_set": "all",
+  "stage": "B",
+  "factor": "train_set"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "baseline",
+  "baseline": "Batch_3",
+  "kpi_set": "all",
+  "stage": "B",
+  "factor": "train_set"
+ }
+]

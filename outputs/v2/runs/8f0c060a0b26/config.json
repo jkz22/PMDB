@@ -1,0 +1,19 @@
+{
+  "family": "dino_ft",
+  "view": "stack",
+  "input": "raw",
+  "train_set": "all",
+  "aug": "aug1",
+  "vae_mask": 0.0,
+  "mae_mask": 0.75,
+  "harmonise": false,
+  "seed": 1000,
+  "steps": 150,
+  "batch_size": 64,
+  "lr": 5e-05,
+  "fold": null,
+  "n_folds": 5,
+  "lobo": null,
+  "kpi_commit": "d23a116",
+  "hash": "8f0c060a0b26"
+}

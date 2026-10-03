@@ -1,0 +1,16 @@
+{
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "Inlens",
+  "input": "raw",
+  "harmonise": false,
+  "aug": "aug1",
+  "fold": 4,
+  "n_folds": 5,
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "hash": "c5c921236804"
+}
