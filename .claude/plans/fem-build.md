@@ -578,3 +578,8 @@ Dispatcher items:
   - Production timeout is capped at 28800 s so attempt plus retry fits the orchestrator.
   - results.md gains a generated `flags` block; the `results_blocks` test expects 6 keys.
   - ES list and Done criteria rewritten for these changes; ES17 (client disconnect) added.
+
+### Round 3 (2026-10-03, dispatcher patch) — trigger: code review of 0b28ff7 (`fem-build.code-reviewer.md`, APPROVE)
+- P12 amended (approved, physics-neutral): `petsc_options` gains `"snes_stol": 0.0`; each substep record stores `fnorm` (SNES function norm) and `error` (repr of any caught exception, else None). Applied during Step 7.
+- Tests: bilayer interface-row assertions added; T4 map shape fixed to (7, 9).
+- Step 7: `run_case` catches GIF render failure on NaN frames as `gif_error`.
