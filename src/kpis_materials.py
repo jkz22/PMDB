@@ -2,16 +2,20 @@
 names, measures and specifies on a datasheet.
 
 Interface shared with kpis_geometry (colleague) and kpis_physics:
-compute(masks, instances) -> dict[str, float]
+compute(masks, instances, instances_border, pixel_size_um) -> dict[str, float]
 masks: dict of boolean arrays (pore, graphite, bright, rim)
 instances: labelled int array for graphite; border-touching labels in
 instances_border are excluded from size statistics.
+pixel_size_um: physical pixel size; KPIs with a _um suffix are in
+micrometres, all others are dimensionless fractions/ratios.
 """
 
 from __future__ import annotations
 
 import numpy as np
 from scipy import ndimage as ndi
+
+from src.io import UnmeasurableImage
 
 try:
     # orientation is owned by the geometry module; imported, not recomputed
@@ -49,13 +53,15 @@ def _crack_mask(masks: dict[str, np.ndarray]) -> np.ndarray:
 
 
 def compute(masks: dict[str, np.ndarray], instances: np.ndarray,
-            instances_border: list[int]) -> dict[str, float]:
+            instances_border: list[int], pixel_size_um: float) -> dict[str, float]:
+    if not pixel_size_um or pixel_size_um <= 0:
+        raise ValueError(f"pixel_size_um must be positive, got {pixel_size_um!r}")
     total = masks["pore"].size
     graphite_px = masks["graphite"].sum()
     if graphite_px == 0:
         # dividing by zero below would write silent NaNs; a frame with no
         # graphite is an unmeasurable image, not a KPI vector
-        raise ValueError("no graphite pixels segmented; unmeasurable image")
+        raise UnmeasurableImage("no graphite pixels segmented")
 
     out = {
         # The number every QC engineer already measures from cross-section
@@ -71,11 +77,11 @@ def compute(masks: dict[str, np.ndarray], instances: np.ndarray,
 
     # Feedstock particle size distribution; first thing that moves when a
     # supplier changes milling or grade.
-    diam = _equivalent_diameters(instances, instances_border)
+    diam = _equivalent_diameters(instances, instances_border) * pixel_size_um
     if diam.size:
         d10, d50, d90 = np.percentile(diam, [10, 50, 90])
-        out.update({"mat_graphite_d10": d10, "mat_graphite_d50": d50,
-                    "mat_graphite_d90": d90})
+        out.update({"mat_graphite_d10_um": d10, "mat_graphite_d50_um": d50,
+                    "mat_graphite_d90_um": d90})
 
     # Intra-particle damage from over-calendering or weak feedstock.
     out["mat_crack_fraction"] = _crack_mask(masks).sum() / graphite_px

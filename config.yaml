@@ -30,8 +30,7 @@ instances:
   min_instance_px: 400
 
 # Confirmed in AGENTS.md: full resolution (data/) is 25.000 +/- 0.001 nm/px.
-# The pipeline does not consume this value yet; committed KPI outputs remain
-# in pixel units (lengths: x0.025 um/px, areas: x0.000625 um^2/px).
+# Consumed by the KPI modules; KPIs with a _um suffix are in micrometres.
 pixel_size_um: 0.025
 
 seed: 0
