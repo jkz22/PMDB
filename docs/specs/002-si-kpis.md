@@ -2,7 +2,8 @@
 
 **Status:** ready for dispatch
 **Repo:** https://github.com/jkz22/PMDB
-**Depends on:** spec 001 **revision 2** (site loader and half-resolution cache, `pmdb/io.py`). Rev 2 crops a fixed 4-px margin from the left and right edges (D-003). **Do not start until spec 001 rev 2 is merged to `main` and its acceptance tests pass.** Branch from that `main`
+**Depends on:** spec 001 **revision 2** (site loader and half-resolution cache, `pmdb/io.py`), which crops a fixed 4-px margin from the left and right edges (D-003). **This dependency is satisfied:** rev 2 is on `main` (commit 5f6bb62) and has been merged into `geometric-kpis` (5143dd6). Read `AGENTS.md` for the current data-loading conventions.
+**Revision 2 of this spec:** the dependency is met; the cache is tracked in git; D-011 segments on un-normalised BSE; KPI outputs are committed to the branch.
 **Locked decisions touched:** D-001 to D-008 from spec 001 are used and must not be changed. This spec sets D-009 to D-020.
 **KPI definitions:** [`docs/kpis/kpi_catalogue.csv`](../kpis/kpi_catalogue.csv) (source of truth) and [`docs/kpis/README.md`](../kpis/README.md) (rationale). Read both before starting.
 
@@ -15,7 +16,8 @@ Every site (31 slices) gets every v1 KPI in the catalogue computed and logged to
 ## Background a planner cannot infer
 
 - Read the "Background" section of spec 001 for the data facts.
-- Build the cache with `python scripts/build_cache.py` first. It is gitignored, so it is not in the repo.
+- **The half-resolution cache is already committed** in `cache/half/` (31 `.npz` files plus `manifest.csv`). Do not rebuild or modify it. The `path` column in `manifest.csv` holds an absolute path from the author's machine. `load_site()` does not use it (it builds the path from the cache root), so ignore that column.
+- **Percentile normalisation depends on image content** (a site with more bright Si gets a higher p99.5, and values above p99.5 are clipped to 1). So segment on `load_site(..., normalise="none")` (see D-011).
 - Work at **half resolution, 50 nm/px** (`load_site(..., resolution="half")`). Si particles are a few µm across, so 40 px or more.
 - **Directions:** image columns are **x**, along the coating width (in-plane). Image rows are **z**, through the coating thickness. No Cu foil is in frame, so the sign of z is unknown. Never report a signed depth trend.
 - In BSE, Si is a **bright tail**, not a separate histogram mode. A global or Otsu threshold is known to be unreliable here.
@@ -30,7 +32,7 @@ Every site (31 slices) gets every v1 KPI in the catalogue computed and logged to
 |---|---|---|---|
 | D-009 | Working resolution | Half (50 nm/px), from the spec-001 cache. All lengths in outputs are in **µm** and all areas in **µm²** | research (locked) |
 | D-010 | Segmentation interface | `pmdb/segment.py: segment(site) -> Masks`. `Masks` is a dataclass of boolean arrays `si, graphite, pore, artefact, admissible`, plus `version: str` and `params: dict`. Here `admissible = ~graphite & ~artefact`. The KPI code consumes only `Masks` and the BSE channel | research (locked) |
-| D-011 | v0 segmenter (provisional) | All constants are global; no per-batch or per-site tuning. (1) Smooth normalised BSE with a Gaussian, σ = 1 px. (2) **pore** = smoothed BSE below the 1st-percentile-anchored dark level: `T_pore = p1 + 0.25·(p50 − p1)`. (3) **si** = smoothed BSE above `median_solid + 4·MAD_solid`, where solid = non-pore pixels; then binary closing (disk radius 2 px), fill holes, and remove objects under 20 px (0.05 µm²). (4) **graphite** = remaining solid pixels after a binary opening (disk radius 5 px), keeping connected components of at least 4 µm². (5) **artefact** = pore components of at least 25 µm². The implementer may revise the v0 rule **once**, before the full run, if the overlays (D-019) show an obvious failure common to all batches. Document any change in `docs/kpis/segmentation-v0-notes.md` with before/after overlays. Never tune to make batches look more or less alike | research (locked, one revision allowed) |
+| D-011 | v0 segmenter (provisional) | All constants are global; no per-batch or per-site tuning. (1) Take the **un-normalised** BSE (`normalise="none"`, cast to float) and smooth it with a Gaussian, σ = 1 px. The rules below are affine-invariant, so they need no normalisation and avoid the p99.5 clipping of the Si tail. (2) **pore** = smoothed BSE below the 1st-percentile-anchored dark level: `T_pore = p1 + 0.25·(p50 − p1)`. (3) **si** = smoothed BSE above `median_solid + 4·MAD_solid`, where solid = non-pore pixels; then binary closing (disk radius 2 px), fill holes, and remove objects under 20 px (0.05 µm²). (4) **graphite** = remaining solid pixels after a binary opening (disk radius 5 px), keeping connected components of at least 4 µm². (5) **artefact** = pore components of at least 25 µm². The implementer may revise the v0 rule **once**, before the full run, if the overlays (D-019) show an obvious failure common to all batches. Document any change in `docs/kpis/segmentation-v0-notes.md` with before/after overlays. Never tune to make batches look more or less alike | research (locked, one revision allowed) |
 | D-012 | Tiles | Split each slice into 4 equal-width tiles along x, each spanning the full height. Every KPI with `per_tile == yes` in the catalogue is also computed per tile | research (locked) |
 | D-013 | Point-pattern null | **Random labelling in admissible space.** Place n points (n = number of Si centroids) uniformly over admissible pixels, with 99 simulations and `numpy.random.default_rng(seed)`, where seed is a stable hash of `batch/site/tile`. Null-relative KPIs (K05 null mean and z, K07 R_rl, K08 envelope) use these simulations. Because observed and null patterns share the same window, no separate edge correction is applied to the null-relative statistics. K07 R_csr is the classical Clark–Evans R and is logged only for comparison with the literature | research (locked) |
 | D-014 | Voronoi | Discrete Voronoi on the pixel grid: each admissible pixel is assigned to the nearest Si centroid (for example, EDT with `return_indices`). Drop cells that touch the image or tile border. The local area fraction for K05 uses the same construction seeded by whole Si objects (SKIZ). K06 cut-offs on normalised cell area: < 0.5 (cluster), > 2.0 (void) | research (locked) |
@@ -64,8 +66,12 @@ Every site (31 slices) gets every v1 KPI in the catalogue computed and logged to
 - Choosing which batch is the baseline.
 - v2 stretch KPIs S01–S04.
 - Learned segmentation (ilastik or random forest) or any neural network.
-- Writing anything under `data/`; committing `cache/` or `outputs/`; changing spec 001 behaviour.
-- Pushing to `main`. Work on a branch and open a PR.
+- Writing anything under `data/`; modifying `cache/` or the spec-001 files in `outputs/`; changing spec 001 behaviour.
+- Pushing to `main` or merging the PR. Commit to the `geometric-kpis` branch and open a PR from `geometric-kpis` to `main`.
+
+## What to commit
+
+Commit code, tests, docs, and these outputs: `outputs/kpis/*.csv`, `outputs/kpis/run_log.json`, `outputs/kpis/figures/*.png` and `outputs/overlays/*.png`. Keep each overlay PNG under about 1 MB (downscale the full-slice thumbnail). These outputs are the deliverable, so the reviewer must see them in the PR.
 
 ## Acceptance criteria
 
