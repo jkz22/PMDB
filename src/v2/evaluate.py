@@ -91,24 +91,46 @@ def lift_shift(E, E_lift, meta) -> float:
 
 
 @torch.no_grad()
-def recon_kpi_error(model, ds: CropDataset, dev, kpi_needed: bool, n_max=256) -> float:
-    """Mean |standardised gated-KPI difference| between original and reconstructed BSE crops,
-    both segmented with the teammate segmenter (crop-level percentiles)."""
-    if 0 not in ds.ch:
-        return np.nan
-    c0 = ds.ch.index(0)
+def ssim(a: np.ndarray, b: np.ndarray, sigma=1.5, L=1.0) -> float:
+    """Gaussian-window SSIM (Wang et al. 2004) on one 2-D image pair in [0, L]."""
+    from scipy.ndimage import gaussian_filter as g
+    c1, c2 = (0.01 * L) ** 2, (0.03 * L) ** 2
+    ma, mb = g(a, sigma), g(b, sigma)
+    va, vb, cab = g(a * a, sigma) - ma ** 2, g(b * b, sigma) - mb ** 2, g(a * b, sigma) - ma * mb
+    return float((((2 * ma * mb + c1) * (2 * cab + c2)) / ((ma ** 2 + mb ** 2 + c1) * (va + vb + c2))).mean())
+
+
+def psnr(a: np.ndarray, b: np.ndarray, L=1.0) -> float:
+    return float(10 * np.log10(L ** 2 / max(float(np.mean((a - b) ** 2)), 1e-12)))
+
+
+@torch.no_grad()
+def recon_metrics(model, ds: CropDataset, dev, kpi_needed: bool, n_max=256) -> dict:
+    """VAE reconstruction quality on held-out crops: PSNR/SSIM per input channel (mean over
+    channels) and mean |standardised gated-KPI difference| between original and reconstructed
+    BSE crops, both segmented with the teammate segmenter."""
     sel = np.linspace(0, len(ds) - 1, min(n_max, len(ds))).astype(int)
-    a, b = [], []
+    a, b, ps, ss = [], [], [], []
+    c0 = ds.ch.index(0) if 0 in ds.ch else None
     for j in sel:
         it = ds[int(j)]
         x = it["x"][None].to(dev)
         r = model.reconstruct(x, it["kpi"][None].to(dev)) if kpi_needed else model.reconstruct(x)
-        for arr, store in ((x, a), (r, b)):
-            bse = (arr[0, c0].float().cpu().numpy() * 255.0)
-            store.append(K.kpis_from_masks(K.segment(bse, NM_HALF), NM_HALF, "recon"))
-    A, B = pd.DataFrame(a)[list(K.GATED_COLS)], pd.DataFrame(b)[list(K.GATED_COLS)]
-    sd = A.std().replace(0, 1)
-    return float(((A - B).abs() / sd).mean().mean())
+        xn, rn = x[0].float().cpu().numpy(), r[0].float().clamp(0, 1).cpu().numpy()
+        ps.append(np.mean([psnr(xn[k], rn[k]) for k in range(xn.shape[0])]))
+        ss.append(np.mean([ssim(xn[k], rn[k]) for k in range(xn.shape[0])]))
+        if c0 is not None:
+            for arr, store in ((xn, a), (rn, b)):
+                store.append(K.kpis_from_masks(K.segment(arr[c0] * 255.0, NM_HALF), NM_HALF, "recon"))
+    err = np.nan
+    if c0 is not None:
+        A, B = pd.DataFrame(a)[list(K.GATED_COLS)], pd.DataFrame(b)[list(K.GATED_COLS)]
+        err = float(((A - B).abs() / A.std().replace(0, 1)).mean().mean())
+    return dict(recon_kpi_err=err, psnr=float(np.mean(ps)), ssim=float(np.mean(ss)))
+
+
+def recon_kpi_error(model, ds: CropDataset, dev, kpi_needed: bool, n_max=256) -> float:
+    return recon_metrics(model, ds, dev, kpi_needed, n_max)["recon_kpi_err"]
 
 
 def evaluate(model, store: FieldStore, view: str, dev, family: str, kpi_norm: dict | None = None) -> dict:
@@ -142,8 +164,9 @@ def evaluate(model, store: FieldStore, view: str, dev, family: str, kpi_norm: di
     widths = {g: im.shape[1] for g, im in zip(store.fields.group_id, store.images)}
     res = dict(kpi_r2=float(np.mean(list(kr.values()))), img_r2=float(np.mean(list(ir.values()))),
                image_id_ratio=image_id_ratio(E, meta, widths), lift_shift=lift_shift(E, E_lift, meta),
-               recon_kpi_err=recon_kpi_error(model, ds, dev, kpi_needed) if family.startswith("vae") else np.nan,
                knn_batch_acc=knn_batch_acc(E, meta), n_crops=len(ds), emb_dim=E.shape[1])
+    res.update(recon_metrics(model, ds, dev, kpi_needed) if family.startswith("vae")
+               else dict(recon_kpi_err=np.nan, psnr=np.nan, ssim=np.nan))
     res.update({f"kpi_r2__{k}": v for k, v in kr.items()})
     res.update({f"img_r2__{k}": v for k, v in ir.items()})
     return res, E, meta
