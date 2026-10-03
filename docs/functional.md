@@ -90,7 +90,37 @@ Robust z (MAD units) of each held-out field against the 17 Batch 3 fields, from
 | `fn0mhxef` | 0.86, z = −0.8 | 0.12, z = −0.2 | 0.81, z = −0.8 | 1.42 µm, z = +1.0 | inside the Batch 3 range on every F and S column (|z| ≤ 1.8; the only mild oddity is the shortest median Si-to-pore distance of any site, 1.20 µm, z = −1.8). Functionally indistinguishable from the baseline, consistent with the fingerprint's Batch 3 assignment. |
 | `xrv9xvzb` | 0.87, z = −0.7 | 0.10, z = −0.7 | 0.81, z = −0.4 | 1.24 µm, z = +0.2 | inside the Batch 3 range on every column (|z| ≤ 0.7). The functional layer sees nothing that the fingerprint's Batch 2 call (mid-depth Si dip) could be checked against — depth distribution is not a functional quantity here. |
 
-### 2.6 How many fields would it take? (`power.csv`)
+### 2.6 Is "Si against graphite" arrangement or composition? (`null_relocation.csv`, `null_relocation_summary.json`)
+Null model in the spirit of D-013: every 8-connected Si object is moved, shape intact, to a random
+non-overlapping position inside the admissible space (anything that is not graphite or artefact),
+so the null keeps the objects, the Si fraction and the graphite skeleton and randomises only the
+arrangement (`pmdb.functional.relocate_si`, 20 draws per field, seeded per site;
+`python scripts/run_swelling_null.py`).
+
+| | Batch 1 | Batch 2 | Batch 3 |
+|---|---|---|---|
+| K15 contact: observed / null median | 0.70 / 0.45 | 0.71 / 0.48 | 0.73 / 0.48 |
+| constrained share at SOC 1: observed / null | 0.86 / 0.81 | 0.87 / 0.82 | 0.88 / 0.83 |
+| pore loss at SOC 1: observed / null | 0.17 / 0.29 | 0.13 / 0.24 | 0.13 / 0.27 |
+
+- Every one of the 31 fields sits far outside its own null: contact excess +0.16 to +0.36
+  (z ≥ 14), constrained share +0.02 to +0.12 (|z| ≥ 6), pore loss *below* null in all 31
+  (z ≤ −8). The Si really is wetted onto the graphite surfaces and keeps out of the pore
+  pockets; a random arrangement of the same objects would close about twice as much pore.
+  This is an arrangement fact, not a consequence of how much Si there is.
+- The **excess over null does not differ by batch** (Kruskal–Wallis p = 0.56 for constrained
+  share, 0.67 for contact, 0.33 for pore loss; B1+B2 vs B3 p = 0.37). The adhesion effect is
+  the same size in every batch. The batch ordering of the constrained share seen in §2.3 is
+  therefore not "Batch 3 arranges its Si against graphite more than chance"; it is a modest
+  shift of both observed and null together (null means 0.81 / 0.82 / 0.83, p = 0.21), i.e. it
+  comes from the geometry the null preserves — object size, Si fraction and how finely the
+  graphite is divided — not from an extra placement preference.
+- Caveat: 11–43 % of objects (median ≈ 25 %, more where objects are large, Spearman 0.78 with
+  K03) find no admissible pocket of their size in 400 draws and stay where they are, so the
+  null is conservative (closer to the observation than a perfect relocation would be). All
+  z-values above are therefore lower bounds on the effect.
+
+### 2.7 How many fields would it take? (`power.csv`)
 Plug-in bootstrap of a Mann–Whitney test at the observed effect sizes: with the present 7 / 7 / 17
 fields the power to detect even the largest batch effects is 0.3–0.7 (`K06_void_region_frac`
 B1 vs B2: 0.60; `F02_soc050_into_graphite`: 0.51 / 0.38). Reaching 80 % power needs ≈ 10–15 fields

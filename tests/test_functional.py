@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from scipy import ndimage
 
 from pmdb import functional as F
 from pmdb.segment import Masks
@@ -170,3 +171,42 @@ def test_compute_functional_columns():
     out = F.compute_functional(_masks(si, None, pore, shape), nm_per_px=50.0)
     assert {"F01_pore_frac", "F01_si_pore_dist_p50_um", "F02_soc100_into_pore", "F02_soc025_pore_loss"} <= out.keys()
     assert all(isinstance(v, float) for v in out.values())
+
+
+# ---------------------------------------------------------------- relocation null
+
+def test_relocate_preserves_objects_and_respects_admissible():
+    from pmdb.functional import relocate_si
+    z = np.zeros((200, 200), dtype=bool)
+    si = z.copy()
+    si[10:20, 10:20] = True
+    si[150:156, 30:50] = True
+    si[100:103, 100:103] = True
+    graphite = z.copy()
+    graphite[:, 120:] = True  # right 40 % of the field is graphite -> not admissible
+    masks = _masks(si=si, graphite=graphite, shape=(200, 200))
+    rng = np.random.default_rng(3)
+    m, n_kept = relocate_si(masks, rng)
+    assert n_kept == 0
+    assert m.si.sum() == si.sum()
+    assert ndimage.label(m.si, structure=np.ones((3, 3)))[1] == 3
+    assert (m.si & ~masks.admissible).sum() <= 0.05 * si.sum()
+    assert not (m.si & m.graphite).any() and not (m.si & m.pore).any()
+    assert (m.si != si).any()
+
+
+def test_swelling_null_detects_si_hugging_graphite():
+    from pmdb.functional import swelling_null
+    z = np.zeros((240, 240), dtype=bool)
+    graphite = z.copy()
+    graphite[100:140, :] = True  # one horizontal graphite slab
+    si = z.copy()
+    for c in range(10, 230, 24):  # discs touching the slab from above
+        rr, cc = np.ogrid[:240, :240]
+        si |= (rr - 93) ** 2 + (cc - c) ** 2 <= 6 ** 2
+    si &= ~graphite
+    masks = _masks(si=si, graphite=graphite, shape=(240, 240))
+    out = swelling_null(masks, soc=1.0, n_sims=8, seed=0)
+    assert out["obs_into_graphite"] > out["null_mean_into_graphite"] + 2 * out["null_sd_into_graphite"]
+    assert out["obs_contact"] > out["null_mean_contact"]
+    assert out["null_kept_frac"] == 0.0

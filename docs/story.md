@@ -93,6 +93,11 @@ columns agree on the first and are too weak to vote on the other two — but the
 Batch 3), swelling past the graphite into free space, the functional twin of the two high-Si
 Batch 1 fields; the other two sit inside the Batch 3 range on every functional column
 (`docs/functional.md` §2.5).
+A random-relocation null (same Si objects, same graphite, random arrangement) shows the
+Si-on-graphite preference is real and universal — every field has ~0.25 more K15 contact and half
+the pore loss of its null — but the *excess* is the same in every batch (p = 0.56): the batch
+difference lives in geometry the null preserves, not in an extra placement preference
+(`docs/functional.md` §2.6).
 
 ### Where each piece lives
 | Layer | Session / branch | Files |

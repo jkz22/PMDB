@@ -68,7 +68,7 @@ valid = clean.valid_for_kpis(mask)  # never compute statistics/KPIs on masked pi
 - **`docs/kpis/screening.md`**: KPI screening tool (`python -m pmdb.screen`) and the KPI submission contract.
 - **`docs/story.md`**: the connecting narrative across every analysis layer (harmonisation → KPIs → fingerprint → GP maps → representation learning → functional morphology → FEM), with pointers to the numbers.
 - **`docs/kpis/stretch.md`** / `outputs/stretch/`: catalogue v2 stretch KPIs S01–S04 (`pmdb/kpis/stretch.py`; `python scripts/run_stretch.py && python scripts/analyse_stretch.py`), implemented and shown redundant with v1 — do not add them to the fingerprint.
-- **`docs/functional.md`** / `outputs/functional/`: functional morphology (`pmdb.functional`): pore access, the Si swelling stress test (where lithiation growth lands: graphite / binder / pore), and a sites-per-batch power analysis. `python scripts/run_functional.py && python scripts/analyse_functional.py`.
+- **`docs/functional.md`** / `outputs/functional/`: functional morphology (`pmdb.functional`): pore access, the Si swelling stress test (where lithiation growth lands: graphite / binder / pore), and a sites-per-batch power analysis. `python scripts/run_functional.py && python scripts/analyse_functional.py`; arrangement null `python scripts/run_swelling_null.py`; held-out explanation `python scripts/explain_heldout_functional.py`.
 
 ## Testing & Pipeline Execution
 

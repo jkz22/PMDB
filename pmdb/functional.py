@@ -277,6 +277,89 @@ def swelling_test(masks: Masks, soc: float, vol_expansion: float = SI_VOL_EXPANS
 
 
 # ---------------------------------------------------------------------------
+# arrangement null: random relocation of the Si objects within the admissible space
+# ---------------------------------------------------------------------------
+
+RELOCATE_MIN_ADMISSIBLE = 0.95
+RELOCATE_MAX_TRIES = 400
+
+
+def relocate_si(masks: Masks, rng: np.random.Generator, min_admissible: float = RELOCATE_MIN_ADMISSIBLE,
+                max_tries: int = RELOCATE_MAX_TRIES) -> tuple[Masks, int]:
+    """Move every 8-connected Si object, shape intact, to a random non-overlapping position whose
+    footprint is at least ``min_admissible`` inside ``masks.admissible`` (D-013 null: same objects,
+    same graphite skeleton, random arrangement). Objects that find no place in ``max_tries`` draws
+    keep their original position; their count is returned. Pore pixels covered by relocated Si are
+    removed from the pore mask (Si displaces what it lands on)."""
+    si = masks.si
+    adm = masks.admissible
+    lab, n = ndimage.label(si, structure=_EIGHT)
+    objs = ndimage.find_objects(lab)
+    areas = np.bincount(lab.ravel(), minlength=n + 1)[1:]
+    order = np.argsort(-areas)
+    placed = np.zeros_like(si)
+    h, w = si.shape
+    adm_r, adm_c = np.nonzero(adm)  # candidate centres: admissible pixels (Si, pore, binder)
+    n_kept = 0
+    for i in order:
+        sl = objs[i]
+        obj = lab[sl] == i + 1
+        oh, ow = obj.shape
+        done = False
+        picks = rng.integers(0, adm_r.size, size=max_tries)
+        for k in picks:
+            r = int(np.clip(adm_r[k] - oh // 2, 0, h - oh))
+            c = int(np.clip(adm_c[k] - ow // 2, 0, w - ow))
+            win = (slice(r, r + oh), slice(c, c + ow))
+            if (adm[win] & obj).sum() < min_admissible * obj.sum():
+                continue
+            if (placed[win] & obj).any():
+                continue
+            placed[win] |= obj
+            done = True
+            break
+        if not done:
+            placed[sl] |= obj
+            n_kept += 1
+    return Masks(si=placed, graphite=masks.graphite & ~placed, pore=masks.pore & ~placed,
+                 artefact=masks.artefact, admissible=masks.admissible, version=masks.version,
+                 params=masks.params), n_kept
+
+
+def swelling_null(masks: Masks, soc: float, n_sims: int, seed: int,
+                  vol_expansion: float = SI_VOL_EXPANSION) -> dict[str, float]:
+    """Observed swelling budget and K15 contact against the random-relocation null.
+
+    Returns ``obs_*``, ``null_mean_*``, ``null_sd_*`` and ``z_*`` for ``into_graphite``,
+    ``pore_loss`` and ``contact`` (Si-graphite contact fraction), plus ``null_kept_frac`` (share
+    of objects that could not be relocated, averaged over simulations).
+    """
+    from pmdb.kpis.crossphase import si_graphite_contact
+
+    def measure(m: Masks) -> dict[str, float]:
+        s = swelling_test(m, soc, vol_expansion)
+        return {"into_graphite": s["into_graphite"], "pore_loss": s["pore_loss"],
+                "contact": si_graphite_contact(m.si, m.graphite)}
+
+    obs = measure(masks)
+    rng = np.random.default_rng(seed)
+    sims, kept = [], []
+    for _ in range(n_sims):
+        m, n_kept = relocate_si(masks, rng)
+        sims.append(measure(m))
+        kept.append(n_kept / max(1, ndimage.label(masks.si, structure=_EIGHT)[1]))
+    out: dict[str, float] = {"null_kept_frac": float(np.mean(kept)), "n_sims": float(n_sims)}
+    for k, v in obs.items():
+        arr = np.array([s[k] for s in sims], dtype=np.float64)
+        mu, sd = float(np.nanmean(arr)), float(np.nanstd(arr, ddof=1)) if n_sims > 1 else NAN
+        out[f"obs_{k}"] = float(v)
+        out[f"null_mean_{k}"] = mu
+        out[f"null_sd_{k}"] = sd
+        out[f"z_{k}"] = float((v - mu) / sd) if sd and sd > 0 else NAN
+    return out
+
+
+# ---------------------------------------------------------------------------
 # per-field summary
 # ---------------------------------------------------------------------------
 

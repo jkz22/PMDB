@@ -1,0 +1,56 @@
+{
+  "into_graphite": {
+    "median_excess_by_batch": [
+      0.03809101431422113,
+      0.044464932662072965,
+      0.04866228011507556
+    ],
+    "median_z_by_batch": [
+      10.84413944416554,
+      11.8948016676563,
+      14.7626093658818
+    ],
+    "sites_z_above_2": 31,
+    "sites_z_below_-2": 0,
+    "kruskal_p_excess": 0.563991452214212,
+    "kruskal_p_null_mean": 0.20597481903036577,
+    "mannwhitney_p_B12_vs_B3_excess": 0.371793069296558
+  },
+  "pore_loss": {
+    "median_excess_by_batch": [
+      -0.12946670789602405,
+      -0.09358208691221045,
+      -0.15208024695196853
+    ],
+    "median_z_by_batch": [
+      -13.387435346861848,
+      -14.38852735085685,
+      -16.150564719112385
+    ],
+    "sites_z_above_2": 0,
+    "sites_z_below_-2": 31,
+    "kruskal_p_excess": 0.3325013321903075,
+    "kruskal_p_null_mean": 0.18469016711538494,
+    "mannwhitney_p_B12_vs_B3_excess": 0.735814797438752
+  },
+  "contact": {
+    "median_excess_by_batch": [
+      0.2539833754371676,
+      0.24443831926704412,
+      0.25552394136252404
+    ],
+    "median_z_by_batch": [
+      31.07056658527457,
+      23.89801523293119,
+      25.588943529475895
+    ],
+    "sites_z_above_2": 31,
+    "sites_z_below_-2": 0,
+    "kruskal_p_excess": 0.6682064893566904,
+    "kruskal_p_null_mean": 0.2336215948070337,
+    "mannwhitney_p_B12_vs_B3_excess": 0.6197691020252198
+  },
+  "null_kept_frac_max": 0.4332298136645962,
+  "n_sims": 20,
+  "elapsed_seconds": 86.8
+}
