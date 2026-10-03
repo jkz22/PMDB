@@ -154,8 +154,8 @@ def main(mode: str = "calibrate", parallel: int = 6, budget: float = 60.0, steps
         return
     if mode == "stage_ab":
         specs = [dict(family=f, stage="OTS") for f in OFF_THE_SHELF] + stage_a() + stage_b()
-    else:
-        specs = json.load(open(REPO / "outputs" / "v2" / "stage_c_specs.json"))
+    else:  # stage_c / round2
+        specs = json.load(open(REPO / "outputs" / "v2" / f"{mode}_specs.json"))
     print(f"{len(specs)} runs; launching detached-safe scheduler (parallel={parallel}, budget=${budget})")
     r = schedule.remote(specs, parallel=parallel, budget_usd=budget, tag=mode)
     print(json.dumps({"usd": r["usd"], "util_mean": r["util_mean"]}, indent=1))
