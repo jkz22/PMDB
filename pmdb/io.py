@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from skimage.transform import downscale_local_mean
@@ -339,7 +341,7 @@ def load_site(
     batch: str,
     site: str,
     resolution: Literal["full", "half"] = "full",
-    normalise: Literal["percentile", "fixed", "none"] = "percentile",
+    normalise: Literal["percentile", "fixed", "none"] | None = None,
     data_root: str | Path | None = None,
     cache_root: str | Path | None = None,
     harmonise: str = "none",
@@ -351,14 +353,16 @@ def load_site(
         site: Site identifier (e.g. '4ih2ggld').
         resolution: 'full' or 'half'. If 'half', reads from the cache.
         normalise: 'percentile' (per-image p0.5->0, p99.5->1, float32), 'fixed' (grey/255,
-            float32, the same map for every image) or 'none' (uint8).
+            float32, the same map for every image) or 'none' (uint8). Default (``None``):
+            'percentile' when ``harmonise == 'none'`` (unchanged behaviour), 'fixed' otherwise,
+            because per-image percentile scaling would cancel an affine harmonisation LUT.
         data_root: Path to data directory (optional).
         cache_root: Path to cache directory (optional).
         harmonise: Grey-level harmonisation method from :data:`pmdb.harmonise.METHODS`
             ('none', 'offset', 'affine2', 'affine3', 'histmatch', 'hybrid'). The per-site LUT is read from
             ``<cache_root>/harmonised/<method>/luts.npz`` and applied before normalisation.
-            Use with ``normalise='fixed'`` or ``'none'``; per-image percentile normalisation
-            would re-stretch each image and undo most of the harmonisation.
+            'histmatch' and 'hybrid' LUTs are fitted on half-resolution histograms and are
+            only accepted with ``resolution='half'``; the affine methods work at both resolutions.
 
     Returns:
         Site object.
@@ -369,10 +373,23 @@ def load_site(
     """
     if resolution not in ("full", "half"):
         raise ValueError(f"Invalid resolution '{resolution}'. Must be 'full' or 'half'.")
-    if normalise not in ("percentile", "fixed", "none"):
-        raise ValueError(f"Invalid normalise '{normalise}'. Must be 'percentile', 'fixed' or 'none'.")
     if harmonise not in _harm.METHODS:
         raise ValueError(f"Invalid harmonise '{harmonise}'. Must be one of {_harm.METHODS}.")
+    if normalise is None:
+        normalise = "percentile" if harmonise == "none" else "fixed"
+    if normalise not in ("percentile", "fixed", "none"):
+        raise ValueError(f"Invalid normalise '{normalise}'. Must be 'percentile', 'fixed' or 'none'.")
+    if harmonise != "none" and normalise == "percentile":
+        warnings.warn(
+            "normalise='percentile' re-stretches each image and cancels an affine harmonisation LUT; "
+            "use normalise='fixed' (default when harmonise is set) or 'none'.",
+            stacklevel=2,
+        )
+    if harmonise in _harm.HISTOGRAM_METHODS and resolution != "half":
+        raise ValueError(
+            f"harmonise='{harmonise}' LUTs are fitted on half-resolution histograms; use resolution='half' "
+            "or an affine method ('offset', 'affine2', 'affine3') at full resolution."
+        )
 
     cache_dir = get_cache_root(cache_root)
 

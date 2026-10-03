@@ -32,7 +32,7 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
 
 # 4. Load with imaging-artefact harmonisation (per-site grey-level LUT, see docs/harmonisation.md).
 #    Fixes the Batch 3 black-level / gain offset; raw data and site.raw_stats are untouched.
-#    normalise="fixed" keeps every site on one common grey scale (grey / 255) instead of per-image percentiles.
+#    normalise defaults to "fixed" (grey / 255, one common scale) when harmonise is set; "percentile" would cancel the LUT.
 site_h = load_site("Batch_3", "71vgq3fw", resolution="half", normalise="fixed", harmonise="hybrid")
 # methods: "none" | "offset" | "affine2" | "affine3" | "histmatch" | "hybrid" (recommended)
 # site_h.harmonised_stats: per-channel intensity stats after the LUT (site_h.raw_stats = before)
@@ -50,7 +50,7 @@ site_h = load_site("Batch_3", "71vgq3fw", resolution="half", normalise="fixed", 
   - Half resolution (`cache/half/`): $50.0$ nm/px (2×2 local mean downsampling)
 - **Known Confounds & QC Data**:
   - **Batch 3 BSE Brightness Offset**: Batch 3 BSE images have an elevated black level (`p1` averages ~7.18 vs 0.00 in Batches 1 and 2). Refer to [`outputs/raw_intensity_stats.csv`](outputs/raw_intensity_stats.csv).
-    It is a per-site **affine** imaging artefact (offset + gain) on all three detectors: 4 Batch 3 sites (`71vgq3fw`, `kbdh4tri`, `tuy3zymq`, `x7u69zsw`) have black level ≈ +19–23 and gain ≈ 0.78×, 5 more (`9luzk4jm`, `hzumfsms`, `ptg8lmto`, `ufdvpb81`, `xgj4xftb`) have +3–7; the other 8 match Batches 1/2. Use `load_site(..., harmonise="hybrid")` for modelling so a model cannot read the batch off the grey levels. LUTs live in `cache/harmonised/<method>/` (rebuild: `python scripts/build_harmonised.py`; evaluation: `python scripts/eval_harmonisation.py` → `outputs/harmonisation/`). See [`docs/harmonisation.md`](docs/harmonisation.md).
+    It is a per-site **affine** imaging artefact (offset + gain) on all three detectors: 4 Batch 3 sites (`71vgq3fw`, `kbdh4tri`, `tuy3zymq`, `x7u69zsw`) have black level ≈ +19–23 and gain ≈ 0.69×, 5 more (`9luzk4jm`, `hzumfsms`, `ptg8lmto`, `ufdvpb81`, `xgj4xftb`) have +3–7; the other 8 match Batches 1/2. Use `load_site(..., harmonise="hybrid")` for modelling so a model cannot read the batch off the grey levels. LUTs live in `cache/harmonised/<method>/` (rebuild: `python scripts/build_harmonised.py`; evaluation: `python scripts/eval_harmonisation.py` → `outputs/harmonisation/`). See [`docs/harmonisation.md`](docs/harmonisation.md).
   - Visual QC overviews are available in [`outputs/qc_contact_sheet.png`](outputs/qc_contact_sheet.png) and [`outputs/raw_stats_by_batch.png`](outputs/raw_stats_by_batch.png).
 
 ## Rules for Agents

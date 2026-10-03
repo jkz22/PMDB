@@ -138,6 +138,12 @@ def test_load_site_applies_lut(tmp_path: Path, clean_and_reference) -> None:
     assert np.allclose(fixed.image, harm.image.astype(np.float32) / 255.0)
     with pytest.raises(ValueError):
         load_site("Batch_9", "abc", resolution="half", cache_root=tmp_path, harmonise="bogus")
+    default = load_site("Batch_9", "abc", resolution="half", cache_root=tmp_path, harmonise="affine2")
+    assert default.image.dtype == np.float32 and np.allclose(default.image, fixed.image)  # defaults to 'fixed'
+    plain = load_site("Batch_9", "abc", resolution="half", cache_root=tmp_path)
+    assert plain.image.max() == pytest.approx(1.0)  # unharmonised default is still percentile
+    with pytest.warns(UserWarning, match="percentile"):
+        load_site("Batch_9", "abc", resolution="half", cache_root=tmp_path, harmonise="affine2", normalise="percentile")
     with pytest.raises(ValueError):
         load_site("Batch_9", "abc", resolution="half", cache_root=tmp_path, normalise="bogus")
 

@@ -42,6 +42,7 @@ import pandas as pd
 from pmdb.segment import segment_bse
 
 METHODS: tuple[str, ...] = ("none", "offset", "affine2", "affine3", "histmatch", "hybrid")
+HISTOGRAM_METHODS: tuple[str, ...] = ("histmatch", "hybrid")  # LUTs depend on the half-res histogram
 CHANNELS: tuple[str, str, str] = ("BSE", "Inlens", "SE_type")
 ANCHOR_NAMES: tuple[str, ...] = ("black", "pore", "graphite", "si")
 HARMONISED_DIRNAME = "harmonised"

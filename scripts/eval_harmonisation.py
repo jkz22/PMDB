@@ -263,7 +263,8 @@ def main() -> None:
     print("Batch_3 groups:", groups[groups.batch == "Batch_3"].groupby("group").site.apply(list).to_dict())
 
     print("Collecting per-site metrics ...")
-    site_df = _collect(cache_root, cache_root, args.methods)
+    methods = list(dict.fromkeys(["none", *args.methods]))  # "none" is the baseline for the summary/figures
+    site_df = _collect(cache_root, cache_root, methods)
     site_df.to_csv(out / "site_metrics.csv", index=False)
     summary = _summarise(site_df, groups)
     summary.to_csv(out / "summary.csv", index=False)
@@ -272,13 +273,13 @@ def main() -> None:
 
     heldout = Path(args.heldout_cache_root)
     if (heldout / "half" / "manifest.csv").exists():
-        h = _collect(heldout, cache_root, args.methods)
+        h = _collect(heldout, cache_root, methods)
         h.to_csv(out / "heldout_metrics.csv", index=False)
 
     print("Figures ...")
     _fig_p05(site_df, groups, out)
-    _fig_hist(cache_root, groups, args.methods, out)
-    _fig_visual(cache_root, args.methods, out)
+    _fig_hist(cache_root, groups, methods, out)
+    _fig_visual(cache_root, methods, out)
     _fig_fractions(site_df, groups, out)
     print(f"Wrote {out}")
 

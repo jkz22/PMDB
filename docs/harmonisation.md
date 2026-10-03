@@ -172,3 +172,8 @@ each materialised cache would add 280 MB to the repository.
   differences between sites are meaningful.
 * Harmonisation does not touch curtaining, noise, or focus differences; those remain as
   documented in `docs/data-processing.md`.
+* `histmatch`/`hybrid` LUTs are fitted on the half-resolution histograms and `load_site` only
+  accepts them with `resolution="half"`; a 2×2 mean changes the histogram, so the same LUT would
+  not match the full-resolution Inlens distribution. The affine methods work at both resolutions.
+* `load_site(..., harmonise=<m>)` defaults to `normalise="fixed"`; passing `normalise="percentile"`
+  re-stretches each image and cancels the affine correction (a warning is raised).
