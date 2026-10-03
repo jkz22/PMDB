@@ -19,6 +19,7 @@ To test a new (surprise) batch, copy it to `data/Batch_N/` and run the same comm
 | 3. Per-site GP | `kpis.py` | One GP per KPI per site. X = tile centre (row, col) in µm, y = tile KPI. Kernel C·RBF + White, fitted by maximum marginal likelihood. Outputs: GP mean, correlated standard error `1/sqrt(1ᵀK⁻¹1)`, naive `std/sqrt(n)` for comparison, lengthscale in µm (patch size). |
 | 4. Particle KPIs | `kpis.py` | Connected Si regions ≥1 µm: size distribution d10/d50/d90 and span (d90−d10)/d50, count per 1000 µm², median aspect ratio (major/minor axis), circularity 4π·A/P², solidity. Clustering: mean nearest-neighbour distance of centroids, Clark–Evans ratio (mean NN / 0.5·λ^-½; below 1 = clustered), cluster size (particles closer than 1 µm grouped). Cracked/irregular = internal gaps ≥2% of filled area or solidity <0.8; anomalous = >8 µm or aspect ratio >3. Inlens edge strength (gradient magnitude, relative) in graphite/binder pixels. |
 | 5. Batch comparison | `compare.py` | The site is the unit. Leave-one-batch-out and pairwise comparisons: permutation p, bootstrap 95% CI, Cohen's d, Holm correction over all 20 KPIs, spread test, robust-z site flags (>3.5), confound checks (BSE black level, SE vs ETD, Si/graphite contrast). |
+| 6. Feature importance | `importance.py` | Model-free ranking: η² (share of site-to-site variance explained by batch, on ranks), Kruskal–Wallis p with Holm correction, largest leave-one-batch-out Cohen's d. Robust-z heatmap of every site × KPI. Cross-check: random forest predicting batch, 5×10-fold CV balanced accuracy vs a label-shuffle null. |
 | 6. Report | `figs.py`, `overlays.py`, `report.py` | Figures and a standalone `qc_report.html`. |
 
 Verdicts: **outlier** = Holm p < 0.01 and \|d\| ≥ 0.8. **investigate** = Holm p < 0.05, or significantly larger spread, or 2 or more sites flagged on at least 2 KPIs each (single-KPI flags are expected by chance with 20 KPIs and are only listed). **consistent** otherwise. Without a specification, "outlier" means *different*, not *defective*.
@@ -32,6 +33,17 @@ Verdicts: **outlier** = Holm p < 0.01 and \|d\| ≥ 0.8. **investigate** = Holm 
 | Batch_3 | 17 | consistent | single-KPI flags only (e.g. hzumfsms pore patch size, vc2whyaq Clark–Evans 0.84 = clustered Si) |
 
 No pairwise batch difference is significant after Holm correction. Batch averages are very close for size distribution, aspect ratio, clustering, anomalous counts and Inlens texture.
+
+### Feature importance
+
+| rank | KPI | η² | p (Holm) | batch that differs most, d |
+|---|---|---|---|---|
+| 1 | Si size span (d90−d10)/d50 | 0.20 | 1.0 | Batch_1, +0.97 |
+| 2 | Si d90 | 0.19 | 1.0 | Batch_1, +1.06 |
+| 3–4 | Inlens edge strength / fine texture | 0.14 | 1.0 | Batch_2, −0.85 |
+| 5 | Si Clark–Evans ratio | 0.13 | 1.0 | Batch_3, −0.55 |
+
+No KPI separates the batches after Holm correction. The random forest reaches 0.42 balanced accuracy vs 0.33 chance (shuffled-label 95th percentile 0.41, p = 0.06), so the batches are not separable as a whole and model-based importances are not reported. Site level: 4ih2ggld is driven by Si fraction (z +6.1), solidity (−4.5), cracked fraction (+3.8) and circularity (−3.6); 5n1q8atc by Si fraction (+10.3), solidity (−6.8), circularity (−4.8) and cluster size (+4.3). See `fig_importance.png`.
 
 Caveats:
 - The two flagged Batch_1 sites get the lowest Si thresholds (a ≈ 1.50 vs 1.6–1.9 elsewhere). In `overlays.png` and `fig_particles.png`, some of their "Si" is on bright graphite-flake edges or mid-grey particles. Their higher Si fraction and their cracked/irregular counts may partly come from segmentation; check before acting on the Batch_1 flag.
@@ -58,4 +70,4 @@ Verdicts: **outlier** = Holm p < 0.01 and \|d\| ≥ 0.8. **investigate** = Holm 
 
 Caveats: the two flagged Batch_1 sites get the lowest Si thresholds (a ≈ 1.50 vs 1.6–1.9 elsewhere). In `overlays.png`, part of their orange area falls on bright graphite-flake edges, so their higher Si fraction may partly be a segmentation artefact; check this before acting on the Batch_1 flag. Also, porosity correlates with the Batch_3 BSE black-level offset and with Si/graphite contrast, and boundary density correlates with contrast. Phase identity (bright = Si) is inferred from BSE contrast.
 
-Outputs: `site_kpis.csv`, `compare.json`, `verdicts.txt`, `fig_kpis.png` (all KPIs per site), `fig_psd.png` (size/shape distributions), `fig_particles.png` (flagged particle crops), `fig_gpmaps.png`, `overlays.png`, `qc_report.html`.
+Outputs: `site_kpis.csv`, `compare.json`, `verdicts.txt`, `fig_kpis.png` (all KPIs per site), `fig_psd.png` (size/shape distributions), `fig_particles.png` (flagged particle crops), `fig_importance.png`, `importance.csv`/`importance.json` (feature importance), `fig_gpmaps.png`, `overlays.png`, `qc_report.html`.

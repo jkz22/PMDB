@@ -103,6 +103,27 @@ else:
     o.append('<p class="a-empty">No site is beyond robust z 3.5 on any KPI.</p>')
 o.append('</section>')
 
+# 3b. feature importance
+import os
+if os.path.exists("importance.json"):
+    I = json.load(open("importance.json")); M = I["model"]
+    o.append('<section class="a-section"><h2 class="a-section__title">Feature importance</h2>'
+             '<p class="a-section__note">Model-free: η² = share of site-to-site variance explained by batch (on ranks); '
+             'Kruskal-Wallis p, Holm-corrected over all KPIs; d = largest effect size of one batch vs all other sites.</p>'
+             '<div class="a-table-scroll"><table class="a-table"><caption class="a-visually-hidden">KPI importance ranking</caption><thead><tr>'
+             '<th scope="col">Rank</th><th scope="col">KPI</th><th scope="col" data-numeric>η²</th><th scope="col" data-numeric>p</th>'
+             '<th scope="col" data-numeric>p (Holm)</th><th scope="col">Batch that differs most</th><th scope="col" data-numeric>d</th></tr></thead><tbody>')
+    for i, u in enumerate(I["univariate"], 1):
+        o.append(f'<tr><td data-numeric>{i}</td><th scope="row">{E(u["name"])}</th><td data-numeric>{u["eta2"]:.3f}</td>'
+                 f'<td data-numeric>{u["kw_p"]:.3f}</td><td data-numeric>{u["kw_p_holm"]:.2f}</td><td>{E(u["batch"])}</td>'
+                 f'<td data-numeric>{u["d_signed"]:+.2f}</td></tr>')
+    o.append('</tbody></table></div>'
+             f'<p class="a-prose">Cross-check: a random forest predicting batch from all {len(I["univariate"])} KPIs reaches '
+             f'{M["cv_balanced_accuracy"]:.2f} balanced accuracy in cross-validation (chance {M["chance"]:.2f}; shuffled labels '
+             f'{M["null_mean"]:.2f}, 95th percentile {M["null_95"]:.2f}; p = {M["p"]:.2f}). That is barely above chance, so '
+             'model-based importances are not reported: the batches are not separable as a whole.</p>'
+             f'<figure class="a-panel">{img("fig_importance.png", "Bar chart of KPI importance and heatmap of robust z per site and KPI")}</figure></section>')
+
 # 4. figures
 o.append('<section class="a-section"><h2 class="a-section__title">Site-level KPIs</h2>'
          '<p class="a-section__note">One dot per site. Error bars are the GP 95% interval, which accounts for neighbouring tiles being correlated.</p>'
