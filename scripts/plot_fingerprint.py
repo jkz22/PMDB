@@ -132,6 +132,22 @@ def plot_depth_profiles(curves: pd.DataFrame, held: pd.DataFrame, out: Path):
     plt.close(fig)
 
 
+def decisive_features(ex: pd.DataFrame, assigned: str, batches: list[str],
+                      n_features: int) -> list[str]:
+    """Features ranked by how strongly they favour the assigned batch.
+
+    A feature's contribution to batch b's score is dev_b + log(scale_b), the
+    summand of fingerprint._scores. Decisiveness = min over the other batches
+    of their contribution minus the assigned batch's contribution.
+    """
+    contrib = {b: ex[f"dev_{b}"] + np.log(ex[f"scale_{b}"]) for b in batches}
+    others = [b for b in batches if b != assigned]
+    decisive = pd.concat([contrib[b] for b in others], axis=1).min(axis=1) - contrib[assigned]
+    return list(ex.assign(decisive=decisive)
+                  .sort_values("decisive", ascending=False)
+                  .head(n_features)["feature"])
+
+
 def plot_card(site: str, X: pd.DataFrame, held: pd.DataFrame,
               pred_row: pd.Series, explain: pd.DataFrame, out: Path,
               n_features: int = 6):
@@ -139,10 +155,7 @@ def plot_card(site: str, X: pd.DataFrame, held: pd.DataFrame,
     batches = ["Batch_1", "Batch_2", "Batch_3"]
     ex = explain[explain["site_index"].astype(str).str.contains(site)].copy()
     assigned = pred_row["assigned"]
-    others = [b for b in batches if b != assigned]
-    # decisiveness: how much closer to the assigned batch than to the best other
-    ex["decisive"] = ex[[f"dev_{b}" for b in others]].min(axis=1) - ex[f"dev_{assigned}"]
-    top = ex.sort_values("decisive", ascending=False).head(n_features)["feature"]
+    top = decisive_features(ex, assigned, batches, n_features)
 
     fig, axes = plt.subplots(n_features, 1, figsize=(7.6, 1.05 * n_features + 1.6))
     fig.patch.set_facecolor(SURFACE)
