@@ -35,6 +35,16 @@ Status: scoping. Literature review complete: `docs/fem/literature-review.md` (pa
   per site. Checks before fixing: (1) per-site tile-prediction spread under LOSO, (2) within- vs between-site variance
   (ICC) per feature, (3) compare <=4 pooling rules under LOSO, (4) synthetic single-tile injection into Batch 3 sites
   (tests/synthetic_patterns.py). Checks 1-2 can run now on outputs/kpis/tile_kpis.csv.
+  CHECKS 1-2 RESULT (KPI tiles, 4/site, scripts/tile_signal_checks.py -> outputs/pooling_checks/):
+  - Mean pooling of tile probabilities beats max pooling in every variant (site acc mean/max: 3-class 0.58/0.55,
+    B1vB3 0.75/0.42, B2vB3 0.67/0.54). Max pooling of probabilities is ruled out: Batch_3 false-alarm rate at p>=0.7
+    is 0.29 (vs B1) and 0.41 (vs B2).
+  - Classifier verdict "diffuse" for both B1vB3 and B2vB3, but feature-level tails matter: B2 has 3 tail-driven
+    features (K04_agglom_frac, K14_empty_p50_um, K15_si_graphite_contact_frac), B1 has 1 (K04_agglom_frac).
+  - Most KPIs have low ICC (within-site tile variance dominates), so tiles are noisy individually.
+  DECISION D10 (updated): pool at the FEATURE level, not the probability level: site features = [mean, max, spread]
+  of tile features (captures diffuse shifts and tail-driven features), plus mean-pooled tile probabilities as a
+  baseline. No max pooling of probabilities. Checks 3-4 still run on FEM features.
 
 ## Resolved from the literature review (user delegated these to Claude's judgment, 2026-10-03)
 Guiding principle: features serve batch discrimination, so between-site ranking must be robust to uncertain
