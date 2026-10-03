@@ -67,6 +67,11 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
   run log (params, solver convergence per step), 34 GIFs (<=2 MB, ~900 px wide, 11 frames, fixed colour scale).
 - Budget: ~$40-70 Modal total (2 full runs + sweeps).
 
+- D16 (user, "modal-only", 2026-10-03) No local FEniCSx. All dolfinx code (unit tests, resolution check, smoke window,
+  benchmark, production) runs on Modal in the official dolfinx Docker image (version pinned), with pure-Python deps
+  added via `uv pip install`. Reason: local conda solve on this Intel (osx-64) Mac stalled; no Docker locally;
+  Modal-only also guarantees test env == production env. Pure-numpy parts may still be tested locally.
+
 ## Pre-approval for unattended execution (user, 2026-10-03)
 User pre-approved proceeding without intervention through: plan review, implementation, code review, local tests,
 one Modal benchmark site, the 2 full runs (Si + SiOx, 34 sites), the D14 sweeps, features, GIFs, pooling checks 3-4,
