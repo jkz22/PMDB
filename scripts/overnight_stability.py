@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import math
 import subprocess
 import sys
 import time
@@ -62,6 +63,10 @@ def predict_heldout(X, y, H) -> pd.DataFrame:
 
 def jackknife(X, y, H, n_drop3: int, seed: int) -> pd.DataFrame:
     n = len(X)
+    max_drop3 = math.comb(n, 3)
+    if not 0 <= n_drop3 <= max_drop3:
+        raise ValueError(
+            f"--n-drop3 must be in [0, C({n},3) = {max_drop3}], got {n_drop3}")
     subsets: list[tuple[int, tuple[int, ...]]] = []
     subsets += [(1, (i,)) for i in range(n)]
     subsets += [(2, c) for c in itertools.combinations(range(n), 2)]

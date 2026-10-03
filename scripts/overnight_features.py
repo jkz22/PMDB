@@ -18,8 +18,10 @@ Writes to outputs/overnight/features/:
     site_scalars.csv    batch, site, acl_depth/lateral per phase + image geometry
     run_log.json        provenance, per-site status and timing
 
-Tables are rewritten atomically after every completed site, so a crash loses at
-most the site in flight.
+Tables are rewritten atomically after every completed site and merged by
+(batch, site) into whatever already exists in --out-dir, so a crash loses at
+most the site in flight, re-running resumes without discarding earlier results,
+and a --sites subset run updates only the selected sites.
 """
 
 from __future__ import annotations
@@ -203,14 +205,51 @@ def _atomic_write_csv(df: pd.DataFrame, path: Path) -> None:
     os.replace(tmp, path)
 
 
-def write_tables(results: dict, order: list[tuple[str, str]], out: Path) -> None:
-    done = [f"{b}/{s}" for b, s in order if f"{b}/{s}" in results]
-    _atomic_write_csv(pd.DataFrame([r for k in done for r in results[k]["curves"]]),
-                      out / "curves_rich.csv")
-    _atomic_write_csv(pd.DataFrame([results[k]["scalars"] for k in done]),
-                      out / "site_scalars.csv")
-    _atomic_write_csv(pd.DataFrame([r for k in done for r in results[k]["tiles"]]),
-                      out / "tile_kpis_rich.csv")
+def _read_existing(path: Path) -> pd.DataFrame | None:
+    if not path.exists():
+        return None
+    return pd.read_csv(path, dtype={"batch": str, "site": str})
+
+
+def merge_rows(existing: pd.DataFrame | None, new: pd.DataFrame,
+               recomputed: set[tuple[str, str]]) -> pd.DataFrame:
+    """Replace every existing row of a recomputed (batch, site); keep all other rows.
+
+    Row order within each site is preserved; sites are ordered by the full
+    manifest order (unknown sites last). Raises ValueError on a column mismatch
+    so a stale table from an incompatible run is never silently merged.
+    """
+    if existing is None or existing.empty:
+        return new.reset_index(drop=True)
+    if set(existing.columns) != set(new.columns):
+        raise ValueError(
+            f"column mismatch with existing table: existing-only "
+            f"{sorted(set(existing.columns) - set(new.columns))}, "
+            f"new-only {sorted(set(new.columns) - set(existing.columns))}")
+    old_keys = list(zip(existing["batch"].astype(str), existing["site"].astype(str)))
+    keep = existing.loc[[k not in recomputed for k in old_keys], list(new.columns)]
+    out = pd.concat([keep, new], ignore_index=True)
+    rank = {k: i for i, k in enumerate(all_sites())}
+    out["_rank"] = [rank.get(k, len(rank))
+                    for k in zip(out["batch"].astype(str), out["site"].astype(str))]
+    out = out.sort_values("_rank", kind="stable").drop(columns="_rank")
+    return out.reset_index(drop=True)
+
+
+def write_tables(results: dict, order: list[tuple[str, str]], out: Path,
+                 existing: dict[str, pd.DataFrame | None]) -> None:
+    done = [(b, s) for b, s in order if f"{b}/{s}" in results]
+    recomputed = set(done)
+    new = {
+        "curves_rich.csv": pd.DataFrame(
+            [r for b, s in done for r in results[f"{b}/{s}"]["curves"]]),
+        "site_scalars.csv": pd.DataFrame(
+            [results[f"{b}/{s}"]["scalars"] for b, s in done]),
+        "tile_kpis_rich.csv": pd.DataFrame(
+            [r for b, s in done for r in results[f"{b}/{s}"]["tiles"]]),
+    }
+    for name, df in new.items():
+        _atomic_write_csv(merge_rows(existing[name], df, recomputed), out / name)
 
 
 def git_commit() -> str:
@@ -237,6 +276,8 @@ def main(argv=None) -> int:
         order = [p for p in order if p in wanted]
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    existing = {name: _read_existing(out / name)
+                for name in ("curves_rich.csv", "site_scalars.csv", "tile_kpis_rich.csv")}
 
     t_start = time.time()
     results: dict[str, dict] = {}
@@ -247,7 +288,7 @@ def main(argv=None) -> int:
         if err is None:
             results[key] = res
             log[key] = {"status": "ok", "seconds": round(res["seconds"], 1)}
-            write_tables(results, order, out)
+            write_tables(results, order, out, existing)
             print(f"[{i:2d}/{len(order)}] {key:28s} ok  {res['seconds']:6.1f}s", flush=True)
         else:
             log[key] = {"status": "error", "error": err}
