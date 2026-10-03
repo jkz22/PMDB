@@ -24,14 +24,14 @@ import torch.nn.functional as F
 
 from src.v2.augment import ForwardRanges, augment
 from src.v2.common import CROP, OUT, SEED, manifest
-from src.v2.data import CropDataset, FieldStore, GPUCropLoader, grouped_folds
+from src.v2.data import CropDataset, FieldStore, GPUCropLoader, grouped_folds, stratified_group_folds
 from src.v2.models import dino_crop, imnet
 from src.v2.train import LOCK_STALE_S, RUNS, RunLocked, device
 
 BATCHES = ("Batch_1", "Batch_2", "Batch_3")
 CLS_RUNS = Path(os.environ.get("PMDB_CLS_RUNS", RUNS.parent / "cls_runs"))  # beside PMDB_RUNS (/vol/runs on Modal)
 DEFAULTS = dict(task="cls", arch="resnet18_imnet", view="stack", input="raw", harmonise=False, aug="aug1",
-                fold=0, n_folds=5, steps=1500, batch_size=64, lr=None, seed=SEED, label_smoothing=0.1)
+                fold=0, n_folds=5, split="strat", steps=1500, batch_size=64, lr=None, seed=SEED, label_smoothing=0.1)
 LR = {"resnet18_scratch": 1e-3, "resnet18_imnet": 3e-4, "effb4_imnet": 3e-4, "dinov2_ft": 5e-5, "dinov2_linear": 1e-3}
 
 
@@ -98,7 +98,10 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     torch.manual_seed(c["seed"]); np.random.seed(c["seed"])
 
     m = manifest()
-    m["fold"] = grouped_folds(m.group_id.to_numpy(), c["n_folds"], c["seed"])
+    if c["split"] == "strat":
+        m["fold"] = stratified_group_folds(m.group_id.to_numpy(), m.batch.to_numpy(), c["n_folds"], c["seed"])
+    else:
+        m["fold"] = grouped_folds(m.group_id.to_numpy(), c["n_folds"], c["seed"])
     tr_f, te_f = m[m.fold != c["fold"]], m[m.fold == c["fold"]]
     tr = CropDataset(FieldStore(tr_f, c["input"], harmonise=c["harmonise"]), c["view"], random_offset=c["aug"] != "aug0")
     y_crop = _labels(tr_f)[torch.tensor([i for i, _, _ in tr.index])].to(dev)

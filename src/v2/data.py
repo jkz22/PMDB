@@ -27,6 +27,19 @@ def heldout_split(m: pd.DataFrame | None = None, frac: float = HELDOUT_FRAC, see
     return m
 
 
+def stratified_group_folds(groups: np.ndarray, labels: np.ndarray, k: int, seed: int = SEED) -> np.ndarray:
+    """Fold id per row: fields of each class are shuffled and dealt round-robin to the k folds,
+    so every fold holds >=1 field of every batch (7/7/17 fields -> 1-2 / 1-2 / 3-4 per fold)."""
+    rng = np.random.default_rng(seed)
+    fold_of = {}
+    for lab in sorted(set(labels)):
+        fields = sorted(set(groups[labels == lab]))
+        rng.shuffle(fields)
+        for j, f in enumerate(fields):
+            fold_of[f] = (j + rng.integers(k)) % k if j == 0 else (fold_of[fields[0]] + j) % k
+    return np.array([fold_of[g] for g in groups])
+
+
 def grouped_folds(groups: np.ndarray, k: int = 5, seed: int = SEED) -> np.ndarray:
     """Fold index per row; every row of a group gets the same fold."""
     u = np.unique(groups)
