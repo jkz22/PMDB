@@ -10,6 +10,8 @@ Writes to --out-dir (default outputs/fingerprint/):
     heldout_features.csv     per held-out site: the fingerprint feature table
     heldout_predictions.csv  per held-out site: assigned, credibility, confidence, OOD flag
     heldout_explain.csv      per held-out site x feature: evidence vs each batch
+Without --heldout-dir, any held-out files left in --out-dir by an earlier run are
+deleted so they cannot be mixed with new training outputs.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
+HELDOUT_OUTPUTS = ("heldout_features.csv", "heldout_predictions.csv", "heldout_explain.csv")
 sys.path.insert(0, str(ROOT))
 
 from pmdb import fingerprint as fp  # noqa: E402
@@ -84,6 +87,12 @@ def main() -> int:
         cols = ["assigned", "credibility", "confidence", "ood"] + \
                [f"p_{b}" for b in model.batches]
         print(pred[cols].to_string())
+    else:
+        removed = [n for n in HELDOUT_OUTPUTS if (out / n).exists()]
+        for n in removed:
+            (out / n).unlink()
+        if removed:
+            print(f"no --heldout-dir: removed stale held-out outputs {removed}")
 
     print(f"\nwrote {out}")
     return 0
