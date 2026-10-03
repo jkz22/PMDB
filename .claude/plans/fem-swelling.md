@@ -67,6 +67,9 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
   run log (params, solver convergence per step), 34 GIFs (<=2 MB, ~900 px wide, 11 frames, fixed colour scale).
 - Budget: ~$40-70 Modal total (2 full runs + sweeps).
 
+- D17 (user, 2026-10-03: "this is a hackathon, not a scientific paper") SCOPE CUT: D13 SiOx full run and D14 robustness
+  sweeps are REMOVED. Only the default pure-Si configuration runs (34 sites × 2 foil orientations). D13/D14 above are
+  superseded; no SiOx gate (G4x), no sweep config/mode, no Spearman robustness filter. Prefer pragmatic scope.
 - D16 (user, "modal-only", 2026-10-03) No local FEniCSx. All dolfinx code (unit tests, resolution check, smoke window,
   benchmark, production) runs on Modal in the official dolfinx Docker image (version pinned), with pure-Python deps
   added via `uv pip install`. Reason: local conda solve on this Intel (osx-64) Mac stalled; no Docker locally;
