@@ -1,0 +1,154 @@
+{
+  "git_commit": "f48ecc8df9165b8ea5208ce476c33794b88e743e",
+  "command": "overnight_features.py --jobs 4",
+  "started_utc": "2026-10-03T21:15:43Z",
+  "total_seconds": 110.3,
+  "n_depth_bands": 15,
+  "lateral_bins_um": [
+    2.0,
+    5.0
+  ],
+  "tile_counts": [
+    16,
+    32
+  ],
+  "segmenter_version": "v0r1",
+  "sites": {
+    "Batch_1/ffwubibz": {
+      "status": "ok",
+      "seconds": 14.6
+    },
+    "Batch_1/f1vzngrs": {
+      "status": "ok",
+      "seconds": 16.2
+    },
+    "Batch_1/4ih2ggld": {
+      "status": "ok",
+      "seconds": 22.0
+    },
+    "Batch_1/5n1q8atc": {
+      "status": "ok",
+      "seconds": 22.1
+    },
+    "Batch_1/iv6g2oq0": {
+      "status": "ok",
+      "seconds": 12.2
+    },
+    "Batch_1/fzrt2k6r": {
+      "status": "ok",
+      "seconds": 15.6
+    },
+    "Batch_1/uhdslk0o": {
+      "status": "ok",
+      "seconds": 12.6
+    },
+    "Batch_2/3806gxp0": {
+      "status": "ok",
+      "seconds": 13.5
+    },
+    "Batch_2/avn74qx1": {
+      "status": "ok",
+      "seconds": 10.5
+    },
+    "Batch_2/b3esycq1": {
+      "status": "ok",
+      "seconds": 14.5
+    },
+    "Batch_2/epqdaau9": {
+      "status": "ok",
+      "seconds": 12.9
+    },
+    "Batch_2/i9jiqjwl": {
+      "status": "ok",
+      "seconds": 15.0
+    },
+    "Batch_2/r17byphk": {
+      "status": "ok",
+      "seconds": 12.9
+    },
+    "Batch_2/rxax5ozo": {
+      "status": "ok",
+      "seconds": 11.5
+    },
+    "Batch_3/0grcilhi": {
+      "status": "ok",
+      "seconds": 11.3
+    },
+    "Batch_3/9luzk4jm": {
+      "status": "ok",
+      "seconds": 9.9
+    },
+    "Batch_3/71vgq3fw": {
+      "status": "ok",
+      "seconds": 11.9
+    },
+    "Batch_3/cfe5vt7s": {
+      "status": "ok",
+      "seconds": 11.1
+    },
+    "Batch_3/hawkfj64": {
+      "status": "ok",
+      "seconds": 9.4
+    },
+    "Batch_3/hzumfsms": {
+      "status": "ok",
+      "seconds": 9.4
+    },
+    "Batch_3/kbdh4tri": {
+      "status": "ok",
+      "seconds": 11.9
+    },
+    "Batch_3/mgxahqnk": {
+      "status": "ok",
+      "seconds": 8.8
+    },
+    "Batch_3/ptg8lmto": {
+      "status": "ok",
+      "seconds": 7.1
+    },
+    "Batch_3/pl8uabbv": {
+      "status": "ok",
+      "seconds": 11.8
+    },
+    "Batch_3/ufdvpb81": {
+      "status": "ok",
+      "seconds": 9.4
+    },
+    "Batch_3/tuy3zymq": {
+      "status": "ok",
+      "seconds": 12.2
+    },
+    "Batch_3/utfgcjfa": {
+      "status": "ok",
+      "seconds": 9.8
+    },
+    "Batch_3/vc2whyaq": {
+      "status": "ok",
+      "seconds": 9.5
+    },
+    "Batch_3/x77cy643": {
+      "status": "ok",
+      "seconds": 9.6
+    },
+    "Batch_3/xgj4xftb": {
+      "status": "ok",
+      "seconds": 8.0
+    },
+    "Batch_3/x7u69zsw": {
+      "status": "ok",
+      "seconds": 12.8
+    },
+    "Batch_heldout/3e122cbj": {
+      "status": "ok",
+      "seconds": 14.2
+    },
+    "Batch_heldout/fn0mhxef": {
+      "status": "ok",
+      "seconds": 8.7
+    },
+    "Batch_heldout/xrv9xvzb": {
+      "status": "ok",
+      "seconds": 8.5
+    }
+  }
+}
