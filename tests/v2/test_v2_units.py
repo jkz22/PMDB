@@ -64,3 +64,10 @@ def test_selection_rank_directions():
                            recon_kpi_err=[np.nan, np.nan]))
     s = selection_score(lb)
     assert s[0] < s[1]
+
+
+def test_selection_gates_runs_without_kpi_signal():
+    lb = pd.DataFrame({"kpi_r2": [-0.1, 0.4], "img_r2": [0.0, 0.3], "image_id_ratio": [1.0, 2.0],
+                       "lift_shift": [0.0, 0.5], "recon_kpi_err": [np.nan, np.nan]})
+    s = selection_score(lb)
+    assert s[1] < s[0]

@@ -175,7 +175,16 @@ def evaluate(model, store: FieldStore, view: str, dev, family: str, kpi_norm: di
 SELECT = {"kpi_r2": False, "img_r2": True, "image_id_ratio": True, "lift_shift": True, "recon_kpi_err": True}
 
 
+KPI_R2_FLOOR = 0.0
+
+
 def selection_score(lb: pd.DataFrame) -> pd.Series:
-    """Rank-average (1 = best) over available selection metrics; NaN metrics are skipped per row."""
+    """Rank-average (1 = best) over available selection metrics; NaN metrics are skipped per row.
+    Runs whose embedding predicts the gated KPIs no better than their mean (kpi_r2 <= 0) carry no
+    microstructure signal and would otherwise win on the nuisance metrics, so they rank below all
+    eligible runs."""
     ranks = pd.DataFrame({m: lb[m].rank(ascending=asc) for m, asc in SELECT.items() if m in lb})
-    return ranks.mean(axis=1, skipna=True)
+    score = ranks.mean(axis=1, skipna=True)
+    if "kpi_r2" in lb:
+        score = score + np.where(lb["kpi_r2"] > KPI_R2_FLOOR, 0.0, len(lb) + 1.0)
+    return score
