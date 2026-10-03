@@ -43,19 +43,19 @@
     - chance: 0.5484
   - **after_acquisition_only**
     - accuracy: 0.4194
-    - null_mean: 0.4429
+    - null_mean: 0.4423
     - null_p95: 0.5484
-    - p_value: 0.7114
+    - p_value: 0.6866
     - chance: 0.5484
   - **after_intensity_percentiles**
     - accuracy: 0.7097
-    - null_mean: 0.424
+    - null_mean: 0.4244
     - null_p95: 0.55
     - p_value: 0.004975
     - chance: 0.5484
   - **after_all**
     - accuracy: 0.6129
-    - null_mean: 0.4039
+    - null_mean: 0.4035
     - null_p95: 0.5484
     - p_value: 0.0199
     - chance: 0.5484
@@ -67,7 +67,7 @@
     - chance: 0.871
   - **strong_vs_rest_after**
     - accuracy: 0.9355
-    - null_mean: 0.8194
+    - null_mean: 0.8195
     - null_p95: 0.871
     - p_value: 0.01493
     - chance: 0.871
@@ -129,7 +129,7 @@
     - noise_sigma_g_after_cv: 0.01428
     - noise_sigma_g_before_cv: 0.1638
     - sigma_e_before_cv: 0.1151
-    - sigma_e_after_cv: 0.1056
+    - sigma_e_after_cv: 0.1062
   - **SE_type**
     - sigma_t: 1.25
     - n_blurred: 11

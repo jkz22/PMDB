@@ -303,7 +303,7 @@
    "sigma_t_px": 1.250251553827863,
    "sigma_k_px": 0.5117685370803471,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.1602965437344896,
+   "sigma_e_after_px": 1.1622779220579318,
    "noise_before": {
     "alpha": 0.002266852295589992,
     "beta": 0.0
@@ -351,5 +351,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 29.7
+ "seconds_harm": 37.5
 }
