@@ -6,11 +6,12 @@ stretch S) score each labelled field by |robust z| against the Batch 3 fields (l
 field is itself Batch 3), then ask how well that score separates Batch 1+2 from Batch 3 (ROC AUC).
 A permutation test on the *maximum* AUC over all columns controls for the search.
 
-    python scripts/acceptance_test.py  -> outputs/acceptance/{per_feature.csv, summary.json, fingerprint_ovr.csv}
+    python scripts/run_acceptance.py  -> outputs/acceptance/{per_feature.csv, summary.json, fingerprint_ovr.csv}
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -23,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 O = ROOT / "outputs"
 OUT = O / "acceptance"
 SEED = 0
-N_PERM = int(sys.argv[1]) if len(sys.argv) > 1 else 2000
+N_PERM = 2000
 BASE = "Batch_3"
 
 
@@ -69,6 +70,9 @@ def auc_for(X: pd.DataFrame, cols: list[str], is_base: np.ndarray) -> pd.Series:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n-perm", type=int, default=N_PERM)
+    n_perm = ap.parse_args().n_perm
     OUT.mkdir(exist_ok=True)
     X = load_features()
     is_base = (X["batch"] == BASE).to_numpy()
@@ -83,12 +87,12 @@ def main() -> int:
     rng = np.random.default_rng(SEED)
     obs_max = float(per["auc_reject_vs_B3"].max())
     better = 0
-    for _ in range(N_PERM):
+    for _ in range(n_perm):
         perm_base = np.zeros_like(is_base)
         perm_base[rng.choice(is_base.size, is_base.sum(), replace=False)] = True
         if auc_for(X, cols, perm_base).max() >= obs_max:
             better += 1
-    p_max = (better + 1) / (N_PERM + 1)
+    p_max = (better + 1) / (n_perm + 1)
 
     # the fingerprint classifier's own one-vs-rest view (LOO), from its committed predictions
     lp = pd.read_csv(O / "fingerprint" / "loo_predictions.csv")
@@ -103,7 +107,7 @@ def main() -> int:
     ovr.to_csv(OUT / "fingerprint_ovr.csv", index=False)
 
     summary = {"n_columns": int(len(per)), "best_column": per.iloc[0]["column"], "best_auc": obs_max,
-               "perm_p_max_auc": p_max, "n_perm": N_PERM,
+               "perm_p_max_auc": p_max, "n_perm": n_perm,
                "median_auc": float(per["auc_reject_vs_B3"].median()),
                "n_auc_above_0.7": int((per["auc_reject_vs_B3"] > 0.7).sum()),
                "fingerprint_ovr": ovr.round(3).to_dict(orient="records")}

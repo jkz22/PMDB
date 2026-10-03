@@ -6,7 +6,7 @@ Batches 1 and 2 are the kinds of deviation to catch, and the held-out fields sho
 test, not a three-way classification, and it is worth checking separately how well the evidence
 collected so far answers *it*.
 
-`python scripts/acceptance_test.py` → `outputs/acceptance/`.
+`python scripts/run_acceptance.py` → `outputs/acceptance/`.
 
 ## 1. One column at a time (`per_feature.csv`)
 
