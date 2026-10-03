@@ -20,7 +20,7 @@ def pv(p): return "<0.001" if p < 0.001 else f"{p:.3f}"
 def img(path, alt):
     if not os.path.exists(path): return f'<p class="a-empty">{E(path)} not found; run figs.py.</p>'
     b = base64.b64encode(open(path, "rb").read()).decode()
-    return f'<img src="data:image/{"jpeg" if path.endswith(".jpg") else "png"};base64,{b}" alt="{E(alt)}" style="width:100%;height:auto">'
+    return f'<img src="data:image/{"jpeg" if path.endswith(".jpg") else "gif" if path.endswith(".gif") else "png"};base64,{b}" alt="{E(alt)}" style="width:100%;height:auto">'
 def status(v): return f'<span class="a-status" data-state="{VSTATE[v]}">{VLABEL[v]}</span>'
 
 flags = pd.DataFrame(R["site_flags"])
@@ -76,13 +76,18 @@ def comp_table(rows, cap, la, lb):
                  f'<td>{"Too few sites" if r.get("insufficient") else status(r["verdict"])}</td></tr>')
     t.append('</tbody></table></div>'); return "".join(t)
 
+TAB_N = [0]
+
+
 def tabs(items, label):
+    TAB_N[0] += 1; k = TAB_N[0]
     t = [f'<div data-a-tabs><div role="tablist" aria-label="{E(label)}">']
     for i, (name, _) in enumerate(items):
-        t.append(f'<button role="tab" type="button" aria-selected="{"true" if i == 0 else "false"}">{E(name)}</button>')
+        t.append(f'<button role="tab" type="button" id="tab{k}-{i}" aria-controls="panel{k}-{i}" '
+                 f'aria-selected="{"true" if i == 0 else "false"}">{E(name)}</button>')
     t.append('</div>')
     for i, (_, body) in enumerate(items):
-        t.append(f'<div role="tabpanel"{"" if i == 0 else " hidden"}>{body}</div>')
+        t.append(f'<div role="tabpanel" id="panel{k}-{i}" aria-labelledby="tab{k}-{i}"{"" if i == 0 else " hidden"}>{body}</div>')
     t.append('</div>'); return "".join(t)
 
 o.append('<section class="a-section"><h2 class="a-section__title">What drives the differences</h2>'
@@ -138,6 +143,31 @@ if os.path.exists("physics.json"):
              'Bold = robust z &gt; 3.5 vs all other sites.</p>'
              f'<p class="a-prose">{concl}{swell}the higher the Si fraction, the more it thickens and the slower its coarse particles fill with lithium.</p>'
              f'<figure class="a-panel">{img("fig_physics.png", "Physics estimates per site and per tile maps of capacity and unabsorbed expansion")}</figure></section>')
+
+# 3a2. simulated evolution (illustrative)
+if os.path.exists("sim/sim.json"):
+    SM = json.load(open("sim/sim.json")); SS = SM["summary"]
+    o.append('<section class="a-section"><h2 class="a-section__title">Simulated evolution over cycling (illustrative)</h2>'
+             f'<p class="a-section__note">{SM["cycles"]} cycles at {SM["crate"]:g}C on a {SM["width_um"]:g} µm wide crop of each image, {SM["seeds"]} random seeds. '
+             'Li diffuses into each Si particle, pixels swell with their Li content, a 2-D finite-element solve gives stress and thickness, '
+             'and each cycle SEI grows, highly stressed Si particles crack and small or disconnected fragments become inactive. '
+             'Literature parameters, not calibrated to cycling data: compare sites with each other, do not read the numbers as predictions.</p>'
+             '<div class="a-table-scroll"><table class="a-table" data-a-sticky-columns="1"><caption class="a-visually-hidden">Simulated KPI change per site</caption><thead><tr>'
+             '<th scope="col">Site</th><th scope="col" data-numeric>Capacity retention (%)</th><th scope="col" data-numeric>Swelling when charged (%)</th>'
+             '<th scope="col" data-numeric>Cracks</th><th scope="col" data-numeric>Si d90 (µm), cycle 0 → end</th><th scope="col" data-numeric>Porosity, start → end</th>'
+             '<th scope="col" data-numeric>Active Si fraction, start → end</th><th scope="col" data-numeric>SEI fraction at end</th></tr></thead><tbody>')
+    for nm, v in SS.items():
+        T0 = pd.read_csv(f"sim/traj_{nm}.csv"); z = T0[T0.cycle == 0].iloc[0]
+        o.append(f'<tr><th scope="row">{E(nm)}</th><td data-numeric>{v["retention_pct"]["end"]:.1f} [{v["retention_pct"]["end_min"]:.1f}–{v["retention_pct"]["end_max"]:.1f}]</td>'
+                 f'<td data-numeric>{v["thickness_charged_pct"]["cycle1"]:.1f} → {v["thickness_charged_pct"]["end"]:.1f}</td>'
+                 f'<td data-numeric>{v["n_cracks"]["end"]:.0f}</td><td data-numeric>{z.si_d90_um:.2f} → {v["si_d90_um"]["end"]:.2f}</td>'
+                 f'<td data-numeric>{z.porosity:.3f} → {v["porosity"]["end"]:.3f}</td><td data-numeric>{z.si_active_frac:.3f} → {v["si_active_frac"]["end"]:.3f}</td>'
+                 f'<td data-numeric>{v["sei_frac"]["end"]:.3f}</td></tr>')
+    o.append('</tbody></table></div><p class="a-section__note">Retention: mean [range] over seeds. Swelling: at full charge, cycle 1 → last cycle.</p>'
+             f'<figure class="a-panel">{img("sim/fig_sim_compare.png", "Simulated KPI trajectories over cycles for each site")}</figure>')
+    o.append(tabs([(nm, f'<figure class="a-panel">{img(f"sim/fig_sim_{nm}.png", f"Simulated microstructure, within-cycle curves and KPI trajectories for {nm}")}</figure>'
+                    f'<figure class="a-panel">{img(f"sim/anim_{nm}.gif", f"Animation of {nm} evolving over cycles")}</figure>') for nm in SS], "Simulated site"))
+    o.append('</section>')
 
 # 3b. feature importance
 import os
