@@ -1,5 +1,8 @@
 # PMDB: the story so far, in one line of argument
 
+![The story in one row: imaging artefact, composition, arrangement, lithiation consequence, power](figures/story.png)
+`python scripts/story_figure.py` redraws it from the committed outputs.
+
 *Written as the overnight synthesis of the repository and every parallel session (KPIs, GP maps,
 harmonisation, physical clean, representation learning / classification, FEM review, functional
 morphology). Every claim points at the file or document that holds the numbers.*
