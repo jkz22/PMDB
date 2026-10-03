@@ -26,6 +26,12 @@ Status: scoping. Literature review complete: `docs/fem/literature-review.md` (pa
   ~22 µm wide (≈ one graphite flake length), full height, non-overlapping, within the central ~135 µm (20 µm lateral edge
   bands excluded for BC influence) -> ~6 tiles/site, ~200 labelled tiles. Existing KPI grid is 4 full-height tiles
   (~44 µm, spec 002 D-012); recompute KPIs on the new grid for the joint model / ablation.
-- D10 (proposed) Site confidence: one vote per tile from a classifier over the tile's full 11-step series (not per
-  tile×step, which are strongly correlated); site probability = class-weighted mean of tile probabilities; calibration
-  checked under leave-one-site-out. Per-step classification kept only as explanation (at which SOC batches separate).
+- D10 (user inclined to agree; open) One vote per tile from a classifier over the tile's full 11-step series (not per
+  tile×step, which are strongly correlated); calibration checked under leave-one-site-out. Per-step classification kept
+  only as explanation (at which SOC batches separate).
+  OPEN RISK (user-raised): batch signal may be localised to one "witness" tile; mean pooling would hide it
+  (multiple-instance learning). Pooling rule NOT fixed to mean. Proposed default: hybrid pooling, site features =
+  [mean, max, spread] of tile scores; max-type threshold calibrated on Batch 3's own LOSO tile spread; fixed tile count
+  per site. Checks before fixing: (1) per-site tile-prediction spread under LOSO, (2) within- vs between-site variance
+  (ICC) per feature, (3) compare <=4 pooling rules under LOSO, (4) synthetic single-tile injection into Batch 3 sites
+  (tests/synthetic_patterns.py). Checks 1-2 can run now on outputs/kpis/tile_kpis.csv.
