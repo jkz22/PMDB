@@ -29,6 +29,13 @@ se_type = site.image[..., 2]  # ETD or standard SE
 
 # 3. Load unnormalised uint8 array (raw camera counts)
 site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
+
+# 4. Load with imaging-artefact harmonisation (per-site grey-level LUT, see docs/harmonisation.md).
+#    Fixes the Batch 3 black-level / gain offset; raw data and site.raw_stats are untouched.
+#    normalise defaults to "fixed" (grey / 255, one common scale) when harmonise is set; "percentile" would cancel the LUT.
+site_h = load_site("Batch_3", "71vgq3fw", resolution="half", normalise="fixed", harmonise="hybrid")
+# methods: "none" | "offset" | "affine2" | "affine3" | "histmatch" | "hybrid" (recommended)
+# site_h.harmonised_stats: per-channel intensity stats after the LUT (site_h.raw_stats = before)
 ```
 
 ### Dataset Specifications
@@ -43,6 +50,7 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
   - Half resolution (`cache/half/`): $50.0$ nm/px (2×2 local mean downsampling)
 - **Known Confounds & QC Data**:
   - **Batch 3 BSE Brightness Offset**: Batch 3 BSE images have an elevated black level (`p1` averages ~7.18 vs 0.00 in Batches 1 and 2). Refer to [`outputs/raw_intensity_stats.csv`](outputs/raw_intensity_stats.csv).
+    It is a per-site **affine** imaging artefact (offset + gain) on all three detectors: 4 Batch 3 sites (`71vgq3fw`, `kbdh4tri`, `tuy3zymq`, `x7u69zsw`) have black level ≈ +19–23 and gain ≈ 0.69×, 5 more (`9luzk4jm`, `hzumfsms`, `ptg8lmto`, `ufdvpb81`, `xgj4xftb`) have +3–7; the other 8 match Batches 1/2. Use `load_site(..., harmonise="hybrid")` for modelling so a model cannot read the batch off the grey levels. LUTs live in `cache/harmonised/<method>/` (rebuild: `python scripts/build_harmonised.py`; evaluation: `python scripts/eval_harmonisation.py` → `outputs/harmonisation/`). See [`docs/harmonisation.md`](docs/harmonisation.md).
   - Visual QC overviews are available in [`outputs/qc_contact_sheet.png`](outputs/qc_contact_sheet.png) and [`outputs/raw_stats_by_batch.png`](outputs/raw_stats_by_batch.png).
 
 ## Rules for Agents
@@ -50,3 +58,7 @@ site_raw = load_site("Batch_1", "4ih2ggld", resolution="half", normalise="none")
 1. **`data/` is Read-Only**: Never edit, move, delete, or write files to `data/`.
 2. **Use Pre-processed Cache**: For segmentation, feature extraction, and KPI calculations (e.g. Spec 002), load from `resolution="half"`.
 3. **Reproducibility**: Always run tests before completing tasks (`pytest -q -m "not data"` and `pytest -q -m data`).
+
+## Held-back Test Sites (`data_heldout/`)
+
+3 unlabelled sites (`3e122cbj`, `fn0mhxef`, `xrv9xvzb`) released by the organisers for scoring. Raw TIFFs in `data_heldout/Batch_heldout/`, processed half-res cache in `cache_heldout/half/` (load with `load_site("Batch_heldout", site, resolution="half", data_root="data_heldout", cache_root="cache_heldout")`). Read-only, never train on them. Batch 3 is the supplier baseline; every held-back site must be assigned to a batch with a confidence and an explanation of how it differs from Batch 3. See [`data_heldout/README.md`](data_heldout/README.md).

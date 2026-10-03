@@ -1,0 +1,10 @@
+batch,site,channel,slope,intercept
+Batch_heldout,3e122cbj,BSE,1.0178571428571426,0.0
+Batch_heldout,3e122cbj,Inlens,1.1818181818181817,0.0
+Batch_heldout,3e122cbj,SE_type,0.9743589743589742,0.0
+Batch_heldout,fn0mhxef,BSE,1.0961538461538458,0.0
+Batch_heldout,fn0mhxef,Inlens,1.0196078431372548,0.0
+Batch_heldout,fn0mhxef,SE_type,0.9743589743589742,0.0
+Batch_heldout,xrv9xvzb,BSE,1.0178571428571428,-4.071428571428568
+Batch_heldout,xrv9xvzb,Inlens,0.9369369369369366,-14.990990990990959
+Batch_heldout,xrv9xvzb,SE_type,0.9268292682926828,0.0

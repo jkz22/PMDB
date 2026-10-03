@@ -162,10 +162,11 @@ def test_run_kpis_main_failure_and_subset(tmp_path, monkeypatch):
     common_args = ["--out-dir", str(tmp_path), "--no-overlays"]
     monkeypatch.setattr(run_kpis, "_worker", worker)
 
-    # (a) full run with one failing site: exit 1, tables untouched, run_log still written
+    # (a) full run with one failing site: exit 1, tables untouched, attempt logged separately
     assert run_kpis.main(common_args) == 1
     assert {n: (tmp_path / n).read_bytes() for n in run_kpis.TABLES} == before
-    log = json.loads((tmp_path / "run_log.json").read_text())
+    assert not (tmp_path / run_kpis.RUN_LOG).exists()
+    log = json.loads((tmp_path / run_kpis.ATTEMPT_LOG).read_text())
     assert log["tables_written"] is False and log["failed"] == [f"{bad[0]}/{bad[1]}"]
 
     # (b) subset of the good site: exit 0, only that site's values replaced
@@ -176,7 +177,150 @@ def test_run_kpis_main_failure_and_subset(tmp_path, monkeypatch):
     assert site_df.loc[site_df["site"] == bad[1], col].tolist() == [1.0]
     tile_df = pd.read_csv(tmp_path / "tile_kpis.csv", dtype={"batch": str, "site": str})
     assert len(tile_df) == 2 * N_TILES
-    assert json.loads((tmp_path / "run_log.json").read_text())["tables_written"] is True
+    log = json.loads((tmp_path / run_kpis.RUN_LOG).read_text())
+    assert log["sites"][f"{good[0]}/{good[1]}"]["run"] == log["latest_run"]
+    assert log["sites"][f"{bad[0]}/{bad[1]}"]["run"] == run_kpis.UNKNOWN_RUN
+    assert not (tmp_path / run_kpis.ATTEMPT_LOG).exists()
 
     # (c) unknown site: exit 2
     assert run_kpis.main([*common_args, "--sites", "Batch_9/nope"]) == 2
+
+
+GOOD_KEY, BAD_KEY = (f"{b}/{s}" for b, s in SITES)
+
+
+@pytest.fixture
+def runner(tmp_path, monkeypatch):
+    """run_kpis.main on SITES with fake workers; set ``state['fail']`` / ``state['commit']`` per call."""
+    state = {"fail": set(), "commit": "a" * 40, "value": 1.0}
+    monkeypatch.setattr(run_kpis, "all_sites", lambda: list(SITES))
+    monkeypatch.setattr(run_kpis, "git_commit", lambda: state["commit"])
+
+    def worker(args):
+        b, s, _ = args
+        if f"{b}/{s}" in state["fail"]:
+            return b, s, None, "RuntimeError: boom\ntraceback"
+        return b, s, _fake_result(b, s, state["value"]), None
+
+    monkeypatch.setattr(run_kpis, "_worker", worker)
+
+    def run(*extra):
+        return run_kpis.main(["--out-dir", str(tmp_path), "--no-overlays", *extra])
+
+    return run, state, tmp_path
+
+
+def _log(path):
+    return _strict_loads((path / run_kpis.RUN_LOG).read_text())
+
+
+def test_subset_run_keeps_retained_site_provenance(runner):
+    run, state, out = runner
+    assert run() == 0
+    full = _log(out)
+    full_run = full["latest_run"]
+    assert {v["run"] for v in full["sites"].values()} == {full_run}
+    assert full["runs"][full_run]["git_commit"] == "a" * 40
+
+    state.update(commit="b" * 40, value=2.0)
+    assert run("--sites", GOOD_KEY) == 0
+    log = _log(out)
+    sub_run = log["latest_run"]
+    assert sub_run != full_run
+    assert log["sites"][GOOD_KEY]["run"] == sub_run
+    assert log["sites"][BAD_KEY] == full["sites"][BAD_KEY]
+    assert log["runs"][full_run] == full["runs"][full_run]
+    assert log["runs"][sub_run]["git_commit"] == "b" * 40
+    assert log["runs"][sub_run]["mode"] == "subset" and "parameters" in log["runs"][sub_run]
+
+    state.update(commit="c" * 40)
+    assert run("--sites", BAD_KEY) == 0
+    log = _log(out)
+    assert set(log["runs"]) == {sub_run, log["latest_run"]}  # unreferenced full run pruned
+
+
+def test_failed_subset_leaves_successful_log_untouched(runner):
+    run, state, out = runner
+    assert run() == 0
+    before = {n: (out / n).read_bytes() for n in (*run_kpis.TABLES, run_kpis.RUN_LOG)}
+
+    state.update(commit="b" * 40, fail={GOOD_KEY})
+    assert run("--sites", GOOD_KEY) == 1
+    assert {n: (out / n).read_bytes() for n in before} == before
+    attempt = _strict_loads((out / run_kpis.ATTEMPT_LOG).read_text())
+    assert attempt["failed"] == [GOOD_KEY] and attempt["git_commit"] == "b" * 40
+
+    state.update(fail=set())
+    assert run("--sites", GOOD_KEY) == 0
+    assert not (out / run_kpis.ATTEMPT_LOG).exists()
+
+
+def test_merge_error_leaves_successful_log_untouched(runner):
+    run, state, out = runner
+    assert run() == 0
+    site_path = out / "site_kpis.csv"
+    pd.read_csv(site_path).assign(extra=0).to_csv(site_path, index=False)
+    before = {n: (out / n).read_bytes() for n in (*run_kpis.TABLES, run_kpis.RUN_LOG)}
+    assert run("--sites", GOOD_KEY) == 1
+    assert {n: (out / n).read_bytes() for n in before} == before
+    assert "column mismatch" in _strict_loads((out / run_kpis.ATTEMPT_LOG).read_text())["table_error"]
+
+
+def test_subset_run_converts_legacy_log(runner):
+    run, state, out = runner
+    assert run() == 0
+    legacy = {"git_commit": "f" * 40, "command": "run_kpis.py --jobs 8", "started_utc": "2026-01-01T00:00:00Z",
+              "mode": "full", "tables_written": True, "parameters": {"p": 1},
+              "sites": {k: {"status": "ok", "seconds": 1.0} for k in (GOOD_KEY, BAD_KEY)}}
+    (out / run_kpis.RUN_LOG).write_text(json.dumps(legacy))
+    state.update(commit="b" * 40)
+    assert run("--sites", GOOD_KEY) == 0
+    log = _log(out)
+    old = log["runs"][log["sites"][BAD_KEY]["run"]]
+    assert old["git_commit"] == "f" * 40 and old["parameters"] == {"p": 1}
+    assert log["sites"][BAD_KEY]["seconds"] == 1.0
+    assert log["runs"][log["sites"][GOOD_KEY]["run"]]["git_commit"] == "b" * 40
+
+
+@pytest.mark.parametrize("legacy", [None, "not json", {"tables_written": False, "sites": {}}])
+def test_subset_run_marks_unknown_provenance(runner, legacy):
+    run, state, out = runner
+    assert run() == 0
+    path = out / run_kpis.RUN_LOG
+    if legacy is None:
+        path.unlink()
+    else:
+        path.write_text(legacy if isinstance(legacy, str) else json.dumps(legacy))
+    assert run("--sites", GOOD_KEY) == 0
+    log = _log(out)
+    assert log["sites"][BAD_KEY]["run"] == run_kpis.UNKNOWN_RUN
+    reason = log["sites"][BAD_KEY]["reason"]
+    assert reason
+    assert log["sites"][GOOD_KEY]["run"] == log["latest_run"]
+
+    # a later subset run keeps the original reason for the still-unknown site
+    assert run("--sites", GOOD_KEY) == 0
+    log = _log(out)
+    assert log["sites"][BAD_KEY]["run"] == run_kpis.UNKNOWN_RUN
+    assert log["sites"][BAD_KEY]["reason"] == reason
+
+
+def test_same_second_runs_keep_distinct_provenance(runner, monkeypatch):
+    run, state, out = runner
+    monkeypatch.setattr(run_kpis, "run_id", lambda record: "same-second_same-commit")
+    assert run() == 0
+    first = _log(out)
+    state.update(value=2.0)
+    assert run("--sites", GOOD_KEY, "--jobs", "1") == 0
+    log = _log(out)
+    assert log["latest_run"] != first["latest_run"]
+    assert log["sites"][BAD_KEY]["run"] == first["latest_run"]
+    assert log["runs"][first["latest_run"]] == first["runs"][first["latest_run"]]
+    assert log["runs"][log["latest_run"]]["mode"] == "subset"
+
+
+def test_unique_run_id_suffixes_collisions():
+    rec = {"started_utc": "T", "git_commit": "c" * 40}
+    base = run_kpis.run_id(rec)
+    assert run_kpis.unique_run_id(rec, {}) == base
+    assert run_kpis.unique_run_id(rec, {base: {}, f"{base}-2": {}}) == f"{base}-3"

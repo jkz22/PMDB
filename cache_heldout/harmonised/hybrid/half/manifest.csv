@@ -1,0 +1,4 @@
+batch,site,se_detector,height,width,nm_per_px,path
+Batch_heldout,3e122cbj,ETD,1158,3494,50.0,cache_heldout/harmonised/hybrid/half/Batch_heldout__3e122cbj.npz
+Batch_heldout,fn0mhxef,ETD,1024,3496,50.0,cache_heldout/harmonised/hybrid/half/Batch_heldout__fn0mhxef.npz
+Batch_heldout,xrv9xvzb,ETD,1044,3496,50.0,cache_heldout/harmonised/hybrid/half/Batch_heldout__xrv9xvzb.npz

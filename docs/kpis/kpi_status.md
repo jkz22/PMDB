@@ -28,7 +28,7 @@ columns are present for 124/124 tiles, with no tile NaNs. The coverage script ex
 - `outputs/kpis/tile_kpis.csv`: 124 tile rows.
 - `outputs/kpis/curves.csv`: K08, K10, K12, K13, D01 and D04 curves.
 - `outputs/kpis/sensitivity.csv`: all nine K04 `(d, d*)` combinations per site.
-- `outputs/kpis/run_log.json`: commit, parameters, versions, timings and per-site status.
+- `outputs/kpis/run_log.json`: provenance of the published tables. `sites` maps each site to the `runs` entry (commit, command, parameters, versions, timings) that produced its rows, so a `--sites` merge keeps the original provenance of retained rows. Failed runs leave it untouched and write `run_attempt.json` instead.
 - `outputs/kpis/figures/`: verdict KPI strip plots and K10 curves.
 - `outputs/overlays/`: 31 review PNGs.
 
