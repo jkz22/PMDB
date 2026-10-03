@@ -1,0 +1,164 @@
+<title>PMDB Site Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control bar over a responsive grid of site cards; overlay view uses two columns, strip views one. */
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --fg: #17202a; --muted: #5b6875; --line: #d9dfe5;
+  --accent: #0f6f8f;
+  --b1: #3b6fd8; --b2: #c07a12; --b3: #2f8a5b;
+  --si: #ff0000; --graphite: #0050ff; --pore: #ffe600; --artefact: #ff00ff;
+  --ui: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1418; --surface: #182027; --fg: #e3e9ee; --muted: #93a1ad; --line: #2a353f;
+  --accent: #5cc3e0; --b1: #7ea3f0; --b2: #e5a54a; --b3: #5fc08d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1418; --surface: #182027; --fg: #e3e9ee; --muted: #93a1ad; --line: #2a353f;
+  --accent: #5cc3e0; --b1: #7ea3f0; --b2: #e5a54a; --b3: #5fc08d; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--ui); padding: 0 16px 48px }
+header { max-width: 1400px; margin: 0 auto; padding-block: 28px 12px }
+h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance }
+.sub { color: var(--muted); margin: 4px 0 0; max-width: 70ch }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  border-bottom: 1px solid var(--line); margin: 0 -16px; padding: 10px 16px }
+.bar-in { max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center }
+.group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.group > span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-right: 4px }
+button.chip { font: 500 13px var(--ui); color: var(--fg); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer }
+button.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg) }
+button.chip:focus-visible, .shot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted) }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+main { max-width: 1400px; margin: 16px auto 0; display: flex; flex-direction: column; gap: 32px }
+.batch h2 { font-size: 18px; margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.batch h2 small { font: 400 13px var(--ui); color: var(--muted) }
+.grid { display: grid; gap: 16px; grid-template-columns: 1fr }
+.grid.two { grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)) }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-width: 0;
+  display: flex; flex-direction: column; gap: 10px }
+.head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center }
+.id { font: 500 15px var(--mono) }
+.tag { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted) }
+.tag.batch { color: var(--surface); border-color: transparent; font-weight: 500 }
+.dim { margin-left: auto; font: 12px var(--mono); color: var(--muted) }
+.shots { display: flex; flex-direction: column; gap: 8px }
+figure { margin: 0 }
+figcaption { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 3px }
+.shot { display: block; width: 100%; padding: 0; border: 0; background: var(--line); cursor: zoom-in; border-radius: 3px; overflow: hidden }
+.shot img { display: block; width: 100%; height: auto }
+dl.kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px 12px; margin: 0;
+  border-top: 1px solid var(--line); padding-top: 8px }
+dl.kpi div { min-width: 0 }
+dl.kpi dt { font-size: 11px; color: var(--muted) }
+dl.kpi dd { margin: 0; font: 500 14px var(--mono); font-variant-numeric: tabular-nums }
+.lb { position: fixed; inset: 0; z-index: 20; background: rgba(5, 8, 10, 0.92); display: flex; flex-direction: column;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px)) }
+.lb-top { display: flex; justify-content: space-between; align-items: center; color: #e3e9ee; font: 14px var(--mono); gap: 12px }
+.lb-top button { font: 500 13px var(--ui); background: #e3e9ee; color: #0f1418; border: 0; border-radius: 999px; padding: 5px 14px; cursor: pointer }
+.lb-scroll { flex: 1; overflow: auto; margin-top: 10px; display: flex; align-items: flex-start; justify-content: center }
+.lb-scroll img { max-width: none; width: auto; height: auto }
+.lb-scroll.fit img { max-width: 100%; max-height: 100% }
+@media (prefers-reduced-motion: no-preference) { .shot img { transition: opacity .2s } }
+</style>
+
+<header>
+  <h1>PMDB Site Atlas</h1>
+  <p class="sub">All 31 labelled SEM sites from Batches 1–3. Processed half-resolution channels at 50 nm/px, plus segmentation review overlays (segmenter v0r1). Batch 3 is the supplier baseline. The held-back test sites are not shown. Click any image to open it at full size.</p>
+</header>
+
+<div class="bar"><div class="bar-in">
+  <div class="group" id="batches"><span>Batch</span></div>
+  <div class="group" id="views"><span>View</span></div>
+  <div class="legend" id="legend">
+    <span><i style="background:var(--si)"></i>Si</span>
+    <span><i style="background:var(--graphite)"></i>Graphite</span>
+    <span><i style="background:var(--pore)"></i>Pore</span>
+    <span><i style="background:var(--artefact)"></i>Artefact</span>
+  </div>
+</div></div>
+
+<main id="main"></main>
+
+<div class="lb" id="lb" hidden>
+  <div class="lb-top"><span id="lb-cap"></span>
+    <span style="display:flex;gap:8px"><button type="button" id="lb-fit">Actual size</button><button type="button" id="lb-close">Close</button></span></div>
+  <div class="lb-scroll fit" id="lb-scroll"><img id="lb-img" alt=""></div>
+</div>
+
+<script>
+const SITES = [{"batch": "Batch_1", "site": "4ih2ggld", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.7, "h_um": 57.9, "files": {"BSE": "img/Batch_1__4ih2ggld_0.jpg", "Inlens": "img/Batch_1__4ih2ggld_1.jpg", "ETD": "img/Batch_1__4ih2ggld_2.jpg", "Composite": "img/Batch_1__4ih2ggld_rgb.jpg", "Overlay": "img/Batch_1__4ih2ggld_overlay.jpg"}, "kpis": [["Si area frac", "0.148"], ["Si / 1000 \u00b5m\u00b2", "107"], ["Si ECD d50 \u00b5m", "0.44"], ["Agglom frac", "0.68"], ["Graphite frac", "0.761"]]}, {"batch": "Batch_1", "site": "5n1q8atc", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 57.9, "files": {"BSE": "img/Batch_1__5n1q8atc_0.jpg", "Inlens": "img/Batch_1__5n1q8atc_1.jpg", "ETD": "img/Batch_1__5n1q8atc_2.jpg", "Composite": "img/Batch_1__5n1q8atc_rgb.jpg", "Overlay": "img/Batch_1__5n1q8atc_overlay.jpg"}, "kpis": [["Si area frac", "0.165"], ["Si / 1000 \u00b5m\u00b2", "94"], ["Si ECD d50 \u00b5m", "0.42"], ["Agglom frac", "0.77"], ["Graphite frac", "0.775"]]}, {"batch": "Batch_1", "site": "f1vzngrs", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 53.7, "files": {"BSE": "img/Batch_1__f1vzngrs_0.jpg", "Inlens": "img/Batch_1__f1vzngrs_1.jpg", "ETD": "img/Batch_1__f1vzngrs_2.jpg", "Composite": "img/Batch_1__f1vzngrs_rgb.jpg", "Overlay": "img/Batch_1__f1vzngrs_overlay.jpg"}, "kpis": [["Si area frac", "0.077"], ["Si / 1000 \u00b5m\u00b2", "25"], ["Si ECD d50 \u00b5m", "0.77"], ["Agglom frac", "0.42"], ["Graphite frac", "0.883"]]}, {"batch": "Batch_1", "site": "ffwubibz", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 52.0, "files": {"BSE": "img/Batch_1__ffwubibz_0.jpg", "Inlens": "img/Batch_1__ffwubibz_1.jpg", "ETD": "img/Batch_1__ffwubibz_2.jpg", "Composite": "img/Batch_1__ffwubibz_rgb.jpg", "Overlay": "img/Batch_1__ffwubibz_overlay.jpg"}, "kpis": [["Si area frac", "0.048"], ["Si / 1000 \u00b5m\u00b2", "18"], ["Si ECD d50 \u00b5m", "0.75"], ["Agglom frac", "0.33"], ["Graphite frac", "0.909"]]}, {"batch": "Batch_1", "site": "fzrt2k6r", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 53.9, "files": {"BSE": "img/Batch_1__fzrt2k6r_0.jpg", "Inlens": "img/Batch_1__fzrt2k6r_1.jpg", "ETD": "img/Batch_1__fzrt2k6r_2.jpg", "Composite": "img/Batch_1__fzrt2k6r_rgb.jpg", "Overlay": "img/Batch_1__fzrt2k6r_overlay.jpg"}, "kpis": [["Si area frac", "0.065"], ["Si / 1000 \u00b5m\u00b2", "25"], ["Si ECD d50 \u00b5m", "0.73"], ["Agglom frac", "0.28"], ["Graphite frac", "0.887"]]}, {"batch": "Batch_1", "site": "iv6g2oq0", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 173.8, "h_um": 44.5, "files": {"BSE": "img/Batch_1__iv6g2oq0_0.jpg", "Inlens": "img/Batch_1__iv6g2oq0_1.jpg", "ETD": "img/Batch_1__iv6g2oq0_2.jpg", "Composite": "img/Batch_1__iv6g2oq0_rgb.jpg", "Overlay": "img/Batch_1__iv6g2oq0_overlay.jpg"}, "kpis": [["Si area frac", "0.058"], ["Si / 1000 \u00b5m\u00b2", "22"], ["Si ECD d50 \u00b5m", "0.56"], ["Agglom frac", "0.43"], ["Graphite frac", "0.879"]]}, {"batch": "Batch_1", "site": "uhdslk0o", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 47.0, "files": {"BSE": "img/Batch_1__uhdslk0o_0.jpg", "Inlens": "img/Batch_1__uhdslk0o_1.jpg", "ETD": "img/Batch_1__uhdslk0o_2.jpg", "Composite": "img/Batch_1__uhdslk0o_rgb.jpg", "Overlay": "img/Batch_1__uhdslk0o_overlay.jpg"}, "kpis": [["Si area frac", "0.064"], ["Si / 1000 \u00b5m\u00b2", "22"], ["Si ECD d50 \u00b5m", "0.55"], ["Agglom frac", "0.51"], ["Graphite frac", "0.886"]]}, {"batch": "Batch_2", "site": "3806gxp0", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 51.2, "files": {"BSE": "img/Batch_2__3806gxp0_0.jpg", "Inlens": "img/Batch_2__3806gxp0_1.jpg", "ETD": "img/Batch_2__3806gxp0_2.jpg", "Composite": "img/Batch_2__3806gxp0_rgb.jpg", "Overlay": "img/Batch_2__3806gxp0_overlay.jpg"}, "kpis": [["Si area frac", "0.059"], ["Si / 1000 \u00b5m\u00b2", "20"], ["Si ECD d50 \u00b5m", "0.64"], ["Agglom frac", "0.33"], ["Graphite frac", "0.887"]]}, {"batch": "Batch_2", "site": "avn74qx1", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 51.2, "files": {"BSE": "img/Batch_2__avn74qx1_0.jpg", "Inlens": "img/Batch_2__avn74qx1_1.jpg", "ETD": "img/Batch_2__avn74qx1_2.jpg", "Composite": "img/Batch_2__avn74qx1_rgb.jpg", "Overlay": "img/Batch_2__avn74qx1_overlay.jpg"}, "kpis": [["Si area frac", "0.044"], ["Si / 1000 \u00b5m\u00b2", "16"], ["Si ECD d50 \u00b5m", "0.77"], ["Agglom frac", "0.32"], ["Graphite frac", "0.897"]]}, {"batch": "Batch_2", "site": "b3esycq1", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 53.9, "files": {"BSE": "img/Batch_2__b3esycq1_0.jpg", "Inlens": "img/Batch_2__b3esycq1_1.jpg", "ETD": "img/Batch_2__b3esycq1_2.jpg", "Composite": "img/Batch_2__b3esycq1_rgb.jpg", "Overlay": "img/Batch_2__b3esycq1_overlay.jpg"}, "kpis": [["Si area frac", "0.084"], ["Si / 1000 \u00b5m\u00b2", "28"], ["Si ECD d50 \u00b5m", "0.58"], ["Agglom frac", "0.46"], ["Graphite frac", "0.867"]]}, {"batch": "Batch_2", "site": "epqdaau9", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 53.7, "files": {"BSE": "img/Batch_2__epqdaau9_0.jpg", "Inlens": "img/Batch_2__epqdaau9_1.jpg", "ETD": "img/Batch_2__epqdaau9_2.jpg", "Composite": "img/Batch_2__epqdaau9_rgb.jpg", "Overlay": "img/Batch_2__epqdaau9_overlay.jpg"}, "kpis": [["Si area frac", "0.066"], ["Si / 1000 \u00b5m\u00b2", "20"], ["Si ECD d50 \u00b5m", "0.69"], ["Agglom frac", "0.43"], ["Graphite frac", "0.888"]]}, {"batch": "Batch_2", "site": "i9jiqjwl", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 56.8, "files": {"BSE": "img/Batch_2__i9jiqjwl_0.jpg", "Inlens": "img/Batch_2__i9jiqjwl_1.jpg", "ETD": "img/Batch_2__i9jiqjwl_2.jpg", "Composite": "img/Batch_2__i9jiqjwl_rgb.jpg", "Overlay": "img/Batch_2__i9jiqjwl_overlay.jpg"}, "kpis": [["Si area frac", "0.068"], ["Si / 1000 \u00b5m\u00b2", "26"], ["Si ECD d50 \u00b5m", "0.64"], ["Agglom frac", "0.39"], ["Graphite frac", "0.885"]]}, {"batch": "Batch_2", "site": "r17byphk", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 52.0, "files": {"BSE": "img/Batch_2__r17byphk_0.jpg", "Inlens": "img/Batch_2__r17byphk_1.jpg", "ETD": "img/Batch_2__r17byphk_2.jpg", "Composite": "img/Batch_2__r17byphk_rgb.jpg", "Overlay": "img/Batch_2__r17byphk_overlay.jpg"}, "kpis": [["Si area frac", "0.050"], ["Si / 1000 \u00b5m\u00b2", "29"], ["Si ECD d50 \u00b5m", "0.52"], ["Agglom frac", "0.39"], ["Graphite frac", "0.889"]]}, {"batch": "Batch_2", "site": "rxax5ozo", "detector": "SE", "channels": ["BSE", "Inlens", "SE"], "w_um": 174.8, "h_um": 51.7, "files": {"BSE": "img/Batch_2__rxax5ozo_0.jpg", "Inlens": "img/Batch_2__rxax5ozo_1.jpg", "SE": "img/Batch_2__rxax5ozo_2.jpg", "Composite": "img/Batch_2__rxax5ozo_rgb.jpg", "Overlay": "img/Batch_2__rxax5ozo_overlay.jpg"}, "kpis": [["Si area frac", "0.057"], ["Si / 1000 \u00b5m\u00b2", "22"], ["Si ECD d50 \u00b5m", "0.71"], ["Agglom frac", "0.36"], ["Graphite frac", "0.900"]]}, {"batch": "Batch_3", "site": "0grcilhi", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 47.6, "files": {"BSE": "img/Batch_3__0grcilhi_0.jpg", "Inlens": "img/Batch_3__0grcilhi_1.jpg", "ETD": "img/Batch_3__0grcilhi_2.jpg", "Composite": "img/Batch_3__0grcilhi_rgb.jpg", "Overlay": "img/Batch_3__0grcilhi_overlay.jpg"}, "kpis": [["Si area frac", "0.054"], ["Si / 1000 \u00b5m\u00b2", "26"], ["Si ECD d50 \u00b5m", "0.56"], ["Agglom frac", "0.35"], ["Graphite frac", "0.884"]]}, {"batch": "Batch_3", "site": "71vgq3fw", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 51.5, "files": {"BSE": "img/Batch_3__71vgq3fw_0.jpg", "Inlens": "img/Batch_3__71vgq3fw_1.jpg", "ETD": "img/Batch_3__71vgq3fw_2.jpg", "Composite": "img/Batch_3__71vgq3fw_rgb.jpg", "Overlay": "img/Batch_3__71vgq3fw_overlay.jpg"}, "kpis": [["Si area frac", "0.068"], ["Si / 1000 \u00b5m\u00b2", "33"], ["Si ECD d50 \u00b5m", "0.52"], ["Agglom frac", "0.40"], ["Graphite frac", "0.890"]]}, {"batch": "Batch_3", "site": "9luzk4jm", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 52.2, "files": {"BSE": "img/Batch_3__9luzk4jm_0.jpg", "Inlens": "img/Batch_3__9luzk4jm_1.jpg", "ETD": "img/Batch_3__9luzk4jm_2.jpg", "Composite": "img/Batch_3__9luzk4jm_rgb.jpg", "Overlay": "img/Batch_3__9luzk4jm_overlay.jpg"}, "kpis": [["Si area frac", "0.061"], ["Si / 1000 \u00b5m\u00b2", "17"], ["Si ECD d50 \u00b5m", "0.91"], ["Agglom frac", "0.36"], ["Graphite frac", "0.884"]]}, {"batch": "Batch_3", "site": "cfe5vt7s", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 52.0, "files": {"BSE": "img/Batch_3__cfe5vt7s_0.jpg", "Inlens": "img/Batch_3__cfe5vt7s_1.jpg", "ETD": "img/Batch_3__cfe5vt7s_2.jpg", "Composite": "img/Batch_3__cfe5vt7s_rgb.jpg", "Overlay": "img/Batch_3__cfe5vt7s_overlay.jpg"}, "kpis": [["Si area frac", "0.068"], ["Si / 1000 \u00b5m\u00b2", "24"], ["Si ECD d50 \u00b5m", "0.59"], ["Agglom frac", "0.49"], ["Graphite frac", "0.883"]]}, {"batch": "Batch_3", "site": "hawkfj64", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 47.6, "files": {"BSE": "img/Batch_3__hawkfj64_0.jpg", "Inlens": "img/Batch_3__hawkfj64_1.jpg", "ETD": "img/Batch_3__hawkfj64_2.jpg", "Composite": "img/Batch_3__hawkfj64_rgb.jpg", "Overlay": "img/Batch_3__hawkfj64_overlay.jpg"}, "kpis": [["Si area frac", "0.046"], ["Si / 1000 \u00b5m\u00b2", "22"], ["Si ECD d50 \u00b5m", "0.69"], ["Agglom frac", "0.14"], ["Graphite frac", "0.908"]]}, {"batch": "Batch_3", "site": "hzumfsms", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 52.2, "files": {"BSE": "img/Batch_3__hzumfsms_0.jpg", "Inlens": "img/Batch_3__hzumfsms_1.jpg", "ETD": "img/Batch_3__hzumfsms_2.jpg", "Composite": "img/Batch_3__hzumfsms_rgb.jpg", "Overlay": "img/Batch_3__hzumfsms_overlay.jpg"}, "kpis": [["Si area frac", "0.050"], ["Si / 1000 \u00b5m\u00b2", "17"], ["Si ECD d50 \u00b5m", "0.88"], ["Agglom frac", "0.38"], ["Graphite frac", "0.894"]]}, {"batch": "Batch_3", "site": "kbdh4tri", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 51.5, "files": {"BSE": "img/Batch_3__kbdh4tri_0.jpg", "Inlens": "img/Batch_3__kbdh4tri_1.jpg", "ETD": "img/Batch_3__kbdh4tri_2.jpg", "Composite": "img/Batch_3__kbdh4tri_rgb.jpg", "Overlay": "img/Batch_3__kbdh4tri_overlay.jpg"}, "kpis": [["Si area frac", "0.069"], ["Si / 1000 \u00b5m\u00b2", "44"], ["Si ECD d50 \u00b5m", "0.51"], ["Agglom frac", "0.27"], ["Graphite frac", "0.888"]]}, {"batch": "Batch_3", "site": "mgxahqnk", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 47.6, "files": {"BSE": "img/Batch_3__mgxahqnk_0.jpg", "Inlens": "img/Batch_3__mgxahqnk_1.jpg", "ETD": "img/Batch_3__mgxahqnk_2.jpg", "Composite": "img/Batch_3__mgxahqnk_rgb.jpg", "Overlay": "img/Batch_3__mgxahqnk_overlay.jpg"}, "kpis": [["Si area frac", "0.069"], ["Si / 1000 \u00b5m\u00b2", "20"], ["Si ECD d50 \u00b5m", "0.68"], ["Agglom frac", "0.69"], ["Graphite frac", "0.887"]]}, {"batch": "Batch_3", "site": "pl8uabbv", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 56.8, "files": {"BSE": "img/Batch_3__pl8uabbv_0.jpg", "Inlens": "img/Batch_3__pl8uabbv_1.jpg", "ETD": "img/Batch_3__pl8uabbv_2.jpg", "Composite": "img/Batch_3__pl8uabbv_rgb.jpg", "Overlay": "img/Batch_3__pl8uabbv_overlay.jpg"}, "kpis": [["Si area frac", "0.058"], ["Si / 1000 \u00b5m\u00b2", "26"], ["Si ECD d50 \u00b5m", "0.74"], ["Agglom frac", "0.32"], ["Graphite frac", "0.886"]]}, {"batch": "Batch_3", "site": "ptg8lmto", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 40.3, "files": {"BSE": "img/Batch_3__ptg8lmto_0.jpg", "Inlens": "img/Batch_3__ptg8lmto_1.jpg", "ETD": "img/Batch_3__ptg8lmto_2.jpg", "Composite": "img/Batch_3__ptg8lmto_rgb.jpg", "Overlay": "img/Batch_3__ptg8lmto_overlay.jpg"}, "kpis": [["Si area frac", "0.055"], ["Si / 1000 \u00b5m\u00b2", "25"], ["Si ECD d50 \u00b5m", "0.59"], ["Agglom frac", "0.34"], ["Graphite frac", "0.905"]]}, {"batch": "Batch_3", "site": "tuy3zymq", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 51.5, "files": {"BSE": "img/Batch_3__tuy3zymq_0.jpg", "Inlens": "img/Batch_3__tuy3zymq_1.jpg", "ETD": "img/Batch_3__tuy3zymq_2.jpg", "Composite": "img/Batch_3__tuy3zymq_rgb.jpg", "Overlay": "img/Batch_3__tuy3zymq_overlay.jpg"}, "kpis": [["Si area frac", "0.059"], ["Si / 1000 \u00b5m\u00b2", "48"], ["Si ECD d50 \u00b5m", "0.50"], ["Agglom frac", "0.24"], ["Graphite frac", "0.893"]]}, {"batch": "Batch_3", "site": "ufdvpb81", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 52.2, "files": {"BSE": "img/Batch_3__ufdvpb81_0.jpg", "Inlens": "img/Batch_3__ufdvpb81_1.jpg", "ETD": "img/Batch_3__ufdvpb81_2.jpg", "Composite": "img/Batch_3__ufdvpb81_rgb.jpg", "Overlay": "img/Batch_3__ufdvpb81_overlay.jpg"}, "kpis": [["Si area frac", "0.055"], ["Si / 1000 \u00b5m\u00b2", "18"], ["Si ECD d50 \u00b5m", "0.93"], ["Agglom frac", "0.39"], ["Graphite frac", "0.896"]]}, {"batch": "Batch_3", "site": "utfgcjfa", "detector": "SE", "channels": ["BSE", "Inlens", "SE"], "w_um": 174.7, "h_um": 51.7, "files": {"BSE": "img/Batch_3__utfgcjfa_0.jpg", "Inlens": "img/Batch_3__utfgcjfa_1.jpg", "SE": "img/Batch_3__utfgcjfa_2.jpg", "Composite": "img/Batch_3__utfgcjfa_rgb.jpg", "Overlay": "img/Batch_3__utfgcjfa_overlay.jpg"}, "kpis": [["Si area frac", "0.059"], ["Si / 1000 \u00b5m\u00b2", "21"], ["Si ECD d50 \u00b5m", "0.76"], ["Agglom frac", "0.54"], ["Graphite frac", "0.892"]]}, {"batch": "Batch_3", "site": "vc2whyaq", "detector": "SE", "channels": ["BSE", "Inlens", "SE"], "w_um": 174.8, "h_um": 51.7, "files": {"BSE": "img/Batch_3__vc2whyaq_0.jpg", "Inlens": "img/Batch_3__vc2whyaq_1.jpg", "SE": "img/Batch_3__vc2whyaq_2.jpg", "Composite": "img/Batch_3__vc2whyaq_rgb.jpg", "Overlay": "img/Batch_3__vc2whyaq_overlay.jpg"}, "kpis": [["Si area frac", "0.059"], ["Si / 1000 \u00b5m\u00b2", "16"], ["Si ECD d50 \u00b5m", "1.04"], ["Agglom frac", "0.36"], ["Graphite frac", "0.892"]]}, {"batch": "Batch_3", "site": "x77cy643", "detector": "SE", "channels": ["BSE", "Inlens", "SE"], "w_um": 174.7, "h_um": 51.7, "files": {"BSE": "img/Batch_3__x77cy643_0.jpg", "Inlens": "img/Batch_3__x77cy643_1.jpg", "SE": "img/Batch_3__x77cy643_2.jpg", "Composite": "img/Batch_3__x77cy643_rgb.jpg", "Overlay": "img/Batch_3__x77cy643_overlay.jpg"}, "kpis": [["Si area frac", "0.065"], ["Si / 1000 \u00b5m\u00b2", "18"], ["Si ECD d50 \u00b5m", "1.20"], ["Agglom frac", "0.19"], ["Graphite frac", "0.889"]]}, {"batch": "Batch_3", "site": "x7u69zsw", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 51.5, "files": {"BSE": "img/Batch_3__x7u69zsw_0.jpg", "Inlens": "img/Batch_3__x7u69zsw_1.jpg", "ETD": "img/Batch_3__x7u69zsw_2.jpg", "Composite": "img/Batch_3__x7u69zsw_rgb.jpg", "Overlay": "img/Batch_3__x7u69zsw_overlay.jpg"}, "kpis": [["Si area frac", "0.089"], ["Si / 1000 \u00b5m\u00b2", "37"], ["Si ECD d50 \u00b5m", "0.55"], ["Agglom frac", "0.53"], ["Graphite frac", "0.866"]]}, {"batch": "Batch_3", "site": "xgj4xftb", "detector": "ETD", "channels": ["BSE", "Inlens", "ETD"], "w_um": 174.8, "h_um": 40.3, "files": {"BSE": "img/Batch_3__xgj4xftb_0.jpg", "Inlens": "img/Batch_3__xgj4xftb_1.jpg", "ETD": "img/Batch_3__xgj4xftb_2.jpg", "Composite": "img/Batch_3__xgj4xftb_rgb.jpg", "Overlay": "img/Batch_3__xgj4xftb_overlay.jpg"}, "kpis": [["Si area frac", "0.057"], ["Si / 1000 \u00b5m\u00b2", "27"], ["Si ECD d50 \u00b5m", "0.42"], ["Agglom frac", "0.45"], ["Graphite frac", "0.902"]]}];
+const BATCH_NOTE = { Batch_1: "", Batch_2: "", Batch_3: "supplier baseline" };
+const VIEWS = [
+  ["Overlay", "Segmentation overlay"],
+  ["Composite", "RGB composite"],
+  ["BSE", "BSE"],
+  ["Inlens", "Inlens"],
+  ["SE_type", "ETD / SE"],
+  ["All", "All channels"],
+];
+const store = {
+  get(k) { try { return localStorage.getItem(k) } catch (e) { return null } },
+  set(k, v) { try { localStorage.setItem(k, v) } catch (e) {} },
+};
+const batches = [...new Set(SITES.map(s => s.batch))];
+let state = { batch: store.get("atlas.batch") || "All", view: store.get("atlas.view") || "Overlay" };
+if (state.batch !== "All" && !batches.includes(state.batch)) state.batch = "All";
+if (!VIEWS.some(v => v[0] === state.view)) state.view = "Overlay";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const bcol = b => `var(--b${b.split("_")[1]})`;
+
+function chips(el, items, key) {
+  items.forEach(([val, label]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = label; b.dataset.val = val;
+    b.addEventListener("click", () => { state[key] = val; store.set("atlas." + key, val); render() });
+    el.appendChild(b);
+  });
+}
+chips(document.getElementById("batches"), [["All", "All"], ...batches.map(b => [b, b.replace("_", " ")])], "batch");
+chips(document.getElementById("views"), VIEWS, "view");
+
+function shotsFor(s) {
+  const v = state.view;
+  let keys = v === "All" ? [...s.channels, "Composite"] : v === "SE_type" ? [s.channels[2]] : [v];
+  return keys.map(k => {
+    const cap = k === "Composite" ? `Composite (R ${s.channels[0]}, G ${s.channels[1]}, B ${s.channels[2]})` : k === "Overlay" ? "Overlay: full slice, then 40 µm crop (raw | overlay)" : k;
+    return `<figure><figcaption>${esc(cap)}</figcaption><button type="button" class="shot" data-src="${esc(s.files[k])}" data-cap="${esc(s.batch + " / " + s.site + " · " + cap)}"><img loading="lazy" src="${esc(s.files[k])}" alt="${esc(s.site + " " + cap)}"></button></figure>`;
+  }).join("");
+}
+
+function render() {
+  document.querySelectorAll("#batches .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.val === state.batch));
+  document.querySelectorAll("#views .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.val === state.view));
+  document.getElementById("legend").hidden = state.view !== "Overlay";
+  const shown = batches.filter(b => state.batch === "All" || b === state.batch);
+  document.getElementById("main").innerHTML = shown.map(b => {
+    const ss = SITES.filter(s => s.batch === b);
+    const det = [...new Set(ss.map(s => s.detector))].map(d => `${ss.filter(s => s.detector === d).length} ${d}`).join(", ");
+    return `<section class="batch"><h2><span style="color:${bcol(b)}">${esc(b.replace("_", " "))}</span><small>${ss.length} sites · ${esc(det)}${BATCH_NOTE[b] ? " · " + BATCH_NOTE[b] : ""}</small></h2>
+      <div class="grid${state.view === "Overlay" ? " two" : ""}">${ss.map(s => `<article class="card">
+        <div class="head"><span class="id">${esc(s.site)}</span><span class="tag batch" style="background:${bcol(s.batch)}">${esc(s.batch.replace("_", " "))}</span><span class="tag">${esc(s.detector)}</span><span class="dim">${s.w_um} × ${s.h_um} µm</span></div>
+        <div class="shots">${shotsFor(s)}</div>
+        <dl class="kpi">${s.kpis.map(([l, v]) => `<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+      </article>`).join("")}</div></section>`;
+  }).join("");
+}
+
+const lb = document.getElementById("lb"), lbImg = document.getElementById("lb-img"), lbScroll = document.getElementById("lb-scroll"), lbFit = document.getElementById("lb-fit");
+document.getElementById("main").addEventListener("click", e => {
+  const b = e.target.closest(".shot"); if (!b) return;
+  lbImg.src = b.dataset.src; document.getElementById("lb-cap").textContent = b.dataset.cap;
+  lbScroll.classList.add("fit"); lbFit.textContent = "Actual size"; lb.hidden = false; document.getElementById("lb-close").focus();
+});
+lbFit.addEventListener("click", () => { const f = lbScroll.classList.toggle("fit"); lbFit.textContent = f ? "Actual size" : "Fit to screen" });
+const closeLb = () => { lb.hidden = true; lbImg.removeAttribute("src") };
+document.getElementById("lb-close").addEventListener("click", closeLb);
+lb.addEventListener("click", e => { if (e.target === lb || e.target === lbScroll) closeLb() });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !lb.hidden) closeLb() });
+render();
+</script>
