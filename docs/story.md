@@ -102,6 +102,12 @@ the pore loss of its null — but the *excess* is the same in every batch (p = 0
 difference lives in geometry the null preserves, not in an extra placement preference
 (`docs/functional.md` §2.6).
 
+And the question the organiser actually asked — *is this field inside the Batch 3 baseline?* — is
+the one the data answer worst: the best of 84 columns rejects non-baseline fields with AUC 0.74,
+which is exactly the best-of-84 chance level (permutation p = 0.50), and the fingerprint's own
+Batch-3-vs-rest AUC is 0.56; its 0.68 accuracy is Batch 1 vs Batch 2. Batch 3 is the wide batch,
+the others sit inside it (`docs/acceptance.md`).
+
 ### Where each piece lives
 | Layer | Session / branch | Files |
 |---|---|---|
