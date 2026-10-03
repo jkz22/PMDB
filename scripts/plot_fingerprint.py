@@ -121,7 +121,9 @@ def plot_depth_profiles(curves: pd.DataFrame, held: pd.DataFrame, out: Path):
     ax.set_title("Held-out sites vs batch medians", fontsize=9.5, color=INK, pad=8)
     ax.set_xlabel("depth band (top -> bottom)", fontsize=9, color=INK_2)
     ax.set_xticks(bands)
-    ax.legend(fontsize=7.5, frameon=False, labelcolor=INK_2, loc="lower left")
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=7.5, frameon=False, labelcolor=INK_2,
+               loc="upper right", ncol=2, bbox_to_anchor=(0.995, 1.0))
 
     fig.suptitle("Si through-thickness distribution is the batch fingerprint",
                  fontsize=12, color=INK, x=0.01, ha="left", fontweight="bold")
