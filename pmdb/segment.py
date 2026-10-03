@@ -12,12 +12,12 @@ import numpy as np
 from scipy import ndimage
 from skimage.morphology import binary_closing, binary_opening, disk, remove_small_objects
 
-SEGMENTER_VERSION = "v0"
+SEGMENTER_VERSION = "v0r1"  # v0 with the one global revision allowed by D-011
 
 V0_PARAMS: dict = {
     "gauss_sigma_px": 1.0,
     "pore_anchor_frac": 0.25,  # T_pore = p1 + frac * (p50 - p1)
-    "si_k_mad": 4.0,  # T_si = median_solid + k * MAD_solid
+    "si_anchor_frac": 0.5,  # T_si = p99 - frac * (p99 - p50)  (revision 1, see segmentation-v0-notes.md)
     "si_closing_radius_px": 2,
     "si_min_area_um2": 0.05,
     "graphite_opening_radius_px": 5,
@@ -32,7 +32,8 @@ class Masks:
 
     ``si``, ``graphite``, ``pore`` and ``artefact`` are mutually exclusive; pixels in
     none of them are unassigned solid (binder / carbon black / small debris).
-    ``admissible = ~graphite & ~artefact`` (D-010).
+    ``admissible = ~graphite & ~artefact`` (D-010) is the null-placement space.
+    ``fraction_space = ~artefact`` is the denominator for Si area fractions (deviation, see kpi_status.md).
     """
 
     si: np.ndarray
@@ -46,6 +47,10 @@ class Masks:
     @property
     def shape(self) -> tuple[int, int]:
         return self.si.shape
+
+    @property
+    def fraction_space(self) -> np.ndarray:
+        return ~self.artefact
 
     def crop(self, rows: slice, cols: slice) -> "Masks":
         return Masks(
@@ -65,21 +70,18 @@ def _um2_to_px(area_um2: float, nm_per_px: float) -> int:
 
 
 def segment_bse(bse: np.ndarray, nm_per_px: float, params: dict | None = None) -> Masks:
-    """Apply the v0 rule (D-011) to a single un-normalised BSE image."""
+    """Apply the revised v0 rule (D-011, revision 1) to a single un-normalised BSE image."""
     p = dict(V0_PARAMS)
     if params:
         p.update(params)
 
     g = ndimage.gaussian_filter(np.asarray(bse, dtype=np.float64), sigma=p["gauss_sigma_px"])
 
-    p1, p50 = np.percentile(g, [1.0, 50.0])
+    p1, p50, p99 = np.percentile(g, [1.0, 50.0, 99.0])
     t_pore = p1 + p["pore_anchor_frac"] * (p50 - p1)
     dark = g < t_pore
 
-    solid_vals = g[~dark]
-    med = float(np.median(solid_vals))
-    mad = float(np.median(np.abs(solid_vals - med)))
-    t_si = med + p["si_k_mad"] * mad
+    t_si = p99 - p["si_anchor_frac"] * (p99 - p50)
 
     si = (g > t_si) & ~dark
     si = binary_closing(si, disk(p["si_closing_radius_px"]))
@@ -97,8 +99,8 @@ def segment_bse(bse: np.ndarray, nm_per_px: float, params: dict | None = None) -
 
     admissible = ~graphite & ~artefact
     used = dict(p)
-    used.update({"T_pore": float(t_pore), "T_si": float(t_si), "median_solid": med, "mad_solid": mad,
-                 "p1": float(p1), "p50": float(p50)})
+    used.update({"T_pore": float(t_pore), "T_si": float(t_si), "p1": float(p1), "p50": float(p50),
+                 "p99": float(p99)})
     return Masks(si=si, graphite=graphite, pore=pore, artefact=artefact, admissible=admissible,
                  version=SEGMENTER_VERSION, params=used)
 

@@ -65,7 +65,7 @@ def process_site(batch: str, site: str, overlay_dir: str | None) -> dict:
     sweep = [{"batch": batch, "site": site, **row} for row in objects.k04_sweep(ctx)]
     curve_rows = [{"batch": batch, "site": site, "kpi_id": k, "curve": c, "x": x, "value": v}
                   for k, c, x, v in curves]
-    seg = {k: v for k, v in masks.params.items() if k in ("T_pore", "T_si", "p1", "p50", "median_solid", "mad_solid")}
+    seg = {k: v for k, v in masks.params.items() if k in ("T_pore", "T_si", "p1", "p50", "p99")}
     return {"site_row": {**meta, **values}, "tiles": tiles, "curves": curve_rows, "sweep": sweep,
             "seconds": time.time() - t0, "segmentation": seg, "n_si_objects": ctx.n_objects}
 

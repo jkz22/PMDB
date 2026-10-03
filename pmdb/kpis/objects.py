@@ -14,13 +14,13 @@ SWEEP_D_STAR_UM = (3.0, 5.0, 8.0)
 
 
 def k01_si_fraction(ctx: KpiContext) -> KpiOutput:
-    adm = ctx.masks.admissible.sum()
-    val = float(ctx.masks.si.sum() / adm) if adm else NAN
+    den = ctx.masks.fraction_space.sum()
+    val = float(ctx.masks.si.sum() / den) if den else NAN
     return KpiOutput({"K01_si_frac_adm": val})
 
 
 def k02_si_density(ctx: KpiContext) -> KpiOutput:
-    a = ctx.admissible_area_um2
+    a = ctx.fraction_area_um2
     val = ctx.n_objects / a * 1000.0 if a > 0 else NAN
     return KpiOutput({"K02_si_density_per_1000um2": float(val)})
 
@@ -35,7 +35,7 @@ def k03_si_size(ctx: KpiContext) -> KpiOutput:
     })
 
 
-def agglomerate_stats(si: np.ndarray, px_um: float, admissible_area_um2: float,
+def agglomerate_stats(si: np.ndarray, px_um: float, area_um2: float,
                       d_um: float = D_UM, d_star_um: float = D_STAR_UM) -> dict[str, float]:
     """K04 (D-015): dilate Si by d/2; components are clusters; size = ECD of Si area inside."""
     if not si.any():
@@ -47,7 +47,7 @@ def agglomerate_stats(si: np.ndarray, px_um: float, admissible_area_um2: float,
     si_area = np.bincount(lab[si], minlength=n + 1)[1:].astype(np.float64)
     cluster_ecd = ecd_um(si_area, px_um)
     frac = float(si_area[cluster_ecd > d_star_um].sum() / si_area.sum())
-    dens = n / admissible_area_um2 * 1000.0 if admissible_area_um2 > 0 else NAN
+    dens = n / area_um2 * 1000.0 if area_um2 > 0 else NAN
     return {"K04_agglom_frac": frac, "K04_n_clusters_per_1000um2": float(dens)}
 
 
