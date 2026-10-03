@@ -8,6 +8,7 @@ numpy<2
 pandas
 scipy
 scikit-learn
+xgboost
 
 # Plotting
 matplotlib
