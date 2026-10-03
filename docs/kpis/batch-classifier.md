@@ -31,6 +31,7 @@ Each model is `SimpleImputer(median)` -> `StandardScaler` -> estimator:
 - `logreg`: `LogisticRegression(C=0.1, class_weight="balanced", max_iter=5000)`
 - `lda`: `LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto")`
 - `rf`: `RandomForestClassifier(n_estimators=500, class_weight="balanced", random_state=0)`
+- `xgb`: `XGBClassifier(n_estimators=300, max_depth=2, learning_rate=0.05, subsample=0.8, colsample_bytree=0.5, random_state=0)`; no class weighting
 
 Score: balanced accuracy, `RepeatedStratifiedKFold(5, 20)`. Null: `permutation_test_score`, `StratifiedKFold(5)`, 200 permutations. Leave-one-out predictions and combined-set importances are also written.
 

@@ -37,6 +37,7 @@ from sklearn.model_selection import (
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -103,12 +104,20 @@ MODELS = {
     "rf": lambda: _pipe(
         RandomForestClassifier(n_estimators=500, class_weight="balanced", random_state=0)
     ),
+    # Shallow, heavily subsampled trees: n = 31 sites. No class_weight equivalent.
+    "xgb": lambda: _pipe(
+        XGBClassifier(
+            n_estimators=300, max_depth=2, learning_rate=0.05, subsample=0.8,
+            colsample_bytree=0.5, random_state=0, n_jobs=1,
+        )
+    ),
 }
 
 
 def evaluate(df, cols, model, seed=0) -> dict:
     X = df[cols].to_numpy(dtype=float)
-    y = df["batch"].to_numpy()
+    # Integer labels: XGBClassifier rejects strings. Balanced accuracy is label-invariant.
+    classes, y = np.unique(df["batch"].to_numpy(), return_inverse=True)
     cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=20, random_state=seed)
     scores = cross_val_score(model, X, y, cv=cv, scoring="balanced_accuracy")
     score, perm, pval = permutation_test_score(
@@ -121,7 +130,7 @@ def evaluate(df, cols, model, seed=0) -> dict:
         random_state=seed,
         n_jobs=-1,
     )
-    loo = cross_val_predict(model, X, y, cv=LeaveOneOut())
+    loo = classes[cross_val_predict(model, X, y, cv=LeaveOneOut())]
     return {
         "n_features": len(cols),
         "cv_bal_acc_mean": scores.mean(),
@@ -193,7 +202,7 @@ def main() -> None:
     imp.to_csv(out / "importance.csv", index=False)
 
     labels = sorted(df["batch"].unique())
-    fig, axes = plt.subplots(1, 3, figsize=(13, 4))
+    fig, axes = plt.subplots(1, len(MODELS), figsize=(4.3 * len(MODELS), 4))
     for ax, (mname, pred) in zip(axes, loo_combined.items()):
         cm = confusion_matrix(df["batch"], pred, labels=labels)
         ax.imshow(cm, cmap="Blues")
