@@ -155,7 +155,7 @@ if os.path.exists("sim/sim.json"):
              '<div class="a-table-scroll"><table class="a-table" data-a-sticky-columns="1"><caption class="a-visually-hidden">Simulated KPI change per site</caption><thead><tr>'
              '<th scope="col">Site</th><th scope="col" data-numeric>Capacity retention (%)</th><th scope="col" data-numeric>Swelling when charged (%)</th>'
              '<th scope="col" data-numeric>Cracks</th><th scope="col" data-numeric>Si d90 (µm), cycle 0 → end</th><th scope="col" data-numeric>Porosity, start → end</th>'
-             '<th scope="col" data-numeric>Active Si fraction, start → end</th><th scope="col" data-numeric>SEI fraction at end</th></tr></thead><tbody>')
+             '<th scope="col" data-numeric>Active Si fraction, start → end</th><th scope="col" data-numeric>SEI volume fraction at end</th></tr></thead><tbody>')
     for nm, v in SS.items():
         T0 = pd.read_csv(f"sim/traj_{nm}.csv"); z = T0[T0.cycle == 0].iloc[0]
         o.append(f'<tr><th scope="row">{E(nm)}</th><td data-numeric>{v["retention_pct"]["end"]:.1f} [{v["retention_pct"]["end_min"]:.1f}–{v["retention_pct"]["end_max"]:.1f}]</td>'
