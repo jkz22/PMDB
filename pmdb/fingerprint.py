@@ -194,7 +194,8 @@ def _scores(z: np.ndarray, mu: np.ndarray, sb: np.ndarray) -> np.ndarray:
     return np.nanmean(dev + np.log(sb)[None, :, :], axis=2)
 
 
-def _fit_core(x: np.ndarray, codes: np.ndarray, n_batches: int):
+def _fit_core(x: np.ndarray, codes: np.ndarray, n_batches: int,
+              with_calibration: bool = True):
     """Numpy fit: standardization, batch params, LOO conformal calibration.
 
     The per-batch calibration scores are leave-one-out within the batch (each
@@ -213,6 +214,8 @@ def _fit_core(x: np.ndarray, codes: np.ndarray, n_batches: int):
     mu, sb = _batch_params(z, codes, n_batches)
 
     calibration = []
+    if not with_calibration:
+        return center, scale, ok, mu, sb, calibration
     for b in range(n_batches):
         zb = z[codes == b]
         n_b = len(zb)
@@ -339,7 +342,8 @@ def _loo_assignments(x: np.ndarray, codes: np.ndarray, n_batches: int) -> np.nda
     idx = np.arange(n)
     for i in range(n):
         tr = idx != i
-        center, scale, ok, mu, sb, _ = _fit_core(x[tr], codes[tr], n_batches)
+        center, scale, ok, mu, sb, _ = _fit_core(x[tr], codes[tr], n_batches,
+                                                 with_calibration=False)
         z = np.clip((x[i:i + 1, ok] - center[ok]) / scale[ok], -MAX_Z, MAX_Z)
         assigned[i] = int(np.argmin(_scores(z, mu, sb)[0]))
     return assigned
