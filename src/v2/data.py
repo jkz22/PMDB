@@ -40,7 +40,7 @@ def normalise_percentile(img: np.ndarray) -> np.ndarray:
     """Teammate normalisation (pmdb.io): per image & channel, p0.5->0, p99.5->1, clip."""
     x = img.astype(np.float32)
     lo, hi = np.percentile(x.reshape(-1, x.shape[-1]), [0.5, 99.5], axis=0)
-    return np.clip((x - lo) / np.maximum(hi - lo, 1e-6), 0, 1)
+    return np.clip((x - lo) / np.maximum(hi - lo, 1e-6), 0, 1).astype(np.float32)
 
 
 def harmonise_params(per_image: pd.DataFrame | None = None) -> pd.DataFrame:
