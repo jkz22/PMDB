@@ -9,7 +9,3 @@ __pycache__/
 
 # macOS
 .DS_Store
-
-# Data cache & outputs
-cache/
-outputs/
