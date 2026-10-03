@@ -35,3 +35,24 @@ Status: scoping. Literature review complete: `docs/fem/literature-review.md` (pa
   per site. Checks before fixing: (1) per-site tile-prediction spread under LOSO, (2) within- vs between-site variance
   (ICC) per feature, (3) compare <=4 pooling rules under LOSO, (4) synthetic single-tile injection into Batch 3 sites
   (tests/synthetic_patterns.py). Checks 1-2 can run now on outputs/kpis/tile_kpis.csv.
+
+## Resolved from the literature review (user delegated these to Claude's judgment, 2026-10-03)
+Guiding principle: features serve batch discrimination, so between-site ranking must be robust to uncertain
+parameters; weakly sourced choices become measured robustness sweeps rather than bets.
+- D11 Pores/artefact: ersatz E = 1e-4·E_binder, ν 0.3, Fλ = I. Pore element det F < 0.1 -> flag, do NOT stop; record
+  SOC of first closure and closed-pore fraction per step. NaN only for steps after a Newton failure (record failure SOC).
+  Basis: no precedent incl. Shah (lit review C17) -> numerical choice, swept in D14.
+- D12 Separator-side edge traction-free by default; confined (Shah-like) and 1 MPa stack-pressure runs only in D14.
+  Basis: no separator in images (lit review l.182); stack 0.1-1 MPa << GPa eigenstresses (C19, item 8).
+- D13 Run BOTH Si and SiOx full configurations on all 34 sites. Pure Si = default (primary-sourced params, matches Yao
+  split) and drives the GIFs. SiOx: Fλ = (1+1.6u)^(1/3) I, E 34 GPa, ν 0.17. Classifier ablation decides utility.
+  Basis: BSE cannot separate Si/SiOx; particle ECD d50 ~0.45 µm, max ~10 µm (>150 nm Si fracture size) hints SiOx/Si-C,
+  but SiOx params are weak (C10, C11); second full run costs ~$10-20.
+- D14 Sweeps: 6 labelled sites (2 per batch, nearest batch-median K01 Si fraction) × 12 one-at-a-time variants:
+  Si utilisation {0.6, 0.95}; binder E {0.05, 2 GPa}; pore stiffness {1e-6, 1e-2}×E_binder; isotropic graphite strain;
+  SOC breakpoint 0.36; proportional Si/Gr split; confined top; 1 MPa stack; Shah E(C) for Si.
+  Robustness criterion: per feature, Spearman rank correlation of site values between default and each variant >= 0.8;
+  features failing are dropped or flagged before classification.
+- D15 Outputs: field maps on a Modal Volume (not git). Committed under outputs/fem/: tile_curves.csv, site_curves.csv,
+  run log (params, solver convergence per step), 34 GIFs (<=2 MB, ~900 px wide, 11 frames, fixed colour scale).
+- Budget: ~$40-70 Modal total (2 full runs + sweeps).
