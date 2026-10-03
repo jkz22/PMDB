@@ -6,6 +6,7 @@ Writes <run_dir>/metrics.json and embeddings_eval.npz (all 31 fields, eval grid)
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 import numpy as np
@@ -27,13 +28,24 @@ def _std_kpis(kpi_norm, cols):
     return k
 
 
+def _release_lock(d):
+    """A crash inside this process must not leave a fresh lock: the scheduler's retry would be
+    skipped as 'locked by another scheduler' and recorded as done."""
+    lock = d / "lock"
+    if lock.exists() and lock.read_text() == str(os.getpid()):
+        lock.unlink()
+
+
 def main(run_spec: dict):
     if run_spec.get("task") == "cls":
-        from src.v2.classify import run_cls
+        from src.v2 import classify
         try:
-            run_cls(run_spec)
+            classify.run_cls(run_spec)
         except RunLocked as e:
             print(f"skip: {e}", flush=True)
+        except Exception:
+            _release_lock(classify.CLS_RUNS / classify.cfg_hash(classify.full_cfg(run_spec)))
+            raise
         return
     dev = device()
     fam = run_spec["family"]
@@ -49,6 +61,9 @@ def main(run_spec: dict):
         except RunLocked as e:  # another scheduler owns it; it will also evaluate
             print(f"skip: {e}", flush=True)
             return
+        except Exception:
+            _release_lock(RUNS / cfg_hash(full_cfg(train_cfg(run_spec))))
+            raise
         s = torch.load(d / "final.pt", map_location=dev, weights_only=False)
         c, kpi_norm = s["cfg"], s["kpi_norm"]
         cols = kpi_cols(c.get("kpi_set"))
