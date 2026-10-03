@@ -13,7 +13,7 @@ from typing import Callable
 
 import numpy as np
 
-from pmdb.kpis import crossphase, diagnostic, fields, objects, pointpattern
+from pmdb.kpis import crossphase, diagnostic, fields, objects, pointpattern, stretch
 from pmdb.kpis.common import NAN, KpiContext, KpiOutput, TooFewObjects, stable_seed  # noqa: F401
 from pmdb.segment import Masks
 
@@ -56,6 +56,15 @@ REGISTRY: dict[str, KpiSpec] = {s.kpi_id: s for s in [
     KpiSpec("A01", diagnostic.a01_large_voids),
     KpiSpec("A02", diagnostic.a02_curtaining),
     KpiSpec("A03", diagnostic.a03_height),
+]}
+
+# Catalogue v2 stretch KPIs (site-level only). Kept out of REGISTRY so the locked v1 tables are
+# unchanged; produced by scripts/run_stretch.py into outputs/stretch/.
+STRETCH_REGISTRY: dict[str, KpiSpec] = {s.kpi_id: s for s in [
+    KpiSpec("S01", stretch.s01_two_point_cluster),
+    KpiSpec("S02", stretch.s02_euler_merge_radius),
+    KpiSpec("S03", stretch.s03_persistence),
+    KpiSpec("S04", stretch.s04_minkowski),
 ]}
 
 

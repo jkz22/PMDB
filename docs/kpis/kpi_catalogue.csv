@@ -24,7 +24,7 @@ D06,diagnostic,process attribution,Pore connectivity,Euler number of pore mask (
 A01,diagnostic,artefact,Large voids,Area fraction of isolated large voids flagged and masked before Si KPIs,pull-out / cracks; high values make Si KPIs unreliable,pore,no,-,v1,A01_large_void_frac
 A02,diagnostic,artefact,Curtaining index,SD of BSE column-mean intensity after median-filter detrending (201 px),high = milling streaks that can fake lateral localisation,BSE,no,x,v1,A02_curtaining_index
 A03,diagnostic,artefact,Slice height,Image height in um (proxy for coating thickness if crops = coating),context only,image,no,z,v1,A03_height_um
-S01,stretch,clustering,Two-point cluster function,C2(r) decay length along x and z,longer = larger connected Si clusters,si,no,x and z,v2,
-S02,stretch,clustering,Euler dilation merge radius,Dilation radius at which the Euler number of the Si mask halves,smaller = Si objects closer together,si,no,-,v2,
-S03,stretch,clustering,Persistent homology H0,Lifetime median / IQR of H0 features under signed-distance filtration,many short-lived features = crowding,si,no,-,v2,
-S04,stretch,clustering,Si streak anisotropy,Minkowski-tensor beta of Si mask,alignment of Si streaks,si,no,-,v2,
+S01,stretch,clustering,Two-point cluster function,C2(r) decay length along x and z,longer = larger connected Si clusters,si,no,x and z,v2,S01_c2_length_x_um;S01_c2_length_z_um;S01_c2_anisotropy
+S02,stretch,clustering,Euler dilation merge radius,Dilation radius at which the Euler number of the Si mask halves,smaller = Si objects closer together,si,no,-,v2,S02_euler_merge_radius_um;S02_euler_0
+S03,stretch,clustering,Persistent homology H0,Lifetime median / IQR of H0 features under signed-distance filtration,many short-lived features = crowding,si,no,-,v2,S03_h0_life_p50_um;S03_h0_life_iqr_um;S03_h0_inradius_p50_um;S03_h0_censored_frac
+S04,stretch,clustering,Si streak anisotropy,Minkowski-tensor beta of Si mask,alignment of Si streaks,si,no,-,v2,S04_si_beta;S04_si_streak_angle_deg

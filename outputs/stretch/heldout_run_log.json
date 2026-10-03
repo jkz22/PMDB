@@ -1,0 +1,21 @@
+{
+  "git_commit": "c986a6a8e73707ecc64e05b439b63dd5852e99e2",
+  "kpi_version": "v2",
+  "segmenter_version": "v0r1",
+  "kpis": [
+    "S01",
+    "S02",
+    "S03",
+    "S04"
+  ],
+  "perturb": 0.0,
+  "heldout": true,
+  "n_sites": 3,
+  "n_tiles": 0,
+  "elapsed_seconds": 12.0,
+  "seconds_per_site": {
+    "Batch_heldout/3e122cbj": 12.0,
+    "Batch_heldout/fn0mhxef": 12.0,
+    "Batch_heldout/xrv9xvzb": 11.2
+  }
+}

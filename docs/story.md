@@ -35,6 +35,11 @@ fingerprint on these 16 features reaches leave-one-site-out accuracy 0.677 again
 majority baseline, permutation p = 0.002 (10 000 permutations, `outputs/overnight/permutation/`),
 with Batch 2 the hardest (recall 0.43). "Composition is identical, arrangement is not" is the
 repository's central material claim, and the 31-site sample size is its central caveat.
+The v2 "stretch" clustering KPIs (two-point cluster length, Euler merge radius, H0 persistence,
+Minkowski anisotropy; `docs/kpis/stretch.md`) were implemented overnight to close that family:
+they restate K02/K03/K04/K11 (Spearman 0.8–0.97), separate no batches, and *lower* the
+fingerprint's accuracy when appended (0.68 → 0.39) — the clustering content of these sections is
+already in v1.
 
 ## 4. Where in the field, and how sure (GP session)
 The Gaussian-process track turns the same tile KPIs into spatial maps: one GP per KPI over
