@@ -60,7 +60,7 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 ## Pre-approval for unattended execution (user, 2026-10-03)
 User pre-approved proceeding without intervention through: plan review, implementation, code review, local tests,
 one Modal benchmark site, the 2 full runs (Si + SiOx, 34 sites), the D14 sweeps, features, GIFs, pooling checks 3-4,
-committing and pushing to branch fem-lit-review / PR #18.
+committing and pushing to branch fem-sim (PR #18 merged 2026-10-03; new PR from fem-sim).
 - HARD CAP: total Modal spend <= $180 (user-set). Before every Modal launch, project cost from the measured
   benchmark; stop and ask if cumulative actual + projected would exceed $180.
 - Stop and wait for the user only if a gate fails: synthetic analytic tests fail; simulated electrode swelling falls
