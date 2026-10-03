@@ -10,7 +10,7 @@
 - The first gate a KPI fails decides its fate (`deciding_gate`). All statistics are still computed for every KPI.
 - The gates guard against different failures and cannot compensate for each other. A highly reliable artefact is still an artefact.
 - Weights would be arbitrary without an outcome label.
-- A gate with no data for a KPI is reported as untested. Untested is not passed.
+- A gate that has no data for a KPI, or whose statistic is undefined, is reported as untested. Untested is not passed.
 
 ## 2. KPI submission contract
 
