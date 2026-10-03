@@ -20,6 +20,7 @@ KEYS = ["arch", "view", "input", "harmonise", "aug"]
 
 def collect(runs: Path) -> pd.DataFrame:
     rows = [json.loads(p.read_text()) for p in sorted(runs.glob("*/metrics.json"))]
+    rows = [r for r in rows if r.get("split", "none") == "strat"]  # drop the first (non-stratified) launch
     return pd.DataFrame(rows)
 
 

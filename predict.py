@@ -35,7 +35,7 @@ def field_kpis(img: np.ndarray, key: str) -> dict:
 
 
 def baseline_kpis() -> pd.DataFrame:
-    cache = OUT / "kpis" / "baseline_field_kpis.csv"
+    cache = OUT / "kpis" / f"baseline_field_kpis_{BASELINE}.csv"
     if cache.exists():
         return pd.read_csv(cache)
     m = manifest()
@@ -77,10 +77,10 @@ def representation_novelty(name: str, img: np.ndarray, run_dir: Path) -> dict:
     from src.v2.models import build
     cfg = json.load(open(run_dir / "config.json"))
     fam = cfg["family"]
-    if fam in ("vae_b", "vae_c"):
-        raise SystemExit("KPI-conditioned VAEs need crop KPIs as input; choose another representation")
+    if fam == "vae_b":
+        raise SystemExit("VAE-B (KPI-conditioned) needs crop KPIs as encoder input; choose another representation")
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # inference only
-    model = build(fam) if fam.startswith("ots_") else build(fam, n_kpi=len(K.GATED_COLS), vae_mask=cfg["vae_mask"],
+    model = build(fam) if fam.startswith("ots_") else build(fam, n_kpi=len(K.kpi_cols(cfg.get("kpi_set"))), vae_mask=cfg["vae_mask"],
                                                            mae_mask=cfg["mae_mask"])
     if not fam.startswith("ots_"):
         model.load_state_dict(torch.load(run_dir / "final.pt", map_location="cpu", weights_only=False)["model"])
