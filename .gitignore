@@ -1,6 +1,3 @@
-# Data (large microscopy images)
-data/
-
 # Virtual environments
 env/
 .venv/
