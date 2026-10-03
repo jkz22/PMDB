@@ -12,64 +12,64 @@
 - **normalisation**
   - pore_median_z_max_abs: 0.0312
   - pore_median_z_sd_across_sites: 0.009103
-  - graphite_hsm_z_max_abs_dev: 0.1101
-  - graphite_hsm_z_sd_across_sites: 0.03196
+  - graphite_hsm_z_max_abs_dev: 0.0875
+  - graphite_hsm_z_sd_across_sites: 0.02821
   - dark_level_rel_sd_before: 0.3344
   - strong_minus_clean_pore_z_after: -0.00711
   - strong_minus_clean_dark_rel_before: 0.9587
   - **gmm_mu_sd_across_sites**
-    - mu0: 0.2162
-    - mu1: 0.05466
-    - mu2: 0.1968
+    - mu0: 0.215
+    - mu1: 0.05422
+    - mu2: 0.1952
   - pass_pore_within_0p05: True
   - pass_graphite_within_0p02: False
 - **flatness**
-  - block_rel_sd_max: 0.1301
-  - block_rel_sd_median: 0.08854
+  - block_rel_sd_max: 0.1307
+  - block_rel_sd_median: 0.08853
   - G_ptp_rel_max: 0.4899
   - pass_block_rel_sd_lt_0p03: False
 - **fingerprint**
   - **before_acquisition_and_percentiles**
-    - accuracy: 0.6129
-    - null_mean: 0.3931
+    - accuracy: 0.6452
+    - null_mean: 0.3945
     - null_p95: 0.5484
-    - p_value: 0.03483
+    - p_value: 0.0199
     - chance: 0.5484
   - **before_intensity_percentiles**
     - accuracy: 0.7097
-    - null_mean: 0.4229
+    - null_mean: 0.4231
     - null_p95: 0.5484
     - p_value: 0.004975
     - chance: 0.5484
   - **after_acquisition_only**
-    - accuracy: 0.4194
-    - null_mean: 0.4423
+    - accuracy: 0.4839
+    - null_mean: 0.4427
     - null_p95: 0.5484
-    - p_value: 0.6866
+    - p_value: 0.3582
     - chance: 0.5484
   - **after_intensity_percentiles**
     - accuracy: 0.7097
-    - null_mean: 0.4244
+    - null_mean: 0.4248
     - null_p95: 0.55
     - p_value: 0.004975
     - chance: 0.5484
   - **after_all**
-    - accuracy: 0.6129
-    - null_mean: 0.4035
+    - accuracy: 0.6774
+    - null_mean: 0.4066
     - null_p95: 0.5484
-    - p_value: 0.0199
+    - p_value: 0.00995
     - chance: 0.5484
   - **strong_vs_rest_before**
     - accuracy: 1
-    - null_mean: 0.8192
+    - null_mean: 0.8179
     - null_p95: 0.871
     - p_value: 0.004975
     - chance: 0.871
   - **strong_vs_rest_after**
     - accuracy: 0.9355
-    - null_mean: 0.8195
+    - null_mean: 0.8179
     - null_p95: 0.871
-    - p_value: 0.01493
+    - p_value: 0.00995
     - chance: 0.871
 - **material**
   - porosity_otsu_vs_fixed_corr: 0.9723
@@ -84,8 +84,8 @@
   - si_graphite_ratio_sd_across_sites: 0.2623
   - flagged_crack_sites: ['hzumfsms']
   - flagged_pore_band_sites: ['0grcilhi', 'ufdvpb81']
-  - porosity_norm_vs_harm_max_abs_diff: 0.02603
-  - si_norm_vs_harm_max_abs_diff: 0.02635
+  - porosity_norm_vs_harm_max_abs_diff: 0.02598
+  - si_norm_vs_harm_max_abs_diff: 0.02631
 - **patching**
   - sites_with_band_events: 22
   - bands_corrected_total: 33
@@ -111,42 +111,42 @@
   - **BSE**
     - sigma_t: 1.396
     - n_blurred: 16
-    - sigma_e_after_max_abs_dev: 0.225
+    - sigma_e_after_max_abs_dev: 0.2502
     - resolution_outliers: ['mgxahqnk']
     - n_noise_added: 29
     - noise_within_10pct_all: True
-    - noise_sigma_g_after_cv: 0.007393
-    - noise_sigma_g_before_cv: 0.09537
-    - sigma_e_before_cv: 0.05313
-    - sigma_e_after_cv: 0.04863
+    - noise_sigma_g_after_cv: 0.007379
+    - noise_sigma_g_before_cv: 0.09545
+    - sigma_e_before_cv: 0.05299
+    - sigma_e_after_cv: 0.05155
   - **Inlens**
     - sigma_t: 1.214
     - n_blurred: 13
-    - sigma_e_after_max_abs_dev: 0.07947
+    - sigma_e_after_max_abs_dev: 0.07445
     - resolution_outliers: ['f1vzngrs', '3806gxp0', 'avn74qx1', 'b3esycq1', '0grcilhi', 'hawkfj64', 'mgxahqnk']
     - n_noise_added: 27
     - noise_within_10pct_all: True
-    - noise_sigma_g_after_cv: 0.01428
+    - noise_sigma_g_after_cv: 0.01476
     - noise_sigma_g_before_cv: 0.1638
-    - sigma_e_before_cv: 0.1151
-    - sigma_e_after_cv: 0.1062
+    - sigma_e_before_cv: 0.1146
+    - sigma_e_after_cv: 0.1063
   - **SE_type**
-    - sigma_t: 1.25
+    - sigma_t: 1.251
     - n_blurred: 11
-    - sigma_e_after_max_abs_dev: 0.0917
+    - sigma_e_after_max_abs_dev: 0.1001
     - resolution_outliers: ['5n1q8atc', 'f1vzngrs', 'iv6g2oq0', '3806gxp0', 'avn74qx1', 'i9jiqjwl', '0grcilhi', 'hawkfj64', 'mgxahqnk', 'pl8uabbv']
     - n_noise_added: 28
     - noise_within_10pct_all: True
-    - noise_sigma_g_after_cv: 0.01041
-    - noise_sigma_g_before_cv: 0.09511
-    - sigma_e_before_cv: 0.1145
-    - sigma_e_after_cv: 0.1061
+    - noise_sigma_g_after_cv: 0.01047
+    - noise_sigma_g_before_cv: 0.09523
+    - sigma_e_before_cv: 0.1143
+    - sigma_e_after_cv: 0.106
 - **heldout**
   - n_sites: 3
   - sites: ['3e122cbj', 'fn0mhxef', 'xrv9xvzb']
   - **BSE_D**
     - 3e122cbj: 2.214
-    - fn0mhxef: 0.8418
+    - fn0mhxef: 0.8417
     - xrv9xvzb: 18.49
   - **BSE_G**
     - 3e122cbj: 53.92
@@ -155,5 +155,5 @@
   - **sigma_k_BSE**
     - 3e122cbj: 0.4954
     - fn0mhxef: 0
-    - xrv9xvzb: 0
+    - xrv9xvzb: 0.07503
   - fit_on_heldout: no — targets.json and material thresholds come from the labelled run

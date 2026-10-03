@@ -55,25 +55,25 @@
  },
  "anchors": {
   "BSE": {
-   "D": 17.35485546598202,
-   "D_se": 0.01684883969366305,
+   "D": 17.35488490038327,
+   "D_se": 0.016848841344041875,
    "D_method": "tobit",
    "D_n": 1388900,
    "D_frac_zero": 0.05654186766505868,
    "D_mode": 22.180237770080566,
    "D_median": 17.36871337890625,
-   "G_level": 45.47328122456868,
+   "G_level": 45.473250706990555,
    "G_coef": [
-    41.069076039074595,
-    0.5251495710459224,
-    12.915254174729212,
-    -0.6344828519663126,
-    0.547282428109905,
-    -9.459109032641754
+    41.06904552149653,
+    0.5251495710459091,
+    12.91525417472913,
+    -0.6344828519663135,
+    0.5472824281099293,
+    -9.459109032641711
    ],
    "G_blocks": 3110,
-   "G_ptp_rel": 0.1086178869009018,
-   "si_graphite_ratio": 2.044560670852661,
+   "G_ptp_rel": 0.10861793905496597,
+   "si_graphite_ratio": 2.0445613861083984,
    "grey_levels_used": 104,
    "grey_step": 3
   },
@@ -87,12 +87,12 @@
    "D_median": 51.76165771484375,
    "G_level": 111.39119974772134,
    "G_coef": [
-    86.17085161258873,
-    -44.24074054158059,
-    197.23369575057504,
-    33.58707795223921,
-    9.379364639988644,
-    -198.84305101449564
+    86.17085161258834,
+    -44.240740541580536,
+    197.2336957505756,
+    33.58707795223916,
+    9.37936463998857,
+    -198.84305101449613
    ],
    "G_blocks": 3110,
    "G_ptp_rel": 0.5774561762809753,
@@ -101,24 +101,24 @@
    "grey_step": 4
   },
   "SE_type": {
-   "D": 6.481363658255832,
-   "D_se": 0.01625621815281966,
+   "D": 6.481346703689039,
+   "D_se": 0.016256222442821645,
    "D_method": "tobit",
    "D_n": 1388900,
    "D_frac_zero": 0.2709914320685434,
    "D_mode": 0.0,
    "D_median": 5.784613609313965,
-   "G_level": 66.88283411661784,
+   "G_level": 66.8828493754069,
    "G_coef": [
-    66.01820552652373,
-    -15.307482399446197,
-    18.216132809709194,
-    13.723912011845796,
-    6.339274792971434,
-    -13.44889983838848
+    66.01822133483276,
+    -15.307480534649226,
+    18.21612963425781,
+    13.723910684636087,
+    6.339274089177094,
+    -13.448897149632005
    ],
    "G_blocks": 3110,
-   "G_ptp_rel": 0.2008882761001587,
+   "G_ptp_rel": 0.20088808238506317,
    "si_graphite_ratio": 1.6699111461639404,
    "grey_levels_used": 126,
    "grey_step": 3
@@ -130,28 +130,28 @@
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.3299109908858089,
-   "edge_10_90_nm": 85.21501295847797,
-   "edge_n_kept": 1395,
-   "noise_alpha": 0.022895201062066856,
-   "noise_beta": 0.007226508256284931,
-   "noise_sigma_graphite": 0.17355606966727435
+   "sigma_e_px": 1.3286489361565454,
+   "edge_10_90_nm": 85.13414588478241,
+   "edge_n_kept": 1389,
+   "noise_alpha": 0.022917055281314387,
+   "noise_beta": 0.007199108077704309,
+   "noise_sigma_graphite": 0.17354009150342953
   },
   "Inlens": {
-   "sigma_e_px": 1.1546758052558768,
-   "edge_10_90_nm": 73.98669112598465,
-   "edge_n_kept": 3834,
+   "sigma_e_px": 1.1545023997927708,
+   "edge_10_90_nm": 73.97558004495224,
+   "edge_n_kept": 3835,
    "noise_alpha": 0.0038566191899037355,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.06210168427590137
   },
   "SE_type": {
-   "sigma_e_px": 1.1005828291400308,
-   "edge_10_90_nm": 70.52064438130424,
-   "edge_n_kept": 3365,
-   "noise_alpha": 0.005627209494344681,
+   "sigma_e_px": 1.1011422607495167,
+   "edge_10_90_nm": 70.55649036812474,
+   "edge_n_kept": 3364,
+   "noise_alpha": 0.00562058204394714,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.0750147285161033
+   "noise_sigma_graphite": 0.07497054117416481
   }
  },
  "material": {
@@ -247,45 +247,45 @@
  "batch": "Batch_3",
  "site": "hzumfsms",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_3/img_hzumfsms_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_3/img_hzumfsms_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_3/img_hzumfsms_ETD.tif"
+  "BSE": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_hzumfsms_BSE.tif",
+  "Inlens": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_hzumfsms_Inlens.tif",
+  "SE_type": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_hzumfsms_ETD.tif"
  },
- "seconds_norm": 35.8,
+ "seconds_norm": 81.6,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.3299109908858089,
-   "sigma_t_px": 1.3962085795872072,
-   "sigma_k_px": 0.4251295732292129,
+   "sigma_e_px": 1.3286489361565454,
+   "sigma_t_px": 1.3955730649632416,
+   "sigma_k_px": 0.4269849928287599,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.4097265191735766,
+   "sigma_e_after_px": 1.403064696088423,
    "noise_before": {
-    "alpha": 0.014518733736073916,
-    "beta": 0.0043655530494066
+    "alpha": 0.01434530061242899,
+    "beta": 0.00433740227239623
    },
    "noise_target": {
-    "alpha": 0.04507331353571918,
-    "beta": 0.02134361435082474
+    "alpha": 0.04506658986444896,
+    "beta": 0.021315812431302882
    },
    "noise_after": {
-    "alpha": 0.04399888350913201,
-    "beta": 0.021370299265037543
+    "alpha": 0.0439511724529746,
+    "beta": 0.02143081140519001
    },
-   "noise_sigma_graphite_after": 0.2556739775068428,
-   "noise_sigma_graphite_target": 0.25771481891141595,
+   "noise_sigma_graphite_after": 0.2556990102799864,
+   "noise_sigma_graphite_target": 0.25764782610329134,
    "noise_within_10pct": true,
-   "d_alpha": 0.030554579799645265,
-   "d_beta": 0.016978061301418143,
+   "d_alpha": 0.030721289252019973,
+   "d_beta": 0.01697841015890665,
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.1546758052558768,
-   "sigma_t_px": 1.2140094207959984,
-   "sigma_k_px": 0.3748901953080768,
+   "sigma_e_px": 1.1545023997927708,
+   "sigma_t_px": 1.2142698479797196,
+   "sigma_k_px": 0.3762651625986979,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.1702663190931983,
+   "sigma_e_after_px": 1.1510373372598792,
    "noise_before": {
-    "alpha": 0.0032333976533692726,
+    "alpha": 0.0032141276530381234,
     "beta": 0.0
    },
    "noise_target": {
@@ -293,59 +293,59 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.015347374246892368,
+    "alpha": 0.015311183736758702,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.12388451980329249,
+   "noise_sigma_graphite_after": 0.12373836808669614,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.011169617442230908,
+   "d_alpha": 0.011188887442562058,
    "d_beta": 0.0,
    "added": true
   },
   "SE_type": {
-   "sigma_e_px": 1.1005828291400308,
-   "sigma_t_px": 1.250251553827863,
-   "sigma_k_px": 0.5931664050256988,
+   "sigma_e_px": 1.1011422607495167,
+   "sigma_t_px": 1.2511406818415192,
+   "sigma_k_px": 0.5940022957449783,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.1723726358065694,
+   "sigma_e_after_px": 1.1642433468010407,
    "noise_before": {
-    "alpha": 0.0016697400760967498,
+    "alpha": 0.001653746060068507,
     "beta": 0.0
    },
    "noise_target": {
-    "alpha": 0.012456698059181634,
+    "alpha": 0.0124496511569676,
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.012554860831137852,
+    "alpha": 0.012596753644749674,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.11204847536284397,
-   "noise_sigma_graphite_target": 0.11160957870712367,
+   "noise_sigma_graphite_after": 0.1122352602560785,
+   "noise_sigma_graphite_target": 0.11157800480815025,
    "noise_within_10pct": true,
-   "d_alpha": 0.010786957983084884,
+   "d_alpha": 0.010795905096899093,
    "d_beta": 0.0,
    "added": true
   }
  },
  "targets": {
   "sigma_t": {
-   "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
-   "SE_type": 1.250251553827863
+   "BSE": 1.3955730649632416,
+   "Inlens": 1.2142698479797196,
+   "SE_type": 1.2511406818415192
   },
   "noise": {
    "BSE": {
-    "alpha": 0.04507331353571918,
-    "beta": 0.02134361435082474
+    "alpha": 0.04506658986444896,
+    "beta": 0.021315812431302882
    },
    "Inlens": {
     "alpha": 0.01440301509560018,
     "beta": 0.0
    },
    "SE_type": {
-    "alpha": 0.012456698059181634,
+    "alpha": 0.0124496511569676,
     "beta": 0.0
    }
   },
@@ -356,5 +356,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 37.2
+ "seconds_harm": 73.3
 }
