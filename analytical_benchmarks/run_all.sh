@@ -8,6 +8,7 @@ cd "$HERE"
 export PYTHONPATH="$HERE:$PMDB" OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1
 python3 kpis.py 2>&1 | grep -v -i warn
 python3 compare.py site_kpis.csv | tee verdicts.txt
+python3 physics.py 2>&1 | grep -v -i warn
 python3 importance.py 2>&1 | grep -v -i warn
 python3 overlays.py
 python3 spots.py 2>&1 | grep -v -i warn

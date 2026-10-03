@@ -103,6 +103,30 @@ else:
     o.append('<p class="a-empty">No site is beyond robust z 3.5 on any KPI.</p>')
 o.append('</section>')
 
+# 3a. physics estimates (not used in the verdict)
+if os.path.exists("physics.json"):
+    PH = json.load(open("physics.json")); PD = pd.read_csv("physics.csv")
+    from physics import KPI_INFO as PK
+    o.append('<section class="a-section"><h2 class="a-section__title">Physics estimates: what the differences mean for the battery</h2>'
+             '<p class="a-section__note">Estimated from the phase fractions and Si sizes with textbook constants (Si 3579 mAh/g, +280% volume; '
+             'graphite 372 mAh/g, +10%). Not measurements, and not used in the verdict: they are functions of KPIs already counted. '
+             'SiOx column: same estimate if the bright particles are SiOx (1600 mAh/g, +160%).</p>'
+             '<div class="a-table-scroll"><table class="a-table" data-a-sticky-columns="1"><caption class="a-visually-hidden">Physics estimates per site</caption><thead><tr>'
+             '<th scope="col">Site</th><th scope="col">Batch</th>'
+             + "".join(f'<th scope="col" data-numeric>{E(v[0])}</th>' for v in PK.values())
+             + '<th scope="col" data-numeric>Capacity if SiOx (mAh/g)</th></tr></thead><tbody>')
+    pfl = {(f["site"], f["kpi"]) for f in PH["site_flags"]}
+    for _, r in PD.sort_values(["batch", "site"]).iterrows():
+        cells = "".join(f'<td data-numeric>{"<strong>" if (r.site, k) in pfl else ""}{fmt(r[k])} ± {fmt(r[k + "__err"])}{"</strong>" if (r.site, k) in pfl else ""}</td>' for k in PK)
+        o.append(f'<tr><th scope="row">{E(r.site)}</th><td>{E(r.batch)}</td>{cells}<td data-numeric>{fmt(r.spec_capacity__siox)}</td></tr>')
+    best = min((x for b in B for x in PH["loo"][b]), key=lambda x: x["p_holm"])
+    o.append('</tbody></table></div><p class="a-section__note">± = 1 standard error (GP for tile-based estimates, bootstrap over particles for diffusion time). '
+             'Bold = robust z &gt; 3.5 vs all other sites.</p>'
+             f'<p class="a-prose">Smallest batch-level adjusted p: {pv(best["p_holm"])} ({E(PK[best["kpi"]][0])}), so no batch differs as a whole. '
+             'Swelling exceeds the pore volume at every site (swelling ÷ porosity &gt; 1), so the electrode must thicken on charging; '
+             'the higher the Si fraction, the more it thickens and the slower its coarse particles fill with lithium.</p>'
+             f'<figure class="a-panel">{img("fig_physics.png", "Physics estimates per site and per tile maps of capacity and unabsorbed expansion")}</figure></section>')
+
 # 3b. feature importance
 import os
 if os.path.exists("importance.json"):
