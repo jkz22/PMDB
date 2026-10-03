@@ -20,6 +20,8 @@ from pmdb import clean
 
 z, mask = load_clean("Batch_3", "71vgq3fw", "BSE", kind="harm", resolution="half")
 valid = clean.valid_for_kpis(mask)          # bool; False on border/markers/FOV intrusions/bad bands/charging
+# resolution="half": mask-aware 2×2 mean; a half pixel is valid iff one of its four parents is, and
+# carries the flags of the contributing parents (a fully masked block keeps the OR of all four)
 porosity = ((z < 0.5) & valid).sum() / valid.sum()
 ```
 
@@ -42,7 +44,7 @@ evaluation under `outputs/clean/eval/`. A rebuild is deterministic (fixed seed `
 | clipping | 255 → `CLIP_HIGH`; 0 → `CLIP_LOW` when `D ≤ 0`. Kept for segmentation, excluded from statistics | per image | bits |
 | material flags | largest pore network area/span (crack, `hzumfsms`), top/bottom-eighth porosity (pore-rich bands) vs robust thresholds from the labelled set; site-level flags only, pixels unchanged | labelled set | `flag_crack`, `flag_pore_band_*` |
 | normalise | `z = (I − D) / G(x, y)`, stored as `uint16` fixed point `z × 10⁴` | — | `<det>_norm.tif`, `<det>_mask.tif` |
-| harmonise down | ESF edge width σₑ from ≥ 10 000 pore/graphite edges (erf fits, R² ≥ 0.9); Gaussian blur with `σₖ = √(σₜ² − σₑ²)` to the 75th percentile σₜ of the four accepted references; Poisson–Gaussian fit `var(z) = αz + β` on flat 7×7 graphite/Si patches (pore patches are censored by the 0-clip); zero-mean noise added up to the noisiest reference when the gap exceeds 10 % of the target variance (≈ 5 % in σ). Never sharpened or denoised | references | `<det>_harm.tif`, `harmonisation.<det>` |
+| harmonise down | ESF edge width σₑ from ≥ 10 000 pore/graphite edges (erf fits, R² ≥ 0.9); mask-aware Gaussian blur (normalised convolution over KPI-valid pixels, so masked markers/bands/charging cannot bleed into their neighbours) with `σₖ = √(σₜ² − σₑ²)` to the 75th percentile σₜ of the four accepted references; Poisson–Gaussian fit `var(z) = αz + β` on flat 7×7 graphite/Si patches (pore patches are censored by the 0-clip); zero-mean noise added up to the noisiest reference when the gap exceeds 10 % of the target variance (≈ 5 % in σ). Never sharpened or denoised | references | `<det>_harm.tif`, `harmonisation.<det>` |
 
 The four accepted references are the unflagged Batch 3 sites `ptg8lmto`, `utfgcjfa`, `vc2whyaq`,
 `xgj4xftb`; the targets (`targets.json`) are fitted on the labelled set only and re-used for the
