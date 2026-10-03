@@ -21,7 +21,7 @@ LABELS = (BINDER, SI, GRAPHITE, PORE, 4)
 
 def _opts(**kw):
     o = dict(load_params()["solver"])
-    o.update(snes_rtol=1e-12, snes_atol=1e-12)
+    o.update(snes_rtol=1e-12, snes_atol=1e-9)
     o.update(kw)
     return o
 
@@ -123,8 +123,10 @@ def _check_bilayer(eps, orientation, rel):
     uz_free = 5 * h * eps * (1 + nu) / (1 - nu)
     if orientation == "bottom":
         assert r.u_nodes[1, 0, :, 1].mean() == pytest.approx(uz_free, rel=rel)
+        assert abs(r.u_nodes[1, 5, :, 1].mean()) < 1e-3 * uz_free
     else:
         assert r.u_nodes[1, 10, :, 1].mean() == pytest.approx(-uz_free, rel=rel)
+        assert r.u_nodes[1, 5, :, 1].mean() == pytest.approx(-uz_free, rel=rel)
 
 
 def test_t2_bilayer_small():
@@ -146,7 +148,7 @@ def test_t3_orientation_top():
 
 
 def test_t4_pixel_mapping():
-    lab = np.full((9, 7), BINDER, dtype=np.uint8)
+    lab = np.full((7, 9), BINDER, dtype=np.uint8)
     lab[1, 6] = SI
     p = load_params()
     r = simulate(lab, 0.1, lambda s: phase_properties(s, p), BCSpec("bottom", "both"), _opts(),

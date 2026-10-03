@@ -112,7 +112,7 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
         petsc_options={
             "snes_type": "newtonls", "snes_linesearch_type": str(solver_opts["linesearch"]),
             "snes_rtol": float(solver_opts["snes_rtol"]), "snes_atol": float(solver_opts["snes_atol"]),
-            "snes_max_it": int(solver_opts["snes_max_it"]),
+            "snes_max_it": int(solver_opts["snes_max_it"]), "snes_stol": 0.0,
             "ksp_type": "preonly", "pc_type": "lu", "pc_factor_mat_solver_type": "mumps",
             "mat_mumps_icntl_14": 100,
         })
@@ -159,22 +159,25 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
     def attempt(s_try: float, ds: float) -> tuple[bool, int, int]:
         set_coeffs(s_try)
         t0 = time.time()
-        reason, its = -99, 0
+        reason, its, fnorm, err = -99, 0, float("nan"), None
         try:
             problem.solve()
             reason = int(problem.solver.getConvergedReason())
             its = int(problem.solver.getIterationNumber())
-        except Exception:  # PETSc / SNES failure
+            fnorm = float(problem.solver.getFunctionNorm())
+        except Exception as exc:  # PETSc / SNES failure
+            err = repr(exc)[:500]
             try:
                 reason = int(problem.solver.getConvergedReason())
                 its = int(problem.solver.getIterationNumber())
+                fnorm = float(problem.solver.getFunctionNorm())
             except Exception:
                 pass
             if reason > 0:
                 reason = -99
         ok = reason > 0 and bool(np.all(np.isfinite(u.x.array)))
         rec = {"s": float(s_try), "ds": float(ds), "its": its, "reason": reason, "ok": bool(ok),
-               "wall_s": time.time() - t0}
+               "wall_s": time.time() - t0, "fnorm": fnorm, "error": err}
         substeps.append(rec)
         if log is not None:
             log(rec)
@@ -206,6 +209,7 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
                 fields[k][fi] = f0[k]
             converged[fi] = True
         ds = min(0.05, ds_max)
+        pred_ok = True
         for target in targets:
             if target <= 0.0:
                 continue
@@ -214,11 +218,13 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
                 if target - (s_n + step) < 1e-12:
                     step = target - s_n
                 s_try = s_n + step
-                if u_nm1 is not None and s_nm1 is not None and s_n > s_nm1:
+                use_pred = (pred_ok and u_nm1 is not None and s_nm1 is not None and s_n > s_nm1)
+                if use_pred:
                     u.x.array[:] = u_n + (step / (s_n - s_nm1)) * (u_n - u_nm1)
                 else:
                     u.x.array[:] = u_n
                 ok, its, _ = attempt(s_try, step)
+                pred_ok = True
                 if ok:
                     u_nm1, s_nm1 = u_n, s_n
                     u_n = u.x.array.copy()
@@ -227,6 +233,9 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
                         ds = min(ds_max, 2 * ds)
                 else:
                     u.x.array[:] = u_n
+                    if use_pred:  # predictor can overshoot into inverted pores: retry this step from u_n
+                        pred_ok = False
+                        continue
                     new_step = step / 2.0
                     if new_step < ds_min * (1.0 - 1e-9):
                         failed_at_s = float(s_try)
