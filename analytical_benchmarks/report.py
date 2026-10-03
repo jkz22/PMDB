@@ -25,7 +25,7 @@ def status(v): return f'<span class="a-status" data-state="{VSTATE[v]}">{VLABEL[
 
 flags = pd.DataFrame(R["site_flags"])
 def explain(b, L):
-    rows = sorted(L["rows"], key=lambda r: -abs(r["d"]))[:2]
+    rows = sorted((r for r in L["rows"] if not r.get("insufficient")), key=lambda r: -abs(r["d"]))[:2]
     drv = "; ".join(f'{kname(r["kpi"])} {"higher" if r["diff"] > 0 else "lower"} by {fmt(abs(r["diff"]))} '
                     f'(effect size {r["d"]:+.1f}, adjusted p={pv(r["p_holm"])})' for r in rows)
     s = f"Strongest differences vs the other sites: {drv}."
@@ -36,7 +36,10 @@ def explain(b, L):
     if L["verdict"] == "consistent" and not L["flagged_sites"]:
         s += " None of these is larger than normal site-to-site variation."
     elif L["verdict"] == "investigate" and all(r["p_holm"] >= 0.05 for r in L["rows"]):
-        s += " The batch average is not decisively different; the verdict comes from multiple unusual sites."
+        spread = [kname(r["kpi"]) for r in L["rows"] if r["p_spread"] < 0.01 and r["spread_diff"] > 0]
+        why = ([f"a larger site-to-site spread in {', '.join(spread)}"] if spread else []) + \
+              (["multiple unusual sites"] if len(L.get("unusual_sites", [])) >= 2 else [])
+        if why: s += f" The batch average is not decisively different; the verdict comes from {' and '.join(why)}."
     return s
 
 o = []
@@ -69,7 +72,8 @@ def comp_table(rows, cap, la, lb):
     for r in sorted(rows, key=lambda r: r["p_holm"]):
         t.append(f'<tr><th scope="row">{E(kname(r["kpi"]))}</th><td data-numeric>{fmt(r["mean_a"])}</td><td data-numeric>{fmt(r["mean_b"])}</td>'
                  f'<td data-numeric>{fmt(r["diff"])}</td><td data-numeric>[{fmt(r["ci95"][0])}, {fmt(r["ci95"][1])}]</td>'
-                 f'<td data-numeric>{r["d"]:+.2f}</td><td data-numeric>{pv(r["p"])}</td><td data-numeric>{pv(r["p_holm"])}</td><td>{status(r["verdict"])}</td></tr>')
+                 f'<td data-numeric>{"–" if r.get("insufficient") else format(r["d"], "+.2f")}</td><td data-numeric>{pv(r["p"])}</td><td data-numeric>{pv(r["p_holm"])}</td>'
+                 f'<td>{"Too few sites" if r.get("insufficient") else status(r["verdict"])}</td></tr>')
     t.append('</tbody></table></div>'); return "".join(t)
 
 def tabs(items, label):
@@ -119,12 +123,20 @@ if os.path.exists("physics.json"):
     for _, r in PD.sort_values(["batch", "site"]).iterrows():
         cells = "".join(f'<td data-numeric>{"<strong>" if (r.site, k) in pfl else ""}{fmt(r[k])} ± {fmt(r[k + "__err"])}{"</strong>" if (r.site, k) in pfl else ""}</td>' for k in PK)
         o.append(f'<tr><th scope="row">{E(r.site)}</th><td>{E(r.batch)}</td>{cells}<td data-numeric>{fmt(r.spec_capacity__siox)}</td></tr>')
-    best = min((x for b in B for x in PH["loo"][b]), key=lambda x: x["p_holm"])
+    allr = [(b, x) for b in B for x in PH["loo"][b]]
+    best = min((x for _, x in allr), key=lambda x: x["p_holm"])
+    sig = sorted(((b, x) for b, x in allr if x["p_holm"] < 0.05), key=lambda t: t[1]["p_holm"])
+    concl = ("Batch-level differences after Holm correction (adjusted p&lt;0.05): "
+             + "; ".join(f'{E(b)}: {E(PK[x["kpi"]][0])} (adjusted p={pv(x["p_holm"])})' for b, x in sig) + ". ") if sig else \
+            f'Smallest batch-level adjusted p: {pv(best["p_holm"])} ({E(PK[best["kpi"]][0])}), so no batch differs as a whole. '
+    n_over = int((PD.swell_to_pore > 1).sum())
+    swell = ("Swelling exceeds the pore volume at every site (swelling ÷ porosity &gt; 1), so the electrode must thicken on charging; "
+             if n_over == len(PD) else
+             f"Swelling exceeds the pore volume at {n_over} of {len(PD)} sites (swelling ÷ porosity &gt; 1); where it does, the electrode must thicken on charging; ")
     o.append('</tbody></table></div><p class="a-section__note">± = 1 standard error (GP for tile-based estimates, bootstrap over particles for diffusion time). '
+             'For swelling ÷ porosity the ± treats the swelling and porosity errors as independent; both come from the same tiles, so it is approximate. '
              'Bold = robust z &gt; 3.5 vs all other sites.</p>'
-             f'<p class="a-prose">Smallest batch-level adjusted p: {pv(best["p_holm"])} ({E(PK[best["kpi"]][0])}), so no batch differs as a whole. '
-             'Swelling exceeds the pore volume at every site (swelling ÷ porosity &gt; 1), so the electrode must thicken on charging; '
-             'the higher the Si fraction, the more it thickens and the slower its coarse particles fill with lithium.</p>'
+             f'<p class="a-prose">{concl}{swell}the higher the Si fraction, the more it thickens and the slower its coarse particles fill with lithium.</p>'
              f'<figure class="a-panel">{img("fig_physics.png", "Physics estimates per site and per tile maps of capacity and unabsorbed expansion")}</figure></section>')
 
 # 3b. feature importance
@@ -142,10 +154,11 @@ if os.path.exists("importance.json"):
                  f'<td data-numeric>{u["kw_p"]:.3f}</td><td data-numeric>{u["kw_p_holm"]:.2f}</td><td>{E(u["batch"])}</td>'
                  f'<td data-numeric>{u["d_signed"]:+.2f}</td></tr>')
     o.append('</tbody></table></div>'
+             + (f'<p class="a-prose">Random-forest cross-check skipped: {E(M["skipped"])}.</p>' if "skipped" in M else
              f'<p class="a-prose">Cross-check: a random forest predicting batch from all {len(I["univariate"])} KPIs reaches '
              f'{M["cv_balanced_accuracy"]:.2f} balanced accuracy in cross-validation (chance {M["chance"]:.2f}; shuffled labels '
              f'{M["null_mean"]:.2f}, 95th percentile {M["null_95"]:.2f}; p = {M["p"]:.2f}). That is barely above chance, so '
-             'model-based importances are not reported: the batches are not separable as a whole.</p>'
+             'model-based importances are not reported: the batches are not separable as a whole.</p>') +
              f'<figure class="a-panel">{img("fig_importance.png", "Bar chart of KPI importance and heatmap of robust z per site and KPI")}</figure></section>')
 
 # 3c. where the outliers are

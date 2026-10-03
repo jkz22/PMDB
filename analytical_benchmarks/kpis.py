@@ -51,17 +51,18 @@ def particles(lab, um):
     m = lab == 2; L = measure.label(m); area_um2 = lab.size * um * um
     props = [p for p in measure.regionprops(L) if p.equivalent_diameter_area * um >= MIN_D_UM]
     nan = float("nan")
-    if len(props) < 3:
-        return dict.fromkeys(["si_d10_um", "si_d50_um", "si_d90_um", "si_psd_span", "si_aspect_ratio", "si_circularity",
-                              "si_solidity", "si_nn_um", "si_clark_evans", "si_cluster_size", "si_cracked_frac",
-                              "si_anomalous_per_1000um2"], nan) | dict(si_count_per_1000um2=len(props) / area_um2 * 1000), {}
-    d = np.array([p.equivalent_diameter_area for p in props]) * um
+    d = np.asarray([p.equivalent_diameter_area for p in props], float) * um
     sol = np.array([p.solidity for p in props])
     ar = np.array([p.major_axis_length / max(p.minor_axis_length, 1e-6) for p in props])
     circ = np.clip([4 * np.pi * p.area / max(p.perimeter, 1e-6) ** 2 for p in props], 0, 1)
     holes = np.array([(p.area_filled - p.area) / p.area_filled for p in props])
     cracked = (holes >= CRACK_HOLE_FRAC) | (sol < CRACK_SOLIDITY)
     anom = (d > ANOM_D_UM) | (ar > ANOM_AR)
+    if len(props) < 3:
+        return dict.fromkeys(["si_d10_um", "si_d50_um", "si_d90_um", "si_psd_span", "si_aspect_ratio", "si_circularity",
+                              "si_solidity", "si_nn_um", "si_clark_evans", "si_cluster_size", "si_cracked_frac",
+                              "si_anomalous_per_1000um2"], nan) | dict(si_count_per_1000um2=len(props) / area_um2 * 1000,
+                                                                   si_n_cracked=int(cracked.sum()), si_n_anomalous=int(anom.sum())), {}
     c = np.array([p.centroid for p in props]) * um; n = len(c); lam = n / area_um2
     nn = cKDTree(c).query(c, k=2)[0][:, 1]
     keep = np.isin(L, [p.label for p in props])

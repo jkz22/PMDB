@@ -2,8 +2,8 @@
 import numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import ConstantKernel as C, RBF, WhiteKernel
-from compare import KPI_INFO
-d = pd.read_csv("site_kpis.csv"); B = sorted(d.batch.unique()); col = dict(zip(B, ["#2f6fdf", "#e08a1e", "#c23b3b", "#3a9a5b"]))
+from compare import KPI_INFO, batch_colours
+d = pd.read_csv("site_kpis.csv"); B = sorted(d.batch.unique()); col = batch_colours(B)
 NC = 4; NR = int(np.ceil(len(KPI_INFO) / NC))
 fig, ax = plt.subplots(NR, NC, figsize=(4.6 * NC, 3.2 * NR))
 for a, (k, (name, _)) in zip(ax.ravel(), KPI_INFO.items()):

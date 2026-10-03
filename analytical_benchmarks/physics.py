@@ -10,14 +10,14 @@ Per tile (then one GP per site, as for the other tile KPIs):
   swelling       added volume at full lithiation / coating volume = E_si*f_si + E_gr*f_gr
   net_expansion  swelling - porosity: volume the pores cannot absorb (-> electrode thickening)
 Per site:
-  swell_to_pore  swelling / porosity (>1: pores cannot absorb the expansion)
+  swell_to_pore  swelling / porosity (>1: pores cannot absorb the expansion); __err ignores the swelling-porosity covariance (approximate)
   diff_time_rel  (d90 / median d90 of all sites)^2: Li diffusion time t ~ r^2/D of the coarse particles
 Writes physics.csv, physics.json, fig_physics.png.
 """
 import json, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from multiprocessing import Pool
 from kpis import gp_mean
-from compare import compare, holm, verdict_of, pooled_sd
+from compare import compare, holm, verdict_of, pooled_sd, batch_colours
 
 Q_GR, RHO_GR, E_GR = 372.0, 2.26, 0.10           # graphite LiC6: mAh/g, g/cm3, volume expansion
 SCEN = {"si": (3579.0, 2.33, 2.80),               # crystalline Si -> Li15Si4
@@ -55,7 +55,7 @@ def run(r):
                     out[f"{k}{sfx}" if a == "mean" else f"{k}{sfx}__{a}"] = v
         p, ep = r["porosity"], r["porosity__err"]; s, es = out[f"swelling{sfx}"], out[f"swelling{sfx}__err"]
         out[f"swell_to_pore{sfx}"] = s / p
-        out[f"swell_to_pore{sfx}__err"] = s / p * np.hypot(es / s, ep / p)   # delta method, errors assumed independent
+        out[f"swell_to_pore{sfx}__err"] = s / p * np.hypot(es / s, ep / p)   # delta method treating swelling and porosity errors as independent; both come from the same tiles (graphite = 1 - pore - Si), so the covariance is ignored and this error is approximate (can be too small or too large)
     d = z["p_d"] if "p_d" in z else np.array([])
     rng = np.random.default_rng(0)
     out["d90_boot"] = [float(np.percentile(rng.choice(d, len(d)), 90)) for _ in range(500)] if len(d) >= 3 else []
@@ -66,7 +66,8 @@ def site_flags(d):
     rows = []
     for k in KPIS:
         for i, r in d.iterrows():
-            rest = d.drop(i)[k]; med = rest.median(); mad = 1.4826 * np.median(np.abs(rest - med))
+            if pd.isna(r[k]): continue
+            rest = d.drop(i)[k].dropna(); med = rest.median(); mad = 1.4826 * np.median(np.abs(rest - med))
             zz = (r[k] - med) / mad if mad > 0 else 0
             if abs(zz) > 3.5: rows.append(dict(batch=r.batch, site=r.site, kpi=k, value=r[k], robust_z=zz))
     return rows
@@ -104,7 +105,7 @@ if __name__ == "__main__":
     for f in out["site_flags"]: print(f"  flag {f['batch']} {f['site']} {f['kpi']}={f['value']:.3g} z={f['robust_z']:+.1f}")
 
     # --- figure: one dot per site + tile maps for flagged vs typical sites
-    col = dict(zip(B, ["#2f6fdf", "#e08a1e", "#c23b3b", "#3a9a5b"]))
+    col = batch_colours(B)
     fig = plt.figure(figsize=(20, 13)); gs = fig.add_gridspec(4, 6, height_ratios=[1, 1, 1, 1])
     for n, k in enumerate(KPIS):
         a = fig.add_subplot(gs[0, n])

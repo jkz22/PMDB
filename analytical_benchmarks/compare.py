@@ -57,11 +57,17 @@ def spread_diff(a, b): return np.mean(np.abs(a - np.median(a))) - np.mean(np.abs
 
 
 def pooled_sd(d, k):
-    g = [v[k].values for _, v in d.groupby("batch") if len(v) > 1]
+    g = [x for x in (v[k].dropna().values for _, v in d.groupby("batch")) if len(x) > 1]
     return np.sqrt(sum(((x - x.mean()) ** 2).sum() for x in g) / sum(len(x) - 1 for x in g))
 
 
 def compare(a, b, sd):
+    a = np.asarray(a, float); b = np.asarray(b, float)
+    a = a[~np.isnan(a)]; b = b[~np.isnan(b)]   # sites without this KPI (e.g. <3 Si particles) are left out
+    if len(a) < 2 or len(b) < 2:                # too few sites with this KPI: report it, never flag it
+        nan = float("nan")
+        return dict(mean_a=a.mean() if len(a) else nan, mean_b=b.mean() if len(b) else nan, diff=nan, ci95=[nan, nan],
+                    d=nan, p=1.0, spread_diff=nan, p_spread=1.0, insufficient=True)
     diff, p = perm_test(a, b, mean_diff)
     se = np.sqrt(a.var(ddof=1) / len(a) + b.var(ddof=1) / len(b))
     dof = se ** 4 / ((a.var(ddof=1) / len(a)) ** 2 / (len(a) - 1) + (b.var(ddof=1) / len(b)) ** 2 / (len(b) - 1))
@@ -81,10 +87,34 @@ def site_flags(d):
     rows = []
     for k in KPIS:
         for i, r in d.iterrows():
-            rest = d.drop(i)[k]; med = rest.median(); mad = 1.4826 * np.median(np.abs(rest - med))
+            if pd.isna(r[k]): continue
+            rest = d.drop(i)[k].dropna(); med = rest.median(); mad = 1.4826 * np.median(np.abs(rest - med))
             z = (r[k] - med) / mad if mad > 0 else 0
             if abs(z) > 3.5: rows.append(dict(batch=r.batch, site=r.site, kpi=k, value=r[k], robust_z=z))
     return rows
+
+
+BATCH_COLOURS = ["#2f6fdf", "#e08a1e", "#c23b3b", "#3a9a5b", "#8e5bc2", "#7f7f7f", "#17becf", "#bcbd22"]
+def batch_colours(batches):
+    """Colour per batch in the given order; the first four match the original figures, then the list cycles."""
+    return {b: BATCH_COLOURS[i % len(BATCH_COLOURS)] for i, b in enumerate(batches)}
+
+def n_cv_splits(y, max_splits=5):
+    """Stratified CV folds the smallest batch allows (callers skip CV below 2)."""
+    return int(min(max_splits, pd.Series(y).value_counts().min()))
+
+def hotspot_sites(res, defaults, tile_kpis):
+    """Sites for spots.py: the fixed defaults first, then every other site flagged high on a mappable tile KPI
+    or unusual (>=2 flags) in compare.json. KPI = its highest positive tile-KPI flag, else si_frac."""
+    seen = {(b, s) for b, s, _ in defaults}; cand = {}
+    for f in res["site_flags"]:
+        key = (f["batch"], f["site"])
+        if key in seen or f["kpi"] not in tile_kpis or f["robust_z"] <= 0: continue
+        if key not in cand or f["robust_z"] > cand[key][1]: cand[key] = (f["kpi"], f["robust_z"])
+    for b, v in res["loo"].items():
+        for s in v.get("unusual_sites", []):
+            if (b, s) not in seen: cand.setdefault((b, s), ("si_frac", 0.0))
+    return list(defaults) + [(b, s, cand[(b, s)][0]) for b, s in sorted(cand)]
 
 
 def confounds(d):

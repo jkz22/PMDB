@@ -6,50 +6,59 @@
 3. Multivariate cross-check: random forest predicting batch from all KPIs, stratified CV balanced accuracy
    vs a label-shuffle null. If it does not clearly beat the null, model-based importances are not meaningful.
 """
-import json, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
+import json, sys, numpy as np, pandas as pd, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from scipy import stats
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
-from compare import KPI_INFO, KPIS, holm
+from compare import KPI_INFO, KPIS, holm, batch_colours, n_cv_splits
 
 d = pd.read_csv("site_kpis.csv"); res = json.load(open("compare.json")); B = sorted(d.batch.unique())
 rows = []
 for k in KPIS:
-    r = stats.rankdata(d[k]); g = [r[d.batch.values == b] for b in B]
+    ok = d[k].notna().values; r = stats.rankdata(d[k][ok]); bk = d.batch.values[ok]
+    g = [r[bk == b] for b in B if (bk == b).any()]
     ssb = sum(len(x) * (x.mean() - r.mean()) ** 2 for x in g); eta2 = ssb / ((r - r.mean()) ** 2).sum()
-    kw = stats.kruskal(*[d[k][d.batch == b] for b in B]).pvalue
+    kw = stats.kruskal(*[x for x in (d[k][(d.batch == b).values & ok] for b in B) if len(x)]).pvalue
     loo = {b: next(x for x in res["loo"][b]["rows"] if x["kpi"] == k)["d"] for b in B}
-    bb = max(loo, key=lambda b: abs(loo[b]))
+    bb = max(loo, key=lambda b: np.nan_to_num(abs(loo[b])))
     rows.append(dict(kpi=k, name=KPI_INFO[k][0], eta2=eta2, kw_p=kw, max_abs_d=abs(loo[bb]), d_signed=loo[bb], batch=bb))
 U = pd.DataFrame(rows); U["kw_p_holm"] = holm(U.kw_p.values); U = U.sort_values("eta2", ascending=False)
 
 med = {k: d[k].median() for k in KPIS}
-Z = pd.DataFrame({k: [(d[k][i] - d[k].drop(i).median()) / (1.4826 * stats.median_abs_deviation(d[k].drop(i)) + 1e-12)
+Z = pd.DataFrame({k: [(d[k][i] - d[k].drop(i).median()) / (1.4826 * stats.median_abs_deviation(d[k].drop(i), nan_policy="omit") + 1e-12)
                       for i in d.index] for k in KPIS}, index=d.batch.str.replace("Batch_", "B") + " " + d.site)
 
-X = ((d[KPIS] - d[KPIS].mean()) / d[KPIS].std()).values; y = d.batch.values
-cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=0)
-def cv_bacc(yy):
-    s = []
-    for tr, te in cv.split(X, yy):
-        m = RandomForestClassifier(200, class_weight="balanced", random_state=0, n_jobs=4).fit(X[tr], yy[tr])
-        s.append(balanced_accuracy_score(yy[te], m.predict(X[te])))
-    return float(np.mean(s))
-acc = cv_bacc(y); rng = np.random.default_rng(0)
-null = np.array([cv_bacc(rng.permutation(y)) for _ in range(30)])
-p_model = float((1 + (null >= acc).sum()) / (1 + len(null)))
+F = d[KPIS].fillna(d[KPIS].median())   # RF cannot take NaN; median impute (label-free)
+X = ((F - F.mean()) / F.std()).values; y = d.batch.values
+k_cv = n_cv_splits(y)
+if k_cv >= 2:
+    cv = RepeatedStratifiedKFold(n_splits=k_cv, n_repeats=10, random_state=0)
+    def cv_bacc(yy):
+        s = []
+        for tr, te in cv.split(X, yy):
+            m = RandomForestClassifier(200, class_weight="balanced", random_state=0, n_jobs=4).fit(X[tr], yy[tr])
+            s.append(balanced_accuracy_score(yy[te], m.predict(X[te])))
+        return float(np.mean(s))
+    acc = cv_bacc(y); rng = np.random.default_rng(0)
+    null = np.array([cv_bacc(rng.permutation(y)) for _ in range(30)])
+    p_model = float((1 + (null >= acc).sum()) / (1 + len(null)))
+    model = dict(cv_balanced_accuracy=acc, chance=1 / len(B), null_mean=float(null.mean()),
+                 null_95=float(np.percentile(null, 95)), p=p_model)
+else:
+    model = dict(skipped=f"smallest batch has {pd.Series(y).value_counts().min()} site(s); cross-validation needs at least 2 per batch",
+                 chance=1 / len(B))
+    print(f"NOTE: random-forest cross-check skipped ({model['skipped']})", file=sys.stderr)  # no 'warn': run_all.sh greps it out
 
 out = dict(univariate=U.to_dict("records"),
-           model=dict(cv_balanced_accuracy=acc, chance=1 / len(B), null_mean=float(null.mean()),
-                      null_95=float(np.percentile(null, 95)), p=p_model),
+           model=model,
            site_top={s: Z.loc[s].abs().sort_values(ascending=False).head(4).round(1).to_dict()
                      for s in Z.index if (Z.loc[s].abs() > 3.5).sum() >= 2})
 json.dump(out, open("importance.json", "w"), indent=1, default=float)
 U.to_csv("importance.csv", index=False)
 
 fig, ax = plt.subplots(1, 2, figsize=(19, 7.5), gridspec_kw=dict(width_ratios=[1, 1.5]))
-col = {"Batch_1": "#2f6fdf", "Batch_2": "#e08a1e", "Batch_3": "#c23b3b"}
+col = batch_colours(B)
 a = ax[0]; yy = np.arange(len(U))[::-1]
 a.barh(yy, U.eta2, color=[col[b] for b in U.batch])
 for yi, (_, r) in zip(yy, U.iterrows()):
