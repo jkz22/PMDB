@@ -1,0 +1,15 @@
+{
+  "r_min": 0.5,
+  "r_max": 3.0,
+  "beta_min": 1.9,
+  "beta_max": 2.0,
+  "a_min": 0.746875,
+  "a_max": 1.082716049382716,
+  "b_min": -0.0392156862745098,
+  "b_max": 0.0784313725490196,
+  "noise_min": 0.0,
+  "noise_max": 0.012306799460565331,
+  "poisson_frac_min": 0.3,
+  "poisson_frac_max": 1.0,
+  "ksize": 15
+}

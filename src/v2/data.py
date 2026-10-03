@@ -43,16 +43,37 @@ def normalise_percentile(img: np.ndarray) -> np.ndarray:
     return np.clip((x - lo) / np.maximum(hi - lo, 1e-6), 0, 1)
 
 
-class FieldStore:
-    """All fields in RAM as float32 [0,1] (raw: /255; norm: teammate percentile)."""
+def harmonise_params(per_image: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Per-image, per-channel linear gain/offset mapping the image's 3-GMM means onto the
+    reference (median over all images of that view) by least squares. Weights untouched."""
+    from src.v2.common import OUT
+    p = pd.read_csv(OUT / "imaging_stats" / "per_image.csv") if per_image is None else per_image
+    mus = ["gmm_mu0", "gmm_mu1", "gmm_mu2"]
+    ref = p.groupby("view")[mus].median()
+    rows = []
+    for r in p.itertuples(index=False):
+        x, y = np.array([getattr(r, k) for k in mus]), ref.loc[r.view].to_numpy()
+        gain, off = np.polyfit(x, y, 1)
+        rows.append(dict(group_id=r.group_id, channel=r.channel, gain=gain, offset=off))
+    return pd.DataFrame(rows)
 
-    def __init__(self, fields: pd.DataFrame, input_mode: str = "raw"):
+
+class FieldStore:
+    """All fields in RAM as float32 [0,1] (raw: /255; norm: teammate percentile).
+    ``harmonise`` applies the GMM-mean linear harmonisation to raw counts first."""
+
+    def __init__(self, fields: pd.DataFrame, input_mode: str = "raw", harmonise: bool = False):
         assert input_mode in ("raw", "norm")
         self.fields = fields.reset_index(drop=True)
+        hp = harmonise_params().set_index(["group_id", "channel"]) if harmonise else None
         self.images = []
-        for b, s in self.fields[["batch", "site"]].itertuples(index=False, name=None):
-            a = load_half_raw(b, s)
-            self.images.append(normalise_percentile(a) if input_mode == "norm" else a.astype(np.float32) / 255.0)
+        for b, s, gid in self.fields[["batch", "site", "group_id"]].itertuples(index=False, name=None):
+            a = load_half_raw(b, s).astype(np.float32)
+            if hp is not None:
+                for c in range(3):
+                    g, o = hp.loc[(gid, c), ["gain", "offset"]]
+                    a[..., c] = np.clip(g * a[..., c] + o, 0, 255)
+            self.images.append(normalise_percentile(a) if input_mode == "norm" else a / 255.0)
 
 
 class CropDataset(Dataset):
