@@ -1,4 +1,9 @@
-"""Field-level localisation KPIs on the Si / admissible maps: K10-K14 (D-017)."""
+"""Field-level localisation KPIs K10-K14 (D-017).
+
+K10-K13 local Si fractions use ``Masks.fraction_space`` (non-artefact pixels) as denominator
+and window filter instead of admissible pixels (deviation, see docs/kpis/kpi_status.md).
+K14 still measures distances from admissible pixels.
+"""
 
 from __future__ import annotations
 
@@ -30,7 +35,7 @@ def _wpx(w_um: float, px_um: float) -> int:
 
 
 def k10_scale_of_segregation(ctx: KpiContext) -> KpiOutput:
-    si, adm = ctx.masks.si, ctx.masks.admissible
+    si, adm = ctx.masks.si, ctx.masks.fraction_space
     ws, cvs = [], []
     curves = []
     for w in K10_WINDOWS_UM:
@@ -47,13 +52,13 @@ def k10_scale_of_segregation(ctx: KpiContext) -> KpiOutput:
 
 def k11_lacey(ctx: KpiContext) -> KpiOutput:
     """Lacey M at w = 10 um with N = expected Si objects per window (catalogue definition)."""
-    s, a = window_counts(ctx.masks.si, ctx.masks.admissible, _wpx(K11_WINDOW_UM, ctx.px_um))
+    s, a = window_counts(ctx.masks.si, ctx.masks.fraction_space, _wpx(K11_WINDOW_UM, ctx.px_um))
     if s.size < 2 or a.sum() == 0:
         return KpiOutput({"K11_lacey_w10": NAN})
     p = s.sum() / a.sum()
     s2 = float(np.var(s / a, ddof=1))
     s0 = p * (1.0 - p)
-    total_adm = float(ctx.masks.admissible.sum())
+    total_adm = float(ctx.masks.fraction_space.sum())
     n_exp = ctx.n_objects / total_adm * a.mean()
     if n_exp <= 0:
         return KpiOutput({"K11_lacey_w10": NAN})
@@ -84,7 +89,7 @@ def band_summary(vals: np.ndarray) -> tuple[float, float, float]:
 
 
 def k12_depth_profile(ctx: KpiContext) -> KpiOutput:
-    vals = band_profile(ctx.masks.si, ctx.masks.admissible)
+    vals = band_profile(ctx.masks.si, ctx.masks.fraction_space)
     _, maxdev, absslope = band_summary(vals)
     curves = [("band_si_frac", float(i), float(v)) for i, v in enumerate(vals)]
     return KpiOutput({"K12_depth_maxdev": maxdev, "K12_depth_absslope": absslope}, curves)
@@ -94,7 +99,7 @@ def k13_lateral(ctx: KpiContext) -> KpiOutput:
     wp = _wpx(K13_BIN_UM, ctx.px_um)
     nb = ctx.shape[1] // wp
     si = ctx.masks.si[:, : nb * wp].reshape(ctx.shape[0], nb, wp).sum(axis=(0, 2))
-    ad = ctx.masks.admissible[:, : nb * wp].reshape(ctx.shape[0], nb, wp).sum(axis=(0, 2))
+    ad = ctx.masks.fraction_space[:, : nb * wp].reshape(ctx.shape[0], nb, wp).sum(axis=(0, 2))
     ok = ad > 0
     frac = si[ok] / ad[ok]
     centres = (np.arange(nb) + 0.5) * K13_BIN_UM

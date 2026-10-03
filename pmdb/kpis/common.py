@@ -83,6 +83,11 @@ class KpiContext:
         return float(self.masks.admissible.sum()) * self.px_area_um2
 
     @cached_property
+    def fraction_area_um2(self) -> float:
+        """Denominator for Si area fractions and densities: everything except artefact."""
+        return float(self.masks.fraction_space.sum()) * self.px_area_um2
+
+    @cached_property
     def image_area_um2(self) -> float:
         return float(self.masks.si.size) * self.px_area_um2
 

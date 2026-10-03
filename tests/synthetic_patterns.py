@@ -30,10 +30,10 @@ def _accept_hard_core(cands: np.ndarray, n_target: int, min_dist: float) -> np.n
 
 
 def poisson_points(rng, n: int, rows: tuple[int, int] = (0, SIZE), size: int = SIZE,
-                   margin: int = RADIUS + 1) -> np.ndarray:
+                   margin: int = RADIUS + 1, min_dist: float = HARD_CORE_PX) -> np.ndarray:
     lo, hi = max(rows[0], margin), min(rows[1], size - margin)
     cands = np.column_stack([rng.uniform(lo, hi, 20 * n), rng.uniform(margin, size - margin, 20 * n)])
-    pts = _accept_hard_core(cands, n, HARD_CORE_PX)
+    pts = _accept_hard_core(cands, n, min_dist)
     assert len(pts) == n
     return pts
 
@@ -108,20 +108,21 @@ def make_masks(si: np.ndarray, graphite: np.ndarray | None = None, pore: np.ndar
                  admissible=~graphite & ~artefact, version="synthetic")
 
 
-def synthetic_bse(rng, size: int = SIZE, n_si: int = 400, n_pores: int = 60, pore_radius: int = 12,
+def synthetic_bse(rng, size: int = SIZE, n_si: int = 1000, si_radius: int = 6, n_pores: int = 200, pore_radius: int = 12,
                   matrix: float = 0.5, si_level: float = 0.85, si_grain: float = 0.05,
                   pore_level: float = 0.1, noise: float = 0.1) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Mid-grey matrix, bright grainy Si discs, dark holes, additive Gaussian noise.
 
     Returns (image, si_truth, pore_truth). Si discs and holes never overlap.
     """
-    pts = poisson_points(rng, n_si + n_pores, size=size, margin=pore_radius + 2)
+    pts = poisson_points(rng, n_si + n_pores, size=size, margin=pore_radius + 2,
+                         min_dist=2 * max(si_radius, pore_radius) // 2 + si_radius + 4)
     # make room for the larger holes: drop Si centres too close to a hole
     pores_c = pts[:n_pores]
     si_c = pts[n_pores:]
     d = np.min(np.linalg.norm(si_c[:, None] - pores_c[None], axis=2), axis=1)
-    si_c = si_c[d > pore_radius + RADIUS + 3]
-    si = discs_mask(si_c, RADIUS, size)
+    si_c = si_c[d > pore_radius + si_radius + 3]
+    si = discs_mask(si_c, si_radius, size)
     pore = discs_mask(pores_c, pore_radius, size)
     img = np.full((size, size), matrix, dtype=np.float64)
     img[si] = si_level + si_grain * rng.standard_normal(int(si.sum()))
