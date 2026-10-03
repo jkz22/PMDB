@@ -243,3 +243,12 @@ def test_card_ranks_by_score_contribution():
         "dev_Batch_2": [1.0, 1.5], "scale_Batch_2": [1.0, 0.5],
     })
     assert decisive_features(ex, "Batch_1", ["Batch_1", "Batch_2"], 1) == ["f1"]
+
+
+def test_predict_empty_batch(features):
+    X, y = features
+    model = fp.fit(X, y)
+    pred = fp.predict(model, X.iloc[:0])
+    assert len(pred) == 0
+    assert {"assigned", "credibility", "confidence", "ood"} <= set(pred.columns)
+    assert fp.conformal_p(model, X.iloc[:0]).shape == (0, len(model.batches))

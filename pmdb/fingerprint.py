@@ -331,6 +331,8 @@ def conformal_p(model: FingerprintModel, X: pd.DataFrame) -> pd.DataFrame:
     `_full_conformal_p`.
     """
     x = _feature_matrix(X, model.features)
+    if len(x) == 0:
+        return pd.DataFrame(np.empty((0, len(model.batches))), index=X.index, columns=model.batches)
     p = np.vstack([_full_conformal_p(model.train_x, model.train_codes,
                                      len(model.batches), row) for row in x])
     return pd.DataFrame(p, index=X.index, columns=model.batches)
@@ -375,7 +377,9 @@ def predict(
             **{f"p_{b}": float(pv[b]) for b in model.batches},
             **{f"score_{b}": float(sv[b]) for b in model.batches},
         })
-    return pd.DataFrame(rows, index=X.index)
+    cols = (["assigned", "credibility", "confidence", "ood"]
+            + [f"p_{b}" for b in model.batches] + [f"score_{b}" for b in model.batches])
+    return pd.DataFrame(rows, index=X.index, columns=cols)
 
 
 # ---------------------------------------------------------------------------
