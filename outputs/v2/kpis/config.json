@@ -1,0 +1,13 @@
+{
+  "kpi_commit": "d23a116c3d07b268a245222132ccf81d8d01b545",
+  "cols": [
+    "frac_si",
+    "frac_graphite",
+    "frac_pore",
+    "K01_si_frac_adm",
+    "K04_agglom_frac"
+  ],
+  "crop": 256,
+  "stride_train": 128,
+  "nm_per_px": 50.0
+}
