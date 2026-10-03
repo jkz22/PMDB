@@ -45,6 +45,12 @@ Status: scoping. Literature review complete: `docs/fem/literature-review.md` (pa
   DECISION D10 (updated): pool at the FEATURE level, not the probability level: site features = [mean, max, spread]
   of tile features (captures diffuse shifts and tail-driven features), plus mean-pooled tile probabilities as a
   baseline. No max pooling of probabilities. Checks 3-4 still run on FEM features.
+  CHECK 3 RESULT (scripts/pooling_compare.py -> outputs/pooling_checks/check3_*; LOSO, balanced acc with site-bootstrap
+  95% CI): R1 mean_prob 0.49/0.66/0.68 (multiclass / B1vB3 / B2vB3); R4 site_kpis 0.49/0.69/0.67; R2 feat_mean
+  0.39/0.57/0.64; R3 feat_mean_max_std 0.41/0.47/0.57. CIs ~±0.2, so R1≈R4; R3 (45 feats on 31 sites) overfits.
+  DECISION D10 (final, supersedes the feature-level choice above): site prediction = class-weighted MEAN of tile
+  probabilities (R1), one vote per tile over its full feature vector. Feature-level [mean,max,spread] pooling dropped.
+  Baseline for the FEM ablation = R1 on KPI tiles and R4 site KPIs. Check 4 (injection) dropped under D17 scope cut.
 
 ## Resolved from the literature review (user delegated these to Claude's judgment, 2026-10-03)
 Guiding principle: features serve batch discrimination, so between-site ranking must be robust to uncertain
