@@ -232,6 +232,53 @@ def test_robustness_drop():
     assert t.at["s", "decision"] == "keep"
 
 
+def test_icc_undefined_is_untested_not_dropped():
+    df = _frame(K=_noise(40))
+    rng = np.random.default_rng(41)
+    first = {f"s{b}00" for b in (1, 2, 3)}
+    rows = []
+    for _, r in df[["batch", "site"]].iterrows():
+        if r["site"] in first:
+            rows += [{**r, "tile": t, "K": rng.normal()} for t in range(4)]
+        else:
+            rows.append({**r, "tile": 0, "K": np.nan})
+    rep = pd.DataFrame(rows)
+    t = screen(df, ["K"], FAST, replicates=rep).table.set_index("kpi")
+    assert t.at["K", "decision"] == "keep" and t.at["K", "deciding_gate"] == ""
+    assert "reliability" in t.at["K", "untested_gates"]
+    assert "icc_undefined" in t.at["K", "flags"]
+
+
+def test_constant_within_batch_covariate_is_untested():
+    df = _frame(K=_noise(42))
+    covdf = _sites().assign(cov=_batch_idx(_sites()).astype(float))
+    t = screen(df, ["K"], FAST, covariates=covdf).table.set_index("kpi")
+    assert "artefact" in t.at["K", "untested_gates"]
+
+
+def test_non_numeric_replicate_kpi_column_is_error():
+    df = _frame(K=_noise(43))
+    rep = _tiles(df, K=lambda t: _noise(44 + t)).astype({"K": object})
+    rep.loc[0, "K"] = "n/a"
+    with pytest.raises(ScreenInputError, match="not numeric"):
+        validate_replicates(rep, df, ["K"], FAST)
+
+
+def test_first_failing_gate_decides():
+    cov = _noise(50)
+    x, y = cov + _noise(51) * 0.1, _noise(52)
+    df = _frame(x=x, y=y)
+    covdf = _sites().assign(cov=cov)
+    rng = np.random.default_rng(53)
+    rep = _tiles(df, x=lambda t: rng.normal(size=30), y=lambda t: rng.normal(size=30))
+    base = _sites()
+    sens = pd.concat([base.assign(p=1, x=x, y=y), base.assign(p=2, x=-x, y=-y)], ignore_index=True)
+    cfg = replace(FAST, sensitivity_params=("p",))
+    t = screen(df, ["x", "y"], cfg, replicates=rep, sensitivity=sens, covariates=covdf).table.set_index("kpi")
+    assert t.at["x", "deciding_gate"] == "artefact:cov"
+    assert t.at["y", "deciding_gate"] == "reliability"
+
+
 def test_filtered_columns_equal_keep_set():
     df = _frame(const=1.0, a=_noise(24), b=_noise(25), c=_noise(26))
     kpis = ["const", "a", "b", "c"]
@@ -300,6 +347,7 @@ def test_screen_cli_on_real_tables(tmp_path):
     assert g.at["K08_pcf_rpeak_z_um", "deciding_gate"] == "degeneracy:missing"
     assert g.at["K10_cv_w10", "untested_gates"] == "reliability;robustness"
     assert np.isfinite(g.at["K04_agglom_frac", "robustness_rho"])
+    assert g.at["K04_agglom_frac", "deciding_gate"] == "reliability"
     f = pd.read_csv(out / "site_kpis_filtered.csv")
     assert len(f) == 31
     assert list(f.columns) == ["batch", "site", *t.loc[t["decision"] == "keep", "kpi"].pipe(

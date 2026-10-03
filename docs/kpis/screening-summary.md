@@ -33,7 +33,7 @@ python -m pmdb.screen --kpis outputs/kpis/site_kpis.csv --replicates outputs/kpi
 ## How to read the verdict
 
 - `decision` = keep/drop; `deciding_gate` = the first gate that failed.
-- `untested_gates` = gates with no data for that KPI: untested is NOT passed.
+- `untested_gates` = gates that could not be evaluated for that KPI (no data or undefined statistic): untested is NOT passed.
 - Kept KPIs are ranked by ICC (highest first); `site_kpis_filtered.csv` holds only them.
 
 > **Limits**

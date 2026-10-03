@@ -376,7 +376,10 @@ def validate_replicates(rep: pd.DataFrame, site: pd.DataFrame, kpis: Sequence[st
     if rep.duplicated([*KEY_COLS, cfg.replicate_col]).any():
         raise ScreenInputError(f"replicates: duplicated (batch, site, {cfg.replicate_col}) rows")
     _check_same_sites(rep, site, "replicates")
-    cols, _ = kpi_columns(rep, cfg.ignore_cols, exclude=[cfg.replicate_col])
+    cols, ign = kpi_columns(rep, cfg.ignore_cols, exclude=[cfg.replicate_col])
+    bad = [c for c in ign if c in set(kpis)]
+    if bad:
+        raise ScreenInputError(f"replicates: column(s) {bad} name site KPIs but are not numeric")
     unknown = [c for c in cols if c not in set(kpis)]
     if unknown:
         raise ScreenInputError(f"replicates: KPI column(s) {unknown} not in the site KPI table (naming typo?)")
@@ -428,7 +431,10 @@ def validate_sensitivity(sens: pd.DataFrame, site: pd.DataFrame, kpis: Sequence[
         if _keys(grp) != _keys(site):
             raise ScreenInputError("sensitivity: a setting does not cover exactly the site set "
                                    f"({len(_keys(grp))} vs {len(_keys(site))} sites)")
-    cols, _ = kpi_columns(sens, cfg.ignore_cols, exclude=params)
+    cols, ign = kpi_columns(sens, cfg.ignore_cols, exclude=params)
+    bad = [c for c in ign if c in set(kpis)]
+    if bad:
+        raise ScreenInputError(f"sensitivity: column(s) {bad} name site KPIs but are not numeric")
     unknown = [c for c in cols if c not in set(kpis)]
     if unknown:
         raise ScreenInputError(f"sensitivity: KPI column(s) {unknown} not in the site KPI table (naming typo?)")
@@ -895,6 +901,8 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
                 covs.append((j, cname, rho, lo, hi, qual))
             q = [c for c in covs if c[5]]
             fin = [c for c in covs if np.isfinite(c[2])]
+            if not fin:
+                untested.append("artefact")
             rep = max(q, key=lambda c: abs(c[2])) if q else (max(fin, key=lambda c: abs(c[2])) if fin else None)
             if rep is not None:
                 j, cname, rho, lo, hi, qual = rep
@@ -916,7 +924,7 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
             icc_v, icc_lo, icc_hi, n_rep = icc1_bootstrap(rep_by_kpi[k], batches, idx_icc, cfg.ci_level)
             if not np.isfinite(icc_v):
                 icc_flags.append("icc_undefined")
-            elif not np.isfinite(icc_lo):
+            if not np.isfinite(icc_lo):
                 icc_flags.append("icc_ci_undefined")
             if icc_flags:
                 untested.append("reliability")
@@ -952,7 +960,7 @@ def screen(site: pd.DataFrame, kpis: Sequence[str], cfg: ScreenConfig = ScreenCo
             gate = "degeneracy:zero_mad"
         elif art_cov is not None:
             gate = f"artefact:{art_cov}"
-        elif np.isfinite(icc_hi) and icc_hi < cfg.icc_upper_min:
+        elif "reliability" not in untested and icc_hi < cfg.icc_upper_min:
             gate = "reliability"
         elif np.isfinite(rob) and rob < cfg.robustness_min:
             gate = "robustness"

@@ -23,7 +23,7 @@ This section is normative. MUST and SHOULD are used in the RFC sense.
 - Several `--kpis` files MAY be given; all MUST cover the identical site set.
 - KPI names MUST match `^[A-Za-z][A-Za-z0-9_]*$` and SHOULD follow `<ID>_<short_name>_<unit>` as in `kpi_catalogue.csv` (for example `K03_ecd_d50_um`).
 - KPI names MUST be unique across all submitted files.
-- Non-numeric columns are ignored and the tool warns about them. These names are ignored silently, in every table: `se_detector`, `segmenter_version`, `nan_reason`, `runner`, `elapsed_s`, `error` (add more with `--ignore-cols`).
+- Non-numeric columns in `--kpis` files are ignored with a warning. In replicate and sensitivity tables, a non-numeric column named like a site KPI is a hard error; other non-numeric columns are ignored silently. These names are ignored silently in every table: `se_detector`, `segmenter_version`, `nan_reason`, `runner`, `elapsed_s`, `error` (add more with `--ignore-cols`).
 
 ### 2.2 Missing values
 
@@ -44,6 +44,7 @@ This section is normative. MUST and SHOULD are used in the RFC sense.
 | site sets differ | `--kpis` files cover different sites (message gives counts and up to 5 examples) | cover all 31 sites in every file |
 | no numeric KPI columns | a `--kpis` file has none | check the file |
 | replicates: site set differs / duplicates / missing replicate column | table does not cover exactly the site set, has duplicate (batch, site, tile) rows or no `tile` column | fix the table, or set `--replicate-col` |
+| replicates/sensitivity: KPI column not numeric | a stray text value (e.g. "n/a") in a KPI column | write missing values as empty/NaN |
 | replicates/sensitivity: unknown KPI name | column not in the site KPIs (naming typo) | use the exact site KPI name |
 | sensitivity: params missing, NaN, fewer than 2 settings, incomplete setting, duplicate rows | see 2.4 | fix the sweep |
 | `--sensitivity` without `--sensitivity-params` (or the reverse) | params are never inferred | give both |
@@ -128,7 +129,7 @@ Bootstrap resamples are stratified by batch (every batch stays present). Each ga
 | `kpi` | KPI name |
 | `decision` | `keep` or `drop` |
 | `deciding_gate` | first failed gate (vocabulary below); empty if kept |
-| `untested_gates` | `;`-joined subset of `artefact;reliability;robustness` lacking data. Untested is not passed |
+| `untested_gates` | `;`-joined subset of `artefact;reliability;robustness` that lacked data or whose statistic was undefined (artefact: no covariate gave a finite rho; reliability: no replicates or ICC/CI undefined). Untested is not passed |
 | `flags` | `;`-joined warnings (vocabulary below) |
 | `rank` | 1..n for kept KPIs, empty for dropped |
 | `n_missing_frac`, `n_unique`, `mad` | gate 0 statistics |
