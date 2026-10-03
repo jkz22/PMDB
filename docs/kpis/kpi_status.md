@@ -18,7 +18,7 @@ columns are present for 124/124 tiles, with no tile NaNs. The coverage script ex
 - Synthetic/non-data suite: 20 passed.
 - Real-data suite: 1 passed.
 - `scripts/check_kpi_coverage.py`: 25/25 v1 KPIs covered, exit 0.
-- Production run: 31/31 sites, 56.3 seconds with `--jobs 8`.
+- Production run: 31/31 sites, 64.0 seconds with `--jobs 8`.
 - Segmentation review: 31/31 overlays inspected; no gross site-specific failures.
 - K01: 0.0437-0.1645 across all sites, within the 0.001-0.50 sanity interval.
 
