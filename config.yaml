@@ -25,6 +25,9 @@ instances:
   # see qc/instances/compare_min_distance.png
   watershed_min_distance: 50
 
-pixel_size_um: null     # unknown; all KPIs in pixel units until mentors confirm
+# Confirmed in AGENTS.md: full resolution (data/) is 25.000 +/- 0.001 nm/px.
+# The pipeline does not consume this value yet; committed KPI outputs remain
+# in pixel units (lengths: x0.025 um/px, areas: x0.000625 um^2/px).
+pixel_size_um: 0.025
 
 seed: 0
