@@ -88,7 +88,11 @@ and (ii) the Batch 3 microscope session logs (or one Batch 3 sample re-imaged un
 settings) to close the noise/sharpness question. On the held-back sites the fingerprint assigns
 3e122cbj → Batch 1 (robust under jackknife), fn0mhxef → Batch 3 and xrv9xvzb → Batch 2
 (`outputs/fingerprint/heldout_predictions.csv`, `outputs/overnight/stability/`); the functional
-columns agree on the first and are too weak to vote on the other two.
+columns agree on the first and are too weak to vote on the other two — but they do say *why*
+3e122cbj is not Batch 3: twice the Si of any baseline field, crowded (H0 lifetimes a third of
+Batch 3), swelling past the graphite into free space, the functional twin of the two high-Si
+Batch 1 fields; the other two sit inside the Batch 3 range on every functional column
+(`docs/functional.md` §2.5).
 
 ### Where each piece lives
 | Layer | Session / branch | Files |

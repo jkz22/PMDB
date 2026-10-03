@@ -57,6 +57,10 @@ finds pore; the rest of the free space is binder / carbon black.
   Spearman 0.79–0.89; K15 alone: p = 0.07): more contact means more of the swelling is taken up by
   the stiff phase. The ordering is unchanged when the segmenter's Si and pore anchors are moved by
   ±0.05 (site-ranking Spearman 0.96–0.98, `robustness.csv`).
+  Sensitivity to the two high-Si Batch 1 fields: without `4ih2ggld` and `5n1q8atc` the B1-vs-B2
+  difference vanishes (Mann–Whitney p = 0.20–0.34) but B1+B2 vs B3 holds (p = 0.03 at both SOCs;
+  Kruskal–Wallis p = 0.05–0.08). The robust statement is "Batch 3 is the most constrained", not a
+  three-way ordering.
 * `pore_loss` at SOC 1 is 13–25 % and is almost entirely a function of Si fraction (Spearman 0.79
   with K01, partial ρ ≈ 0.1 once K01 is controlled; `figures/pore_loss_vs_si_fraction.png`). The
   two high-Si Batch 1 fields (`4ih2ggld`, `5n1q8atc`, K01 = 0.14–0.16) would lose 22–25 % of their
@@ -76,7 +80,17 @@ confidence 0.0); these are not to be used for assignment. The value of F02 is th
 *consequence* of the arrangement the fingerprint already detects: Batch 3 Si is more boxed in by
 graphite, so if anything in these batches cracks first under swelling, the geometry says Batch 3.
 
-### 2.5 How many fields would it take? (`power.csv`)
+### 2.5 Held-out sites against the Batch 3 baseline (`heldout_explain.csv`, `figures/heldout_swelling_cards.png`)
+Robust z (MAD units) of each held-out field against the 17 Batch 3 fields, from
+`python scripts/explain_heldout_functional.py` (read-only use of the held-out data):
+
+| site | constrained share (SOC 1) | pore loss | Si objects after/before | H0 lifetime p50 | reading |
+|---|---|---|---|---|---|
+| `3e122cbj` | 0.80, **z = −3.3** (below every B3 field) | 0.22, **z = +2.4** (above every B3 field) | 0.64, **z = −6.8** | 0.40 µm, z = −2.6 | K01 = 0.137, 107 objects / 1000 µm²: twice the Si of any Batch 3 field, crowded (Euler merge radius 0.07 µm, H0 lifetimes a third of B3), one object in three merges on lithiation and the growth spills past the graphite into binder and pore. Functionally it is the twin of the two high-Si Batch 1 fields (`4ih2ggld` 0.78 / 0.22 / 0.66; `5n1q8atc` 0.83 / 0.25 / 0.68); its z against Batch 1 is −2.9 / +0.6 / −2.7, i.e. still extreme but on Batch 1's side. Supports the fingerprint's Batch 1 call and explains *why* it is not Batch 3: too much Si, too close together, swelling into free space rather than against graphite. |
+| `fn0mhxef` | 0.86, z = −0.8 | 0.12, z = −0.2 | 0.81, z = −0.8 | 1.42 µm, z = +1.0 | inside the Batch 3 range on every F and S column (|z| ≤ 1.8; the only mild oddity is the shortest median Si-to-pore distance of any site, 1.20 µm, z = −1.8). Functionally indistinguishable from the baseline, consistent with the fingerprint's Batch 3 assignment. |
+| `xrv9xvzb` | 0.87, z = −0.7 | 0.10, z = −0.7 | 0.81, z = −0.4 | 1.24 µm, z = +0.2 | inside the Batch 3 range on every column (|z| ≤ 0.7). The functional layer sees nothing that the fingerprint's Batch 2 call (mid-depth Si dip) could be checked against — depth distribution is not a functional quantity here. |
+
+### 2.6 How many fields would it take? (`power.csv`)
 Plug-in bootstrap of a Mann–Whitney test at the observed effect sizes: with the present 7 / 7 / 17
 fields the power to detect even the largest batch effects is 0.3–0.7 (`K06_void_region_frac`
 B1 vs B2: 0.60; `F02_soc050_into_graphite`: 0.51 / 0.38). Reaching 80 % power needs ≈ 10–15 fields

@@ -43,4 +43,4 @@ the expected outcome for a dispersed-particle microstructure at 3–16 % Si (Tor
 lineal-path function diverge from S2-type statistics only when clusters percolate, which Si never
 does here). The honest value of S01–S04 is as a *closure* of the clustering family: the spec's
 open items are done, measured, and shown to be redundant, so attention can go to more fields
-(see `docs/functional.md` §2.5) rather than more clustering metrics.
+(see `docs/functional.md` §2.6) rather than more clustering metrics.
