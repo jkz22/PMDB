@@ -164,6 +164,7 @@ def merge_provenance(runs: dict[str, dict], sites: dict[str, dict], new_run_id: 
     """Provenance for the merged tables: recomputed sites point at the new run, retained sites keep
     their old entry, and retained sites without one point at an explicit 'unknown' run."""
     merged: dict[str, dict] = {}
+    new_unknown = False
     for key in table_keys:
         if key in new_sites:
             merged[key] = {"run": new_run_id, **new_sites[key]}
@@ -171,12 +172,15 @@ def merge_provenance(runs: dict[str, dict], sites: dict[str, dict], new_run_id: 
             merged[key] = sites[key]
         else:
             merged[key] = {"run": UNKNOWN_RUN, "status": "retained"}
+            new_unknown = True
     used = {v["run"] for v in merged.values()}
     out_runs = {rid: rec for rid, rec in runs.items() if rid in used and rid != new_run_id}
     out_runs[new_run_id] = new_run
-    if UNKNOWN_RUN in used:
+    if new_unknown:  # keep the reason recorded for sites that were already unknown
+        reason = problem or "site missing from previous run log"
+        old = out_runs.get(UNKNOWN_RUN, {}).get("reason")
         out_runs[UNKNOWN_RUN] = {"note": "rows retained from tables without provenance",
-                                 "reason": problem or "site missing from previous run log"}
+                                 "reason": reason if old in (None, reason) else f"{old}; {reason}"}
     return out_runs, merged
 
 

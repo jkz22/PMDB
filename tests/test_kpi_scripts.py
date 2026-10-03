@@ -294,5 +294,12 @@ def test_subset_run_marks_unknown_provenance(runner, legacy):
     assert run("--sites", GOOD_KEY) == 0
     log = _log(out)
     assert log["sites"][BAD_KEY]["run"] == run_kpis.UNKNOWN_RUN
-    assert log["runs"][run_kpis.UNKNOWN_RUN]["reason"]
+    reason = log["runs"][run_kpis.UNKNOWN_RUN]["reason"]
+    assert reason
     assert log["sites"][GOOD_KEY]["run"] == log["latest_run"]
+
+    state.update(commit="b" * 40)  # a later subset keeps the original reason
+    assert run("--sites", GOOD_KEY) == 0
+    log = _log(out)
+    assert log["sites"][BAD_KEY]["run"] == run_kpis.UNKNOWN_RUN
+    assert log["runs"][run_kpis.UNKNOWN_RUN]["reason"] == reason
