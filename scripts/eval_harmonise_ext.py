@@ -429,11 +429,7 @@ def main() -> None:
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    if args.methods is None:
-        if args.figures_only and (out / "summary.csv").exists():
-            args.methods = list(pd.read_csv(out / "summary.csv")["method"])
-        else:
-            args.methods = ["none", "nyul", "basic", "hybrid"]
+    args.methods = resolve_methods(args.methods, args.figures_only, out)
 
     hybrid_root = get_cache_root()  # H.load_lut / H.load_reference append 'harmonised/<method>' themselves
     methods = [m for m in args.methods if m != "hybrid" or (hybrid_root / "harmonised" / "hybrid" / "luts.npz").exists()]
@@ -501,6 +497,18 @@ def main() -> None:
             print(f"  held-out skipped: {e}")
 
     _figures(out, methods, sites, hs if hrows else None, hrows, loader, site_df, summary)
+
+
+def resolve_methods(methods, figures_only: bool, out: Path) -> list[str]:
+    """Explicit --methods wins; --figures-only takes the saved summary.csv methods (or fails); else the intensity default."""
+    if methods is not None:
+        return list(methods)
+    if figures_only:
+        summ = out / "summary.csv"
+        if not summ.exists():
+            raise SystemExit(f"--figures-only: cannot determine methods, {summ} is missing; pass --methods")
+        return list(pd.read_csv(summ)["method"])
+    return ["none", "nyul", "basic", "hybrid"]
 
 
 def _figures(out: Path, methods, sites, hs, hrows, loader, site_df, summary) -> None:
