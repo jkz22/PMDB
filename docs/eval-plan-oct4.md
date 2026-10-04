@@ -66,3 +66,19 @@ set is adopted.
 `outputs/overnight/eval_extended/`: extended feature tables (labelled +
 held-out), LOO predictions, permutation result, held-out predictions, and an
 `evaluation.json` recording the decision against the rule above.
+
+## Result (recorded after the run; the sections above are unchanged)
+
+Run 2026-10-04, `scripts/eval_extended_features.py`, outputs in
+`outputs/overnight/eval_extended/`:
+
+- LOO accuracy **0.6129** (19/31) — fails the ≥ 0.742 rule. Batch 2 recall rose
+  (4/7) but Batch 1 (3/7) and Batch 3 (12/17) fell: the 10 additions dilute the
+  signal at n = 31.
+- Permutation p = **0.0185** (2000 perms) — fails the ≤ 0.005 rule.
+- **Decision: KEEP the merged 16-feature model**, presented unchanged.
+- For the record, the rejected set's held-out calls: fn0mhxef → Batch 3 and
+  xrv9xvzb → Batch 2 (agreeing with the merged model); 3e122cbj → Batch 3 (the
+  jackknife's known only-alternative for that site).
+
+No further feature evaluations will be run.
