@@ -108,7 +108,10 @@ def _save_budget(budget: dict) -> None:
 def _manifest_cases(orientation: str, sites: str = "") -> list[dict]:
     """All 31 labelled + 3 held-out sites (cache manifests) x one orientation, optionally restricted."""
     out = []
-    for man in (ROOT / "cache" / "half" / "manifest.csv", ROOT / "cache_heldout" / "half" / "manifest.csv"):
+    for man in (ROOT / "cache" / "half" / "manifest.csv", ROOT / "cache_heldout" / "half" / "manifest.csv",
+                ROOT / "cache_test" / "half" / "manifest.csv"):
+        if not man.exists():  # cache_test only exists on test day
+            continue
         with open(man, newline="") as fh:
             for r in csv.DictReader(fh):
                 out.append({"batch": r["batch"], "site": r["site"], "orientation": orientation,
@@ -265,7 +268,7 @@ def run_case_remote(case: dict, tag: str, threads: int, crop_um: float = 0.0, re
     try:
         from pmdb.fem.run import run_case
 
-        cache_root = "/data/heldout" if batch == "Batch_heldout" else "/data"
+        cache_root = {"Batch_heldout": "/data/heldout", "Batch_test": "/data/test"}.get(batch, "/data")
         res = run_case(batch, site, orientation, cache_root=cache_root, res_nm=res_nm or None,
                        crop_um=crop_um or None,
                        fields_path=Path(f"/out/fields/{tag}/{orientation}/{batch}__{site}.npz"),

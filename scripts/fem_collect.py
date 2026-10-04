@@ -79,7 +79,10 @@ def g2(dir100: Path, dir50: Path) -> int:
 
 def _manifest() -> list[dict]:
     out = []
-    for man in (ROOT / "cache" / "half" / "manifest.csv", ROOT / "cache_heldout" / "half" / "manifest.csv"):
+    for man in (ROOT / "cache" / "half" / "manifest.csv", ROOT / "cache_heldout" / "half" / "manifest.csv",
+                ROOT / "cache_test" / "half" / "manifest.csv"):
+        if not man.exists():  # cache_test only exists on test day
+            continue
         with open(man, newline="") as fh:
             out += [{"batch": r["batch"], "site": r["site"], "width": int(r["width"])} for r in csv.DictReader(fh)]
     return sorted(out, key=lambda r: (r["batch"], r["site"]))
