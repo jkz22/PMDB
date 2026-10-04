@@ -1,0 +1,57 @@
+{
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "input": "raw",
+  "harmonise": "none",
+  "aug": "aug1",
+  "fold": -1,
+  "n_folds": 5,
+  "split": "strat",
+  "steps": 1500,
+  "batch_size": 64,
+  "lr": 0.0003,
+  "seed": 0,
+  "label_smoothing": 0.1,
+  "save": true,
+  "dequant": 0.0,
+  "labels": "off",
+  "exclude": "",
+  "hash": "32f9f09c826b",
+  "train_sec": 170.27527570724487,
+  "n_train_fields": 31,
+  "n_test_fields": 0,
+  "classes": [
+    "Batch_1+2",
+    "Batch_3"
+  ],
+  "heldout": [
+    {
+      "site": "3e122cbj",
+      "truth": "Batch_1+2",
+      "pred": "Batch_1+2",
+      "correct": true,
+      "p_Batch_1+2": 0.95490562915802,
+      "p_Batch_3": 0.04509429261088371
+    },
+    {
+      "site": "fn0mhxef",
+      "truth": "Batch_1+2",
+      "pred": "Batch_1+2",
+      "correct": true,
+      "p_Batch_1+2": 0.955021321773529,
+      "p_Batch_3": 0.04497859254479408
+    },
+    {
+      "site": "xrv9xvzb",
+      "truth": "Batch_3",
+      "pred": "Batch_3",
+      "correct": true,
+      "p_Batch_1+2": 0.05769186466932297,
+      "p_Batch_3": 0.9423083662986755
+    }
+  ],
+  "heldout_correct": 3,
+  "heldout_nll": 0.05052902617376722,
+  "heldout_min_margin": 0.8846165016293526
+}

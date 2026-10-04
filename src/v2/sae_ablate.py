@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 import numpy as np
@@ -29,7 +30,7 @@ from sklearn.model_selection import LeaveOneGroupOut, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.v2.common import CROP, EXT_METHODS, OUT, REPO, grid, harm_method, trim_ext
+from src.v2.common import CROP, EXT_METHODS, OUT, REPO, SHIFT_METHODS, grid, harm_method, trim_ext
 from src.v2.data import NAIVE_BLUR, VIEWS, normalise_percentile, naive_transform, phase_labels
 from src.v2.kpi_adapter import GATED_COLS, kpi_cols
 from src.v2.latent_audit import load, targets
@@ -120,7 +121,7 @@ def feature_sets(feats: pd.DataFrame, seed=0) -> dict[str, list[int]]:
 
 # ----------------------------------------------------------------------------------------------- held-out
 def _route_array(site: str, harm: str) -> tuple[np.ndarray, np.ndarray | None]:
-    root = REPO / "cache_heldout"
+    root = Path(os.environ.get("PMDB_CACHE_HELDOUT", REPO / "cache_heldout"))
     if harm == "none":
         return np.load(root / "half" / f"Batch_heldout__{site}.npz")["image"], None
     if harm.startswith("clean"):
@@ -131,6 +132,8 @@ def _route_array(site: str, harm: str) -> tuple[np.ndarray, np.ndarray | None]:
         return im, v.all(-1)
     if harm in EXT_METHODS:
         return trim_ext(np.load(root / "harmonised_ext" / harm / "half" / f"Batch_heldout__{site}.npz")["image"]), None
+    if harm in SHIFT_METHODS:
+        return trim_ext(np.load(root / "harmonised_shift" / harm / "half" / f"Batch_heldout__{site}.npz")["image"]), None
     return np.load(root / "harmonised" / harm / "half" / f"Batch_heldout__{site}.npz")["image"], None
 
 

@@ -38,7 +38,7 @@ image = (
         "Dinov2Model.from_pretrained('facebook/dinov2-small'); ViTMAEForPreTraining.from_pretrained('facebook/vit-mae-base')\"",
         "python -c \"import torch; torch.hub.load_state_dict_from_url('https://huggingface.co/jstuckner/"
         "microscopy-efficientnet-b4-imagenet-micronet/resolve/main/efficientnet-b4_imagenet-micronet_weights.pth')\"")
-    .env({"PMDB_CACHE": "/vol/cache", "PMDB_RUNS": "/vol/runs", "PMDB_KPI_ROOT": "/kpi/d23a116",
+    .env({"PMDB_CACHE": "/vol/cache", "PMDB_CACHE_HELDOUT": "/vol/cache_heldout", "PMDB_RUNS": "/vol/runs", "PMDB_KPI_ROOT": "/kpi/d23a116",
           "PMDB_KPI_COMMIT": "d23a116", "PYTHONPATH": "/root/pmdb", "OMP_NUM_THREADS": "2"})
     .add_local_dir(REPO / "src", "/root/pmdb/src", ignore=["**/__pycache__/**"])
     .add_local_dir(REPO / "pmdb", "/root/pmdb/pmdb", ignore=["**/__pycache__/**"])

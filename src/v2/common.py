@@ -33,6 +33,7 @@ def manifest() -> pd.DataFrame:
 
 HARM_METHODS = ("hybrid", "affine2", "histmatch", "offset", "affine3")  # PR #16 per-site LUTs, materialised uint8
 EXT_METHODS = ("nyul", "basic")  # PR #37 imported pipelines (N4ITK + Nyul-Udupa; BaSiC), cache/harmonised_ext/<m>/half uint8
+SHIFT_METHODS = ("spectrum", "fda", "spechyb")  # pmdb.harmonise_shift (NPS/spectrum filter, Fourier domain adaptation), cache/harmonised_shift/<m>/half, _ext border
 CLEAN_METHODS = ("clean_norm", "clean_harm",  # PR #27 physical route (pmdb.clean), see src/v2/materialise_clean.py
                  "clean2_norm", "clean2_harm")  # same route rebuilt on PR #33 (edge-connected collector, contributor-only half-res mask bits)
 
@@ -44,7 +45,7 @@ def harm_method(h) -> str:
         return "none"
     if h is True or str(h) == "True":
         return "gmm"
-    assert h in HARM_METHODS or h in CLEAN_METHODS or h in EXT_METHODS, h
+    assert h in HARM_METHODS or h in CLEAN_METHODS or h in EXT_METHODS or h in SHIFT_METHODS, h
     return str(h)
 
 
@@ -63,6 +64,8 @@ def load_half_raw(batch: str, site: str, harm: str = "none") -> np.ndarray:
         return np.load(CACHE.parent / "harmonised" / harm / "half" / f"{batch}__{site}.npz")["image"]
     if harm in EXT_METHODS:  # stored uint8: nyul = standard scale, basic = raw - b_i + 64 (pmdb.harmonise_ext.store_scale)
         return trim_ext(np.load(CACHE.parent / "harmonised_ext" / harm / "half" / f"{batch}__{site}.npz")["image"])
+    if harm in SHIFT_METHODS:
+        return trim_ext(np.load(CACHE.parent / "harmonised_shift" / harm / "half" / f"{batch}__{site}.npz")["image"])
     if harm in CLEAN_METHODS:
         return load_half_clean(batch, site, harm)[0]
     return np.load(CACHE / f"{batch}__{site}.npz")["image"]

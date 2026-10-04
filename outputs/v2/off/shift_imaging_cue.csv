@@ -1,0 +1,5 @@
+route,noise_gap_sd,sharp_gap_sd,p1_gap_sd,p99_gap_sd,ns_LOPO_acc,ns_LOPO_auroc,ns_LOFO_acc
+none,-1.3,-0.63,1.05,-0.13,0.81,0.92,0.84
+hybrid,-0.98,-0.71,1.33,0.17,0.65,0.68,0.65
+spectrum,-0.08,0.64,0.91,0.38,0.48,0.49,0.55
+fda,-1.3,-1.08,1.37,0.11,0.84,0.9,0.81

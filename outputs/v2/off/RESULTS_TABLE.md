@@ -86,3 +86,28 @@ Same test for the binary off-detectors on all routes is running (`outputs/v2/off
 ## Bottom line
 
 The off-detector's 0.84-0.87 is a noise / focus fingerprint of the Batch_3 imaging session, reproduced exactly by two scalar image statistics and absent from the KPIs. None of raw, hybrid (PR #16), nyul, basic (PR #37) or clean_harm removes that cue. The extreme route removes it from the measured statistics but the CNN still separates; what remains there is the open question. A material-based off-detector has to be trained on the extreme/phase-only route (or on KPI/VAE-C embeddings) and will be weaker than 0.87, because on the KPIs these batches are not 0.87-separable.
+
+## Best models (committed checkpoints)
+
+Binary off-detector (Batch_3 = baseline vs Batch_1+2 = off), ResNet-18 (ImageNet init) fine-tuned end-to-end on all
+31 labelled fields, detector stack view, aug1, 1500 steps; selected on the three held-out sites (3/3 on every one of
+the 38 final configurations, so the held-out trio is tuning data for these two, not an independent test).
+
+| checkpoint | input | P(true) 3e122cbj / fn0mhxef / xrv9xvzb | note |
+|---|---|---|---|
+| `outputs/v2/cls_runs/32f9f09c826b/final.pt` | raw | 0.95 / 0.96 / 0.94 | top held-out margin; reads session texture (noise/sharpness) |
+| `outputs/v2/cls_runs/e62f7086e3dc/final.pt` | extreme (phase-only, rescale, blur, noise) | 0.95 / 0.94 / 0.91 | scalar imaging cue at chance on this input; still a parent/session read on mixed parents |
+
+Parent-aware caveat: both are perfect on pure-batch parent images and ~0.69 on mixed parents (crops of one acquisition
+carrying different batch labels), i.e. they recognise the acquisition rather than the material; Batch_1 vs Batch_2 is
+not learnable by any route (stage 2 at/below chance). Grad-CAM/occlusion galleries: `outputs/v2/off/heldout_attrib/`.
+
+```python
+import json, torch
+from src.v2.classify import Classifier, classes_of
+run = "outputs/v2/cls_runs/32f9f09c826b"
+c = json.load(open(f"{run}/metrics.json"))            # the spec (arch, input, harmonise, view, ...) is stored with the metrics
+model = Classifier(c["arch"], n_cls=len(classes_of(c)))
+model.load_state_dict(torch.load(f"{run}/final.pt", map_location="cpu")); model.eval()
+# input: 256x256 crops, 3-detector stack prepared exactly as src.v2.data.CropDataset does for c["input"] / c["harmonise"]
+```

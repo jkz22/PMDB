@@ -1,0 +1,18 @@
+[
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "hybrid",
+  "phase_mask": "inpaint",
+  "stage": "PHASE"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "hybrid",
+  "phase_mask": "weight",
+  "stage": "PHASE"
+ }
+]

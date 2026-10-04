@@ -1,0 +1,4 @@
+site,occ_ratio_si,occ_ratio_graphite,occ_ratio_pore,cam_ratio_si,cam_ratio_graphite,cam_ratio_pore,occ_corr_brightness,occ_corr_contrast,occ_corr_edges,occ_corr_noise,cam_corr_brightness,cam_corr_contrast,cam_corr_edges,cam_corr_noise,occ_total,p_off,route
+3e122cbj,0.812,1.031,0.9,0.96,1.01,1.05,-0.038,0.001,0.042,-0.003,-0.107,-0.037,0.219,0.175,0.061,0.964,extreme
+fn0mhxef,1.274,0.961,1.213,0.917,0.998,1.221,-0.029,0.044,0.109,0.037,-0.096,0.332,0.24,0.061,0.236,0.959,extreme
+xrv9xvzb,0.581,0.982,1.065,1.057,0.998,1.032,-0.088,0.075,0.08,0.063,-0.02,0.19,0.163,0.171,0.092,0.055,extreme

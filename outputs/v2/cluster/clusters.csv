@@ -1,0 +1,443 @@
+field,batch,gmm,kmeans3,kmeans2,latent,stage
+Batch_1/4ih2ggld,Batch_1,0,1,0,KPI space,as is
+Batch_1/5n1q8atc,Batch_1,0,1,0,KPI space,as is
+Batch_1/f1vzngrs,Batch_1,1,0,1,KPI space,as is
+Batch_1/ffwubibz,Batch_1,1,0,1,KPI space,as is
+Batch_1/fzrt2k6r,Batch_1,1,0,1,KPI space,as is
+Batch_1/iv6g2oq0,Batch_1,1,2,1,KPI space,as is
+Batch_1/uhdslk0o,Batch_1,1,2,1,KPI space,as is
+Batch_2/3806gxp0,Batch_2,1,2,1,KPI space,as is
+Batch_2/avn74qx1,Batch_2,1,2,1,KPI space,as is
+Batch_2/b3esycq1,Batch_2,1,0,1,KPI space,as is
+Batch_2/epqdaau9,Batch_2,1,0,1,KPI space,as is
+Batch_2/i9jiqjwl,Batch_2,1,0,1,KPI space,as is
+Batch_2/r17byphk,Batch_2,1,2,1,KPI space,as is
+Batch_2/rxax5ozo,Batch_2,1,0,1,KPI space,as is
+Batch_3/0grcilhi,Batch_3,1,2,1,KPI space,as is
+Batch_3/71vgq3fw,Batch_3,1,0,1,KPI space,as is
+Batch_3/9luzk4jm,Batch_3,1,0,1,KPI space,as is
+Batch_3/cfe5vt7s,Batch_3,1,0,1,KPI space,as is
+Batch_3/hawkfj64,Batch_3,1,0,1,KPI space,as is
+Batch_3/hzumfsms,Batch_3,1,0,1,KPI space,as is
+Batch_3/kbdh4tri,Batch_3,1,0,1,KPI space,as is
+Batch_3/mgxahqnk,Batch_3,1,0,1,KPI space,as is
+Batch_3/pl8uabbv,Batch_3,1,2,1,KPI space,as is
+Batch_3/ptg8lmto,Batch_3,1,0,1,KPI space,as is
+Batch_3/tuy3zymq,Batch_3,1,0,1,KPI space,as is
+Batch_3/ufdvpb81,Batch_3,1,0,1,KPI space,as is
+Batch_3/utfgcjfa,Batch_3,1,0,1,KPI space,as is
+Batch_3/vc2whyaq,Batch_3,1,0,1,KPI space,as is
+Batch_3/x77cy643,Batch_3,1,0,1,KPI space,as is
+Batch_3/x7u69zsw,Batch_3,1,0,1,KPI space,as is
+Batch_3/xgj4xftb,Batch_3,1,0,1,KPI space,as is
+Batch_heldout/3e122cbj,heldout,0,1,0,KPI space,as is
+Batch_heldout/fn0mhxef,heldout,1,2,1,KPI space,as is
+Batch_heldout/xrv9xvzb,heldout,1,0,1,KPI space,as is
+Batch_1/4ih2ggld,Batch_1,1,1,1,extreme VAE-C,as trained
+Batch_1/5n1q8atc,Batch_1,1,1,1,extreme VAE-C,as trained
+Batch_1/f1vzngrs,Batch_1,0,0,0,extreme VAE-C,as trained
+Batch_1/ffwubibz,Batch_1,0,0,0,extreme VAE-C,as trained
+Batch_1/fzrt2k6r,Batch_1,0,0,0,extreme VAE-C,as trained
+Batch_1/iv6g2oq0,Batch_1,0,0,0,extreme VAE-C,as trained
+Batch_1/uhdslk0o,Batch_1,0,0,0,extreme VAE-C,as trained
+Batch_2/3806gxp0,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_2/avn74qx1,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_2/b3esycq1,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_2/epqdaau9,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_2/i9jiqjwl,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_2/r17byphk,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_2/rxax5ozo,Batch_2,0,0,0,extreme VAE-C,as trained
+Batch_3/0grcilhi,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/71vgq3fw,Batch_3,1,2,1,extreme VAE-C,as trained
+Batch_3/9luzk4jm,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/cfe5vt7s,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/hawkfj64,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/hzumfsms,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/kbdh4tri,Batch_3,1,2,1,extreme VAE-C,as trained
+Batch_3/mgxahqnk,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/pl8uabbv,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/ptg8lmto,Batch_3,1,2,1,extreme VAE-C,as trained
+Batch_3/tuy3zymq,Batch_3,1,2,1,extreme VAE-C,as trained
+Batch_3/ufdvpb81,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/utfgcjfa,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/vc2whyaq,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/x77cy643,Batch_3,0,0,0,extreme VAE-C,as trained
+Batch_3/x7u69zsw,Batch_3,1,2,1,extreme VAE-C,as trained
+Batch_3/xgj4xftb,Batch_3,0,2,0,extreme VAE-C,as trained
+Batch_heldout/3e122cbj,heldout,0,1,1,extreme VAE-C,as trained
+Batch_heldout/fn0mhxef,heldout,0,0,0,extreme VAE-C,as trained
+Batch_heldout/xrv9xvzb,heldout,0,0,0,extreme VAE-C,as trained
+Batch_1/4ih2ggld,Batch_1,0,2,0,extreme VAE-C,session-imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,2,0,extreme VAE-C,session-imaging projected out
+Batch_1/f1vzngrs,Batch_1,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_1/ffwubibz,Batch_1,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_1/fzrt2k6r,Batch_1,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_1/iv6g2oq0,Batch_1,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_1/uhdslk0o,Batch_1,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_2/3806gxp0,Batch_2,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_2/avn74qx1,Batch_2,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_2/b3esycq1,Batch_2,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_2/epqdaau9,Batch_2,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_2/i9jiqjwl,Batch_2,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_2/r17byphk,Batch_2,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/0grcilhi,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/71vgq3fw,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/9luzk4jm,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/cfe5vt7s,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/hawkfj64,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/hzumfsms,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/kbdh4tri,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/mgxahqnk,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/pl8uabbv,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/tuy3zymq,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/ufdvpb81,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_3/vc2whyaq,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/x77cy643,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/x7u69zsw,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_3/xgj4xftb,Batch_3,1,0,1,extreme VAE-C,session-imaging projected out
+Batch_heldout/3e122cbj,heldout,1,2,0,extreme VAE-C,session-imaging projected out
+Batch_heldout/fn0mhxef,heldout,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_heldout/xrv9xvzb,heldout,1,1,1,extreme VAE-C,session-imaging projected out
+Batch_1/4ih2ggld,Batch_1,0,2,0,extreme VAE-C,all imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,2,0,extreme VAE-C,all imaging projected out
+Batch_1/f1vzngrs,Batch_1,0,0,1,extreme VAE-C,all imaging projected out
+Batch_1/ffwubibz,Batch_1,0,1,1,extreme VAE-C,all imaging projected out
+Batch_1/fzrt2k6r,Batch_1,0,1,1,extreme VAE-C,all imaging projected out
+Batch_1/iv6g2oq0,Batch_1,0,1,1,extreme VAE-C,all imaging projected out
+Batch_1/uhdslk0o,Batch_1,0,1,1,extreme VAE-C,all imaging projected out
+Batch_2/3806gxp0,Batch_2,1,1,1,extreme VAE-C,all imaging projected out
+Batch_2/avn74qx1,Batch_2,0,1,1,extreme VAE-C,all imaging projected out
+Batch_2/b3esycq1,Batch_2,0,0,1,extreme VAE-C,all imaging projected out
+Batch_2/epqdaau9,Batch_2,0,0,1,extreme VAE-C,all imaging projected out
+Batch_2/i9jiqjwl,Batch_2,0,1,1,extreme VAE-C,all imaging projected out
+Batch_2/r17byphk,Batch_2,0,1,1,extreme VAE-C,all imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,0,1,extreme VAE-C,all imaging projected out
+Batch_3/0grcilhi,Batch_3,0,0,1,extreme VAE-C,all imaging projected out
+Batch_3/71vgq3fw,Batch_3,1,1,1,extreme VAE-C,all imaging projected out
+Batch_3/9luzk4jm,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/cfe5vt7s,Batch_3,1,1,1,extreme VAE-C,all imaging projected out
+Batch_3/hawkfj64,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/hzumfsms,Batch_3,0,0,1,extreme VAE-C,all imaging projected out
+Batch_3/kbdh4tri,Batch_3,0,0,1,extreme VAE-C,all imaging projected out
+Batch_3/mgxahqnk,Batch_3,1,1,1,extreme VAE-C,all imaging projected out
+Batch_3/pl8uabbv,Batch_3,0,0,1,extreme VAE-C,all imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,0,1,extreme VAE-C,all imaging projected out
+Batch_3/tuy3zymq,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/ufdvpb81,Batch_3,0,0,1,extreme VAE-C,all imaging projected out
+Batch_3/utfgcjfa,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/vc2whyaq,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/x77cy643,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/x7u69zsw,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_3/xgj4xftb,Batch_3,0,1,1,extreme VAE-C,all imaging projected out
+Batch_heldout/3e122cbj,heldout,0,2,0,extreme VAE-C,all imaging projected out
+Batch_heldout/fn0mhxef,heldout,0,1,1,extreme VAE-C,all imaging projected out
+Batch_heldout/xrv9xvzb,heldout,0,0,1,extreme VAE-C,all imaging projected out
+Batch_1/4ih2ggld,Batch_1,1,2,1,extreme VAE-C phase-inpaint,as trained
+Batch_1/5n1q8atc,Batch_1,1,2,1,extreme VAE-C phase-inpaint,as trained
+Batch_1/f1vzngrs,Batch_1,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_1/ffwubibz,Batch_1,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_1/fzrt2k6r,Batch_1,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_1/iv6g2oq0,Batch_1,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_1/uhdslk0o,Batch_1,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/3806gxp0,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/avn74qx1,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/b3esycq1,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/epqdaau9,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/i9jiqjwl,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/r17byphk,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_2/rxax5ozo,Batch_2,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/0grcilhi,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/71vgq3fw,Batch_3,1,0,1,extreme VAE-C phase-inpaint,as trained
+Batch_3/9luzk4jm,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/cfe5vt7s,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/hawkfj64,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/hzumfsms,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/kbdh4tri,Batch_3,1,0,1,extreme VAE-C phase-inpaint,as trained
+Batch_3/mgxahqnk,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/pl8uabbv,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/ptg8lmto,Batch_3,1,0,1,extreme VAE-C phase-inpaint,as trained
+Batch_3/tuy3zymq,Batch_3,1,0,1,extreme VAE-C phase-inpaint,as trained
+Batch_3/ufdvpb81,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/utfgcjfa,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/vc2whyaq,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/x77cy643,Batch_3,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_3/x7u69zsw,Batch_3,1,0,1,extreme VAE-C phase-inpaint,as trained
+Batch_3/xgj4xftb,Batch_3,1,0,1,extreme VAE-C phase-inpaint,as trained
+Batch_heldout/3e122cbj,heldout,1,2,1,extreme VAE-C phase-inpaint,as trained
+Batch_heldout/fn0mhxef,heldout,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_heldout/xrv9xvzb,heldout,0,1,0,extreme VAE-C phase-inpaint,as trained
+Batch_1/4ih2ggld,Batch_1,0,1,0,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,1,0,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/f1vzngrs,Batch_1,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/ffwubibz,Batch_1,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/fzrt2k6r,Batch_1,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/iv6g2oq0,Batch_1,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/uhdslk0o,Batch_1,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/3806gxp0,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/avn74qx1,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/b3esycq1,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/epqdaau9,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/i9jiqjwl,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/r17byphk,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/0grcilhi,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/71vgq3fw,Batch_3,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/9luzk4jm,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/cfe5vt7s,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/hawkfj64,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/hzumfsms,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/kbdh4tri,Batch_3,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/mgxahqnk,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/pl8uabbv,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/tuy3zymq,Batch_3,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/ufdvpb81,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/vc2whyaq,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/x77cy643,Batch_3,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/x7u69zsw,Batch_3,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_3/xgj4xftb,Batch_3,1,2,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_heldout/3e122cbj,heldout,1,1,0,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_heldout/fn0mhxef,heldout,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_heldout/xrv9xvzb,heldout,1,0,1,extreme VAE-C phase-inpaint,session-imaging projected out
+Batch_1/4ih2ggld,Batch_1,0,2,1,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,2,1,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/f1vzngrs,Batch_1,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/ffwubibz,Batch_1,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/fzrt2k6r,Batch_1,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/iv6g2oq0,Batch_1,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/uhdslk0o,Batch_1,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/3806gxp0,Batch_2,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/avn74qx1,Batch_2,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/b3esycq1,Batch_2,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/epqdaau9,Batch_2,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/i9jiqjwl,Batch_2,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/r17byphk,Batch_2,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/0grcilhi,Batch_3,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/71vgq3fw,Batch_3,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/9luzk4jm,Batch_3,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/cfe5vt7s,Batch_3,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/hawkfj64,Batch_3,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/hzumfsms,Batch_3,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/kbdh4tri,Batch_3,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/mgxahqnk,Batch_3,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/pl8uabbv,Batch_3,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/tuy3zymq,Batch_3,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/ufdvpb81,Batch_3,0,1,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/vc2whyaq,Batch_3,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/x77cy643,Batch_3,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/x7u69zsw,Batch_3,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_3/xgj4xftb,Batch_3,1,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_heldout/3e122cbj,heldout,0,2,1,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_heldout/fn0mhxef,heldout,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_heldout/xrv9xvzb,heldout,0,0,0,extreme VAE-C phase-inpaint,all imaging projected out
+Batch_1/4ih2ggld,Batch_1,0,1,0,hybrid VAE-C,as trained
+Batch_1/5n1q8atc,Batch_1,0,1,0,hybrid VAE-C,as trained
+Batch_1/f1vzngrs,Batch_1,1,2,1,hybrid VAE-C,as trained
+Batch_1/ffwubibz,Batch_1,1,0,1,hybrid VAE-C,as trained
+Batch_1/fzrt2k6r,Batch_1,1,2,1,hybrid VAE-C,as trained
+Batch_1/iv6g2oq0,Batch_1,1,0,1,hybrid VAE-C,as trained
+Batch_1/uhdslk0o,Batch_1,1,0,1,hybrid VAE-C,as trained
+Batch_2/3806gxp0,Batch_2,1,0,1,hybrid VAE-C,as trained
+Batch_2/avn74qx1,Batch_2,1,0,1,hybrid VAE-C,as trained
+Batch_2/b3esycq1,Batch_2,1,2,1,hybrid VAE-C,as trained
+Batch_2/epqdaau9,Batch_2,1,2,1,hybrid VAE-C,as trained
+Batch_2/i9jiqjwl,Batch_2,1,2,1,hybrid VAE-C,as trained
+Batch_2/r17byphk,Batch_2,1,0,1,hybrid VAE-C,as trained
+Batch_2/rxax5ozo,Batch_2,1,2,1,hybrid VAE-C,as trained
+Batch_3/0grcilhi,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/71vgq3fw,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/9luzk4jm,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/cfe5vt7s,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/hawkfj64,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/hzumfsms,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/kbdh4tri,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/mgxahqnk,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/pl8uabbv,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/ptg8lmto,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/tuy3zymq,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/ufdvpb81,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/utfgcjfa,Batch_3,1,0,1,hybrid VAE-C,as trained
+Batch_3/vc2whyaq,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/x77cy643,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/x7u69zsw,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_3/xgj4xftb,Batch_3,1,2,1,hybrid VAE-C,as trained
+Batch_heldout/3e122cbj,heldout,1,1,0,hybrid VAE-C,as trained
+Batch_heldout/fn0mhxef,heldout,1,0,1,hybrid VAE-C,as trained
+Batch_heldout/xrv9xvzb,heldout,1,0,1,hybrid VAE-C,as trained
+Batch_1/4ih2ggld,Batch_1,0,1,0,hybrid VAE-C,session-imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,1,0,hybrid VAE-C,session-imaging projected out
+Batch_1/f1vzngrs,Batch_1,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_1/ffwubibz,Batch_1,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_1/fzrt2k6r,Batch_1,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_1/iv6g2oq0,Batch_1,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_1/uhdslk0o,Batch_1,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_2/3806gxp0,Batch_2,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_2/avn74qx1,Batch_2,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_2/b3esycq1,Batch_2,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_2/epqdaau9,Batch_2,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_2/i9jiqjwl,Batch_2,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_2/r17byphk,Batch_2,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/0grcilhi,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/71vgq3fw,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/9luzk4jm,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/cfe5vt7s,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/hawkfj64,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/hzumfsms,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/kbdh4tri,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/mgxahqnk,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/pl8uabbv,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/tuy3zymq,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/ufdvpb81,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_3/vc2whyaq,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/x77cy643,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/x7u69zsw,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_3/xgj4xftb,Batch_3,1,2,1,hybrid VAE-C,session-imaging projected out
+Batch_heldout/3e122cbj,heldout,1,1,0,hybrid VAE-C,session-imaging projected out
+Batch_heldout/fn0mhxef,heldout,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_heldout/xrv9xvzb,heldout,1,0,1,hybrid VAE-C,session-imaging projected out
+Batch_1/4ih2ggld,Batch_1,0,1,0,hybrid VAE-C,all imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,1,0,hybrid VAE-C,all imaging projected out
+Batch_1/f1vzngrs,Batch_1,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_1/ffwubibz,Batch_1,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_1/fzrt2k6r,Batch_1,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_1/iv6g2oq0,Batch_1,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_1/uhdslk0o,Batch_1,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_2/3806gxp0,Batch_2,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_2/avn74qx1,Batch_2,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_2/b3esycq1,Batch_2,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_2/epqdaau9,Batch_2,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_2/i9jiqjwl,Batch_2,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_2/r17byphk,Batch_2,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/0grcilhi,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/71vgq3fw,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/9luzk4jm,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/cfe5vt7s,Batch_3,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_3/hawkfj64,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/hzumfsms,Batch_3,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_3/kbdh4tri,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/mgxahqnk,Batch_3,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_3/pl8uabbv,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/tuy3zymq,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/ufdvpb81,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_3/vc2whyaq,Batch_3,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_3/x77cy643,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/x7u69zsw,Batch_3,1,0,1,hybrid VAE-C,all imaging projected out
+Batch_3/xgj4xftb,Batch_3,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_heldout/3e122cbj,heldout,1,1,0,hybrid VAE-C,all imaging projected out
+Batch_heldout/fn0mhxef,heldout,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_heldout/xrv9xvzb,heldout,1,2,1,hybrid VAE-C,all imaging projected out
+Batch_1/4ih2ggld,Batch_1,1,0,1,raw VAE-C,as trained
+Batch_1/5n1q8atc,Batch_1,1,0,1,raw VAE-C,as trained
+Batch_1/f1vzngrs,Batch_1,0,1,0,raw VAE-C,as trained
+Batch_1/ffwubibz,Batch_1,0,1,0,raw VAE-C,as trained
+Batch_1/fzrt2k6r,Batch_1,0,1,0,raw VAE-C,as trained
+Batch_1/iv6g2oq0,Batch_1,0,1,0,raw VAE-C,as trained
+Batch_1/uhdslk0o,Batch_1,0,1,0,raw VAE-C,as trained
+Batch_2/3806gxp0,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_2/avn74qx1,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_2/b3esycq1,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_2/epqdaau9,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_2/i9jiqjwl,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_2/r17byphk,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_2/rxax5ozo,Batch_2,0,1,0,raw VAE-C,as trained
+Batch_3/0grcilhi,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/71vgq3fw,Batch_3,1,2,1,raw VAE-C,as trained
+Batch_3/9luzk4jm,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/cfe5vt7s,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/hawkfj64,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/hzumfsms,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/kbdh4tri,Batch_3,1,2,1,raw VAE-C,as trained
+Batch_3/mgxahqnk,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/pl8uabbv,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/ptg8lmto,Batch_3,0,2,0,raw VAE-C,as trained
+Batch_3/tuy3zymq,Batch_3,1,2,1,raw VAE-C,as trained
+Batch_3/ufdvpb81,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/utfgcjfa,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/vc2whyaq,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/x77cy643,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_3/x7u69zsw,Batch_3,1,2,1,raw VAE-C,as trained
+Batch_3/xgj4xftb,Batch_3,0,1,0,raw VAE-C,as trained
+Batch_heldout/3e122cbj,heldout,0,0,1,raw VAE-C,as trained
+Batch_heldout/fn0mhxef,heldout,0,1,0,raw VAE-C,as trained
+Batch_heldout/xrv9xvzb,heldout,0,1,0,raw VAE-C,as trained
+Batch_1/4ih2ggld,Batch_1,0,0,0,raw VAE-C,session-imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,0,0,raw VAE-C,session-imaging projected out
+Batch_1/f1vzngrs,Batch_1,0,1,1,raw VAE-C,session-imaging projected out
+Batch_1/ffwubibz,Batch_1,0,1,1,raw VAE-C,session-imaging projected out
+Batch_1/fzrt2k6r,Batch_1,0,1,1,raw VAE-C,session-imaging projected out
+Batch_1/iv6g2oq0,Batch_1,1,2,1,raw VAE-C,session-imaging projected out
+Batch_1/uhdslk0o,Batch_1,1,1,1,raw VAE-C,session-imaging projected out
+Batch_2/3806gxp0,Batch_2,1,2,1,raw VAE-C,session-imaging projected out
+Batch_2/avn74qx1,Batch_2,1,2,1,raw VAE-C,session-imaging projected out
+Batch_2/b3esycq1,Batch_2,0,1,1,raw VAE-C,session-imaging projected out
+Batch_2/epqdaau9,Batch_2,0,1,1,raw VAE-C,session-imaging projected out
+Batch_2/i9jiqjwl,Batch_2,0,1,1,raw VAE-C,session-imaging projected out
+Batch_2/r17byphk,Batch_2,1,2,1,raw VAE-C,session-imaging projected out
+Batch_2/rxax5ozo,Batch_2,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/0grcilhi,Batch_3,1,2,1,raw VAE-C,session-imaging projected out
+Batch_3/71vgq3fw,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/9luzk4jm,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/cfe5vt7s,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/hawkfj64,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/hzumfsms,Batch_3,1,2,1,raw VAE-C,session-imaging projected out
+Batch_3/kbdh4tri,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/mgxahqnk,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/pl8uabbv,Batch_3,1,2,1,raw VAE-C,session-imaging projected out
+Batch_3/ptg8lmto,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/tuy3zymq,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/ufdvpb81,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,1,1,raw VAE-C,session-imaging projected out
+Batch_3/vc2whyaq,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/x77cy643,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/x7u69zsw,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_3/xgj4xftb,Batch_3,0,1,1,raw VAE-C,session-imaging projected out
+Batch_heldout/3e122cbj,heldout,0,0,0,raw VAE-C,session-imaging projected out
+Batch_heldout/fn0mhxef,heldout,0,1,1,raw VAE-C,session-imaging projected out
+Batch_heldout/xrv9xvzb,heldout,0,1,1,raw VAE-C,session-imaging projected out
+Batch_1/4ih2ggld,Batch_1,0,1,1,raw VAE-C,all imaging projected out
+Batch_1/5n1q8atc,Batch_1,0,1,1,raw VAE-C,all imaging projected out
+Batch_1/f1vzngrs,Batch_1,1,0,0,raw VAE-C,all imaging projected out
+Batch_1/ffwubibz,Batch_1,1,0,0,raw VAE-C,all imaging projected out
+Batch_1/fzrt2k6r,Batch_1,1,0,0,raw VAE-C,all imaging projected out
+Batch_1/iv6g2oq0,Batch_1,1,2,0,raw VAE-C,all imaging projected out
+Batch_1/uhdslk0o,Batch_1,1,0,0,raw VAE-C,all imaging projected out
+Batch_2/3806gxp0,Batch_2,1,2,0,raw VAE-C,all imaging projected out
+Batch_2/avn74qx1,Batch_2,1,0,0,raw VAE-C,all imaging projected out
+Batch_2/b3esycq1,Batch_2,1,0,0,raw VAE-C,all imaging projected out
+Batch_2/epqdaau9,Batch_2,1,0,0,raw VAE-C,all imaging projected out
+Batch_2/i9jiqjwl,Batch_2,1,0,0,raw VAE-C,all imaging projected out
+Batch_2/r17byphk,Batch_2,1,2,0,raw VAE-C,all imaging projected out
+Batch_2/rxax5ozo,Batch_2,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/0grcilhi,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/71vgq3fw,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/9luzk4jm,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/cfe5vt7s,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/hawkfj64,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/hzumfsms,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/kbdh4tri,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/mgxahqnk,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/pl8uabbv,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/ptg8lmto,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/tuy3zymq,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/ufdvpb81,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/utfgcjfa,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/vc2whyaq,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_3/x77cy643,Batch_3,1,2,0,raw VAE-C,all imaging projected out
+Batch_3/x7u69zsw,Batch_3,0,2,0,raw VAE-C,all imaging projected out
+Batch_3/xgj4xftb,Batch_3,1,0,0,raw VAE-C,all imaging projected out
+Batch_heldout/3e122cbj,heldout,1,1,1,raw VAE-C,all imaging projected out
+Batch_heldout/fn0mhxef,heldout,1,0,0,raw VAE-C,all imaging projected out
+Batch_heldout/xrv9xvzb,heldout,1,0,0,raw VAE-C,all imaging projected out

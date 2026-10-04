@@ -32,10 +32,11 @@ BATCHES = ("Batch_1", "Batch_2", "Batch_3")
 CLS_RUNS = Path(os.environ.get("PMDB_CLS_RUNS", RUNS.parent / "cls_runs"))  # beside PMDB_RUNS (/vol/runs on Modal)
 DEFAULTS = dict(task="cls", arch="resnet18_imnet", view="stack", input="raw", harmonise=False, aug="aug1",
                 fold=0, n_folds=5, split="strat", steps=1500, batch_size=64, lr=None, seed=SEED, label_smoothing=0.1,
-                save=False, dequant=0.0, labels="batch")
+                save=False, dequant=0.0, labels="batch", exclude="")
 NOHASH = ("save",)  # bookkeeping flags that do not change the trained model
-NOHASH_IF_DEFAULT = ("dequant", "labels")  # later additions: keep earlier hashes stable when left at default
+NOHASH_IF_DEFAULT = ("dequant", "labels", "exclude")  # later additions: keep earlier hashes stable when left at default
 # labels='batch': 3-class Batch_1/2/3; labels='off': Batch_3 (supplier baseline) vs Batch_1+2 ('off')
+# exclude: comma-separated site ids dropped from training AND evaluation (e.g. imaging-outlier fields)
 OFF_CLASSES = ("Batch_1+2", "Batch_3")
 LR = {"resnet18_scratch": 1e-3, "resnet18_imnet": 3e-4, "effb4_imnet": 3e-4, "effb4_micronet": 3e-4,
       "dinov2_ft": 5e-5, "dinov2_linear": 1e-3}
@@ -92,13 +93,19 @@ class Classifier(nn.Module):
         return self.m(x)
 
 
+B12_CLASSES = ("Batch_1", "Batch_2")  # labels='b12': stage-2 classifier trained on the 14 off fields only
+
+
 def classes_of(c: dict) -> tuple[str, ...]:
-    return BATCHES if c.get("labels", "batch") == "batch" else OFF_CLASSES
+    lab = c.get("labels", "batch")
+    return BATCHES if lab == "batch" else B12_CLASSES if lab == "b12" else OFF_CLASSES
 
 
 def _labels(fields: pd.DataFrame, c: dict | None = None) -> torch.Tensor:
     if c is not None and c.get("labels", "batch") == "off":
         return torch.tensor([int(b == "Batch_3") for b in fields.batch])
+    if c is not None and c.get("labels", "batch") == "b12":
+        return torch.tensor([B12_CLASSES.index(b) for b in fields.batch])
     return torch.tensor([BATCHES.index(b) for b in fields.batch])
 
 
@@ -118,11 +125,17 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     torch.manual_seed(c["seed"]); np.random.seed(c["seed"])
 
     m = manifest()
-    if c["split"] == "strat":
+    if c.get("exclude"):
+        m = m[~m.group_id.str.split("/").str[1].isin(c["exclude"].split(","))].reset_index(drop=True)
+    if c.get("labels", "batch") == "b12":
+        m = m[m.batch.isin(B12_CLASSES)].reset_index(drop=True)
+    if c["split"] == "parent":  # leave-parents-out: crops of one parent image never straddle train/test
+        m["fold"] = parent_folds(m, c["n_folds"], c["seed"])
+    elif c["split"] == "strat":
         m["fold"] = stratified_group_folds(m.group_id.to_numpy(), m.batch.to_numpy(), c["n_folds"], c["seed"])
     else:
         m["fold"] = grouped_folds(m.group_id.to_numpy(), c["n_folds"], c["seed"])
-    tr_f, te_f = m[m.fold != c["fold"]], m[m.fold == c["fold"]]
+    tr_f, te_f = m[m.fold != c["fold"]], m[m.fold == c["fold"]]  # fold=-1: train on every labelled field, no test fold
     tr = CropDataset(FieldStore(tr_f, c["input"], harmonise=c["harmonise"]), c["view"], random_offset=c["aug"] != "aug0")
     classes = classes_of(c); n_cls = len(classes)
     y_crop = _labels(tr_f, c)[torch.tensor([i for i, _, _ in tr.index])].to(dev)
@@ -167,6 +180,14 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
 
     # ---- evaluate on the held-out fold: non-overlapping eval grid
     model.eval()
+    if len(te_f) == 0:  # final model: score the 3 organiser held-out sites instead (labels known post hoc)
+        if c["save"]:
+            torch.save(model.state_dict(), d / "final.pt")
+        out = {**c, "hash": h, "train_sec": train_sec, "n_train_fields": len(tr_f), "n_test_fields": 0, "classes": list(classes),
+               **heldout_eval(model, c, dev)}
+        (d / "metrics.json").write_text(json.dumps(out, indent=2, default=float))
+        lock.unlink(missing_ok=True)
+        return d
     te = CropDataset(FieldStore(te_f, c["input"], harmonise=c["harmonise"]), c["view"], stride=CROP)
     y_te = _labels(te_f, c)[torch.tensor([i for i, _, _ in te.index])].numpy()
     logits = []
@@ -201,6 +222,51 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
         torch.save(model.state_dict(), d / "final.pt")
     lock.unlink(missing_ok=True)
     return d
+
+
+PARENTS = Path(__file__).with_name("parent_groups.csv")  # outputs/parent_groups.csv from main: 31 sites = crops of 13 parent images
+
+
+def parent_folds(m: pd.DataFrame, n_folds: int, seed: int) -> np.ndarray:
+    """Assign whole parent images to folds, largest parents first, balancing the Batch_3 share per fold."""
+    par = pd.read_csv(PARENTS).set_index("site").parent_id
+    site = m.group_id.str.split("/").str[1]
+    pid = site.map(par).to_numpy()
+    rng = np.random.default_rng(seed)
+    ids, n = np.unique(pid, return_counts=True)
+    order = np.argsort(-n + rng.uniform(0, 0.5, len(n)))
+    fold_n, fold_b3, fold_of = np.zeros(n_folds), np.zeros(n_folds), {}
+    for k in order:
+        b3 = (m.batch.to_numpy()[pid == ids[k]] == "Batch_3").sum()
+        score = fold_n + 0.5 * np.abs(fold_b3 + b3 - (fold_n + n[k]) * 17 / 31)
+        f = int(np.argmin(score)); fold_of[ids[k]] = f; fold_n[f] += n[k]; fold_b3[f] += b3
+    return np.array([fold_of[p] for p in pid])
+
+
+HELDOUT_TRUTH = {"3e122cbj": "Batch_2", "fn0mhxef": "Batch_1", "xrv9xvzb": "Batch_3"}  # organiser labels, given after the fact
+
+
+def heldout_eval(model, c: dict, dev) -> dict:
+    """Fold-free final model: P(class) per held-out site on the eval grid, compared with HELDOUT_TRUTH."""
+    from src.v2.sae_ablate import heldout_crops
+    classes = classes_of(c)
+    X, meta = heldout_crops(c)
+    with torch.no_grad():
+        P = torch.cat([torch.softmax(model(torch.from_numpy(X[i:i + 64]).permute(0, 3, 1, 2).float().to(dev)).float(), 1).cpu()
+                       for i in range(0, len(X), 64)]).numpy()
+    rows, n_ok, nll = [], 0, 0.0
+    for site, truth in HELDOUT_TRUTH.items():
+        p = P[(meta.site == site).to_numpy()].mean(0)
+        t = truth if c.get("labels", "batch") in ("batch", "b12") else ("Batch_3" if truth == "Batch_3" else "Batch_1+2")
+        if t not in classes:  # stage-2 B1/B2 model: the Batch_3 site is out of scope, report its probabilities only
+            rows.append({"site": site, "truth": t, "pred": classes[int(p.argmax())], "correct": None, **{f"p_{b}": float(v) for b, v in zip(classes, p)}})
+            continue
+        k = classes.index(t); pred = classes[int(p.argmax())]
+        n_ok += pred == t; nll -= math.log(max(p[k], 1e-6))
+        rows.append({"site": site, "truth": t, "pred": pred, "correct": pred == t, **{f"p_{b}": float(v) for b, v in zip(classes, p)}})
+    scored = [r for r in rows if r["correct"] is not None]
+    return {"heldout": rows, "heldout_correct": int(n_ok), "heldout_nll": nll / len(scored),
+            "heldout_min_margin": float(min(r[f"p_{r['truth']}"] - max(v for kk, v in r.items() if kk.startswith("p_") and kk != f"p_{r['truth']}") for r in scored))}
 
 
 def cls_grid(n_folds: int = 5, harms=(False, True), aug2: bool = True) -> list[dict]:
