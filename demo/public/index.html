@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="data:,">
+<meta charset="utf-8">
+<title>PMDB · Batch fingerprint — live demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>PMDB</b><span>Si/graphite anode batch QC from SEM cross-sections</span></div>
+  <nav id="nav"></nav>
+  <div class="live" id="live" title="Dashboard reads outputs/ directly and reloads when a result file changes">
+    <span class="dot"></span><span id="live-text">connecting…</span>
+  </div>
+</header>
+<main id="views"></main>
+<div id="toast" class="toast" hidden></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
