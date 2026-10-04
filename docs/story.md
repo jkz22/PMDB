@@ -159,4 +159,7 @@ consistent across sections than random geometry allows. (iii) An independently w
 reproduces Si fraction, the two high-Si outliers and pore loss (ρ 0.86–0.97) but **not** the
 constrained-share batch difference (KW p 0.015 → 0.73): that result is about the v0r1 graphite/binder
 split and is downgraded to a segmentation-dependent observation.
+(iv) Fields vs area: for every KPI with a real field-level signal, sampling noise is only 12–22 % of the
+field variance, so bigger fields do not buy power — K15 needs ≈ 50 fields per batch for 80 % power even at
+infinite area (`docs/reliability.md` §4). The binding constraint is the number of fields.
 

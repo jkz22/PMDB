@@ -119,3 +119,39 @@ Reading:
   opening (radius `graphite_opening_radius_px`) of the non-dark, non-Si phase plus small removed objects,
   i.e. thin or fragmented solid, not a BSE intensity class. A segmenter with a *validated* binder/carbon
   class (Inlens topography, or a labelled patch set) is the experiment that would settle it.
+
+## 4. More fields or bigger fields? (`scripts/run_power_area.py`, `outputs/reliability/power_area.csv`)
+
+The ICC variance components let the power question be asked in two directions at once: a field imaged at
+k × the current area has sampling SD `sd_within_tile / sqrt(16 k)`, so a field value has variance
+`sd_between² + sd_within² / (16 k)`; power (α 0.05, normal approximation) to detect the largest observed
+batch-median difference with n fields per batch:
+
+| KPI | sampling share of field variance now | power, 7 fields, current area | 7 fields, 4× area | 7 fields, infinite area | n per batch for 80 %: now → infinite area |
+|---|---|---|---|---|---|
+| K15 contact | 0.12 | 0.21 | 0.22 | 0.23 | 50 → 50 |
+| K03 ECD d50 | 0.20 | 0.25 | 0.29 | 0.31 | 50 → 30 |
+| K03 ECD d90 | 0.22 | 0.18 | 0.21 | 0.22 | 50 → 50 |
+| K04 agglomerate fraction | 0.46 | 0.23 | 0.32 | 0.38 | 50 → 30 |
+| K01 Si fraction | 0.14 | 0.08 | 0.08 | 0.08 | > 100 → > 100 |
+| K02, K09, K14, K05 | 0.01–0.44 | ≤ 0.15 | ≤ 0.16 | ≤ 0.16 | ≥ 100 |
+
+Reading:
+
+- **For every KPI that carries a real field-level signal, bigger fields do not buy power.** Sampling noise
+  is 12–22 % of the field variance for K01/K03/K15; the remaining 78–88 % is genuine field-to-field
+  variation, which only more fields can average. Even infinite area per field leaves K15 at n ≈ 50 per
+  batch for 80 % power. The hackathon's constraint is the number of fields, not their size.
+- The two KPIs where area *would* help are K07 (Clark–Evans, 70 % sampling noise) and K04 agglomerate
+  fraction (46 %). But the K07 effect size entered here is the observed batch-median range of a KPI that is
+  mostly noise — a winner's-curse estimate — so its apparent power at 4× area (0.89) should not be believed
+  until it is re-measured on larger fields. It is listed for completeness, not as a recommendation.
+- The ICC-based sampling share for K01 (0.14) is lower than the synthetic sectioning estimate of §2
+  (≈ 0.44). The ICC number is measured on the real images but uses tile-to-tile variation *within* one plane
+  as the noise model, which misses plane-to-plane variation at scales larger than a tile; the synthetic
+  number depends on guessed particle geometry. The truth is probably between them; neither changes the
+  conclusion, since even at a 0.44 share infinite area would at most halve the field count needed.
+
+Figure: `figures/power_area.png` — power as a function of fields per batch × area per field for K15, K01,
+K02 and K03 d50.
+
