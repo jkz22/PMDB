@@ -14,19 +14,19 @@ mask is PMDB-specific. `none` is the raw grey at the same coordinates; `hybrid` 
 | black_gap_strong_SE_type | 19.308 | 0.000 | 10.750 | 0.308 |
 | iqr_gap_strong_BSE | -9.327 | 0.000 | -9.077 | 3.942 |
 | black_sd_BSE | 8.520 | 0.000 | 7.770 | 4.102 |
-| graphite_sd_BSE | 3.687 | 0.543 | 0.539 | 0.000 |
-| contrast_rel_change_clean | 0.000 | 0.054 | 0.006 | 0.002 |
-| contrast_ratio_sd_all | 0.161 | 0.129 | 0.159 | 0.159 |
+| graphite_sd_BSE | 3.638 | 0.499 | 0.562 | 0.180 |
+| contrast_rel_change_clean | 0.000 | 0.072 | 0.008 | 0.003 |
+| contrast_ratio_sd_all | 0.199 | 0.129 | 0.199 | 0.196 |
 | fixed_fsi_gap_strong | 0.016 | 0.008 | 0.002 | 0.026 |
 | fixed_fpore_gap_strong | -0.032 | -0.003 | -0.033 | -0.009 |
-| fixed_vs_seg_fsi_r | 0.941 | 0.697 | 0.945 | 0.911 |
+| fixed_vs_seg_fsi_r | 0.941 | 0.691 | 0.945 | 0.910 |
 | seg_fsi_sd_all | 0.026 | 0.020 | 0.026 | 0.025 |
 | clip0_BSE | 0.008 | 0.013 | 0.000 | 0.010 |
 | clip255_BSE | 0.000 | 0.010 | 0.000 | 0.000 |
 | mean_abs_change_clean | 0.000 | 58.999 | 8.415 | 3.512 |
 | mean_abs_change_strong | 0.000 | 53.793 | 2.026 | 6.756 |
 | shortcut_batch_acc | 0.613 | 0.645 | 0.548 | 0.548 |
-| shortcut_batch3_recall | 0.871 | 0.774 | 0.806 | 0.774 |
+| shortcut_batch3_recall | 0.882 | 0.824 | 0.824 | 0.882 |
 | shortcut_strong_vs_rest_b3 | 1.000 | 0.941 | 1.000 | 1.000 |
 
 * `black_gap_strong_*`: mean 1st percentile of the 4 strong Batch-3 sites minus the other Batch-3 sites (grey levels; 0 = artefact removed).
@@ -36,7 +36,7 @@ mask is PMDB-specific. `none` is the raw grey at the same coordinates; `hybrid` 
   with the segmenter. Nyúl matches 11 landmarks per site, which by construction forces equal percentile positions and so pulls phase
   fractions towards a common value (the known limitation of histogram standardisation).
 * `mean_abs_change_*`: |method − raw| per pixel in stored uint8 units; for `nyul` (standard scale) and `basic` (raw − bᵢ + 64) this includes the scale change itself.
-* `shortcut_*`: leave-one-out accuracy of a logistic regression on grey statistics only (chance: 0.45 batch, 0.55 Batch-3, 0.76 strong-vs-rest).
+* `shortcut_*`: leave-one-out logistic regression on grey statistics only; `_acc`/`_b3` = accuracy (chance 0.45 batch, 0.76 strong-vs-rest), `batch3_recall` = fraction of Batch-3 sites predicted Batch 3.
 
 ## What is cut out ('crops')
 

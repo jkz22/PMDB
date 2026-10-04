@@ -116,3 +116,44 @@ def test_load_half_raw_uses_clean_mask_and_relative_paths(tmp_path, monkeypatch)
     assert np.allclose(g, 100)
     assert (m[0] & C.BIT_BORDER).all() and not (m[3, 3] & C.BIT_CHARGE_LOCAL)  # a valid sibling → block valid
     assert C.valid_for_kpis(m)[3, 3]
+
+
+# --- evaluation helpers (scripts/eval_harmonise_ext.py) -------------------------------------------------------
+
+
+def test_eval_site_metrics_ignore_masked_pixels(phantoms):
+    from scripts.eval_harmonise_ext import _site_metrics
+
+    base, _, _ = phantoms
+    img = np.repeat(base[0].astype(np.uint8)[..., None], 3, axis=2)
+    msk = np.zeros(img.shape, dtype=np.uint16)
+    # saturate a block on every detector and mark it excluded (clipped + charging): anchors, thresholds and phase
+    # fractions must be the same as for the clean image under the same mask
+    bad = img.copy()
+    bad[20:60, 50:200] = 255
+    msk_bad = msk.copy()
+    msk_bad[20:60, 50:200] = C.BIT_CLIP_HIGH | C.BIT_CHARGE_LOCAL
+    ref = _site_metrics(img, msk_bad, img)
+    got = _site_metrics(bad, msk_bad, bad)
+    for k in ("BSE_anchor_black", "BSE_anchor_graphite", "BSE_anchor_si", "BSE_contrast_ratio", "Inlens_anchor_si", "seg_f_si", "seg_f_pore"):
+        assert got[k] == pytest.approx(ref[k], abs=2e-3 if k.startswith("seg") else 1.0), k
+    # same image, no mask: the saturated block does leak into the anchors
+    leaked = _site_metrics(bad, msk, bad)
+    assert leaked["BSE_anchor_si"] > ref["BSE_anchor_si"] + 10
+
+
+def test_eval_shortcut_recall_is_recall_not_accuracy():
+    import pandas as pd
+
+    from scripts.eval_harmonise_ext import _shortcut, _shortcut_recall
+
+    rng = np.random.default_rng(1)
+    # feature carries no information: recall of a rare positive class must be well below the accuracy
+    df = pd.DataFrame({"x": rng.normal(size=40)})
+    y = np.zeros(40, dtype=bool)
+    y[:4] = True
+    acc, rec = _shortcut(df, ["x"], y), _shortcut_recall(df, ["x"], y)
+    assert acc > 0.7 and rec <= 0.5
+    # perfectly separable: both 1
+    df2 = pd.DataFrame({"x": np.where(y, 5.0, -5.0) + rng.normal(0, 0.1, 40)})
+    assert _shortcut(df2, ["x"], y) == 1.0 and _shortcut_recall(df2, ["x"], y) == 1.0
