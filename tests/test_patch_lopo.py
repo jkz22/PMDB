@@ -99,3 +99,44 @@ def test_build_lopo_outputs_synthetic():
 def test_phrases():
     assert pl.feature_phrase("gz_2.0_4.0") == "graphite clustering through the depth at 2.0-4.0 um spacing"
     assert pl.image_third(np.array([0, 0, 5]), 6) == "top"
+
+
+def test_fp_vote_argmax_matches_assignment():
+    rng = np.random.default_rng(1)
+    score = rng.normal(size=(50, 3)) * 3
+    q = pl.softmax_neg_score(score)
+    assert np.allclose(q.sum(axis=1), 1.0)
+    assert (q.argmax(axis=1) == score.argmin(axis=1)).all()
+    pr = pd.DataFrame({"assigned": [pl.BATCHES[i] for i in score.argmin(axis=1)], "ood": False,
+                       "confidence": 0.5, **{f"p_{b}": rng.uniform(0.05, 1, 50) for b in pl.BATCHES},
+                       **{f"score_{b}": score[:, j] for j, b in enumerate(pl.BATCHES)}})
+    f = pl._pred_frame(pr)
+    qq = f[[f"q_fp_{b}" for b in pl.BATCHES]].to_numpy()
+    assert [pl.BATCHES[i] for i in qq.argmax(axis=1)] == list(f["fp_call"])
+
+
+def test_unanimous_calls_not_overturned():
+    p_ens = np.array([[0.2, 0.5, 0.3], [0.2, 0.5, 0.3]])
+    out = pl.final_call(p_ens, np.array([2, 0]), np.array([2, 1]))
+    assert out.tolist() == [2, 1]
+
+
+def _expl():
+    return pd.DataFrame({"feature": ["si_depth_slope", "si_depth_mid_dip"], "z": [1.0, 1.0],
+                         "center_Batch_3": [0.0, 0.0],
+                         "dev_Batch_1": [0.1, 5.0], "dev_Batch_2": [5.0, 0.1], "dev_Batch_3": [9.0, 8.0]})
+
+
+def test_high_confidence_wording_with_dissent():
+    rows = np.array([0, 1])
+    txt = pl.make_explanation("s", 0, True, _expl(), 0, 0.2, rows, 10, 0.05)
+    assert "consistently" not in txt and "combined evidence favours Batch 1" in txt
+    assert "Si depletion at mid-depth look like Batch 2" in txt
+    ok = pl.make_explanation("s", 0, True, _expl().iloc[[0]], 0, 0.2, rows, 10, 0.05)
+    assert "consistently point to Batch 1" in ok
+
+
+def test_figure_ref_optional():
+    rows = np.array([0, 1])
+    assert "heldout_s.png" in pl.make_explanation("s", 0, False, _expl(), 0, 0.2, rows, 10, 0.05)
+    assert "heldout_s.png" not in pl.make_explanation("s", 0, False, _expl(), 0, 0.2, rows, 10, 0.05, figure_ref=False)
