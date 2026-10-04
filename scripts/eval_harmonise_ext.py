@@ -1,13 +1,14 @@
 """Evaluate the imported harmonisation pipelines (``cache/harmonised_ext``) and draw the visual report.
 
-Compares ``none`` (raw grey at the same half-res coordinates and masks), ``nyul`` and ``basic`` –
+Compares ``none`` (raw grey at the same half-res coordinates and masks) with the imported intensity routes
+``nyul`` / ``basic`` or the shift routes ``spectrum`` / ``fda`` (``--methods``) –
 and ``hybrid`` (LUT route) where its cache exists – on: residual Batch-3 black-level gap, imaging-
 statistics shortcut classifier (leave-one-out logistic regression on grey statistics), fixed-threshold
 phase fractions vs the in-house segmenter, Si/graphite contrast preservation and mean absolute change.
 Anchors/segmentation are used as *measurements* only, never inside the imported pipelines.
 
 Figures (outputs/harmonisation_ext/):
-    effects_<det>.png     every site, raw | nyul | basic strips with the exclusion mask overlaid
+    effects_<det>.png     every site, raw | method strips with the exclusion mask overlaid
     effects_examples.png  compact version: strong / mild / clean / Batch-1 / held-out site, BSE + Inlens
     crops_gallery.png     every site whose mask flags more than the border: what is cut out and why
     crops_table.csv       per site/detector masked fractions by reason
@@ -153,6 +154,15 @@ def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict
 
 
 TEXTURE = ("hf_ratio", "noise_sigma", "grad_p90", "edge_sigma_px")
+METHOD_LABEL = {"none": "raw", "nyul": "N4 + Nyúl–Udupa", "basic": "BaSiC", "hybrid": "hybrid LUT",
+                "spectrum": "spectrum (NPS filter)", "fda": "FDA"}
+METHOD_BLURB = {
+    "nyul": "**nyul** = N4ITK bias-field correction → Nyúl–Udupa piecewise-linear histogram standardisation (`pmdb/harmonise_ext.py`, `docs/harmonisation_ext.md`)",
+    "basic": "**basic** = BaSiC flat-field/dark-field + per-image baseline (`pmdb/harmonise_ext.py`)",
+    "spectrum": "**spectrum** = radial amplitude-spectrum (MTF/NPS) matching filter to the labelled median, DC kept (`pmdb/harmonise_shift.py`, `docs/harmonisation_shift.md`)",
+    "fda": "**fda** = Fourier Domain Adaptation, low-frequency amplitude window (β = 0.01) from the labelled reference (`pmdb/harmonise_shift.py`)",
+    "hybrid": "**hybrid** = in-house LUT route (`pmdb/harmonise.py`), for reference",
+}
 
 
 def _texture(ch: np.ndarray, valid: np.ndarray) -> dict[str, float]:
@@ -282,12 +292,12 @@ def _fig_effects(sites: list[tuple[str, str]], methods: list[str], loader, det: 
     plt.close(fig)
 
 
-def _fig_examples(loader, out: Path, hs) -> None:
+def _fig_examples(loader, out: Path, hs, methods=("none", "nyul", "basic")) -> None:
     """Compact before/after: one strong, one mild, one clean Batch-3 site, one Batch-1 site, one held-out; BSE and Inlens."""
     picks = [("Batch_3", "71vgq3fw"), ("Batch_3", "9luzk4jm"), ("Batch_3", "vc2whyaq"), ("Batch_1", "4ih2ggld")]
     if hs is not None and len(hs):
         picks.append((hs.batch.iloc[-1], hs.site.iloc[-1]))
-    methods = ["none", "nyul", "basic"]
+    methods = [m for m in methods if m != "hybrid"] or ["none"]
     fig, axes = plt.subplots(2 * len(picks), len(methods), figsize=(5.4 * len(methods), 1.5 * 2 * len(picks)), squeeze=False)
     for i, (b, s) in enumerate(picks):
         for k, det in enumerate((0, 1)):
@@ -300,7 +310,7 @@ def _fig_examples(loader, out: Path, hs) -> None:
                 if i == 0 and k == 0:
                     ax.set_title(m, fontsize=11)
     _legend(fig)
-    fig.suptitle("Harmonisation effects – raw | N4 + Nyúl–Udupa | BaSiC, same 0–255 display range; coloured = masked", fontsize=11)
+    fig.suptitle("Harmonisation effects – " + " | ".join(METHOD_LABEL.get(m, m) for m in methods) + ", same 0–255 display range; coloured = masked", fontsize=11)
     fig.tight_layout(rect=(0, 0.02, 1, 0.98))
     fig.savefig(out, dpi=90)
     plt.close(fig)
@@ -492,7 +502,7 @@ def _figures(out: Path, methods, sites, hs, hrows, loader, site_df, summary) -> 
     ext_methods = [m for m in methods if m in ("none", "nyul", "basic") or m in S.METHODS]
     for det in range(3):
         _fig_effects(sites, ext_methods, loader, det, out / f"effects_{X.DETECTORS[det]}.png")
-    _fig_examples(loader, out / "effects_examples.png", hs)
+    _fig_examples(loader, out / "effects_examples.png", hs, ext_methods)
     all_sites = sites + ([(b, s) for b, s in zip(hs.batch, hs.site)] if hs is not None else [])
     table = _fig_crops(all_sites, loader, out / "crops_gallery.png")
     table.to_csv(out / "crops_table.csv", index=False)
@@ -505,17 +515,20 @@ def _figures(out: Path, methods, sites, hs, hrows, loader, site_df, summary) -> 
 
 def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held: pd.DataFrame, crops: pd.DataFrame) -> None:
     s = summary.set_index("method")
-    L = ["# Imported harmonisation pipelines – results", "",
-         "Pipelines taken from the literature and run as implemented in their packages (`pmdb/harmonise_ext.py`,",
-         "`docs/harmonisation_ext.md`): **nyul** = N4ITK bias-field correction → Nyúl–Udupa piecewise-linear histogram",
-         "standardisation; **basic** = BaSiC flat-field/dark-field + per-image baseline. Only the `pmdb.clean` exclusion",
-         "mask is PMDB-specific. `none` is the raw grey at the same coordinates; `hybrid` is the in-house LUT route for reference.", "",
-         "## Summary (labelled sites)", ""]
+    shift_run = any(m in S.METHODS for m in s.index)
+    L = ["# " + ("Shift (non-intensity) harmonisation – results" if shift_run else "Imported harmonisation pipelines – results"), "",
+         "Methods compared on the `pmdb.clean`-masked half-res grey (`none` is the raw grey at the same coordinates):", ""]
+    L += [f"* {METHOD_BLURB[m]}" for m in s.index if m in METHOD_BLURB]
+    L += ["", "## Summary (labelled sites)", ""]
     cols = ["black_gap_strong_BSE", "black_gap_strong_Inlens", "black_gap_strong_SE_type", "iqr_gap_strong_BSE",
             "black_sd_BSE", "graphite_sd_BSE", "contrast_rel_change_clean", "contrast_ratio_sd_all",
             "fixed_fsi_gap_strong", "fixed_fpore_gap_strong", "fixed_vs_seg_fsi_r", "seg_fsi_sd_all",
             "clip0_BSE", "clip255_BSE", "mean_abs_change_clean", "mean_abs_change_strong",
             "shortcut_batch_acc", "shortcut_batch3_recall", "shortcut_strong_vs_rest_b3"]
+    cols += [c for c in ("hf_ratio_gap_strong_BSE", "hf_ratio_cv_BSE", "noise_sigma_cv_BSE", "edge_sigma_sd_BSE",
+                         "hf_ratio_gap_strong_Inlens", "hf_ratio_cv_Inlens", "noise_sigma_cv_Inlens",
+                         "texture_shortcut_batch_acc", "texture_shortcut_strong_vs_rest_all", "texture_shortcut_batch3_recall",
+                         "all_shortcut_batch_acc") if c in s.columns]
     L.append("| metric | " + " | ".join(s.index) + " |")
     L.append("|---|" + "---|" * len(s.index))
     for c in cols:
@@ -527,7 +540,10 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
           "  with the segmenter. Nyúl matches 11 landmarks per site, which by construction forces equal percentile positions and so pulls phase",
           "  fractions towards a common value (the known limitation of histogram standardisation).",
           "* `mean_abs_change_*`: |method − raw| per pixel in stored uint8 units; for `nyul` (standard scale) and `basic` (raw − bᵢ + 64) this includes the scale change itself.",
-          "* `shortcut_*`: leave-one-out logistic regression on grey statistics only; `_acc`/`_b3` = accuracy (chance 0.45 batch, 0.76 strong-vs-rest), `batch3_recall` = fraction of Batch-3 sites predicted Batch 3.", ""]
+          "* `shortcut_*`: leave-one-out logistic regression on grey statistics only; `_acc`/`_b3` = accuracy (chance 0.45 batch, 0.76 strong-vs-rest), `batch3_recall` = fraction of Batch-3 sites predicted Batch 3.",
+          "* `hf_ratio_gap_strong_*`: relative high-frequency (0.35–0.5 c/px) / low-frequency amplitude ratio of the strong sites vs the rest (0 = texture shift removed);",
+          "  `hf_ratio_cv_*`, `noise_sigma_cv_*`, `edge_sigma_sd_*`: across-site spread of texture, noise and blur width (lower = more homogeneous).",
+          "* `texture_shortcut_*`: the same leave-one-out classifier on the four texture statistics only (is the site still identifiable from blur/noise?); `all_shortcut_batch_acc` uses grey + texture.", ""]
     L += ["## What is cut out ('crops')", "",
           "No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so",
           "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where the mask excludes more than 0.2 % of the interior and why", ""]
@@ -541,7 +557,7 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
         for m, d in held.groupby("method", sort=False):
             L.append(f"* {m}: BSE p1 = " + ", ".join(f"{r.site} {r.BSE_p1:.1f}" for r in d.itertuples())
                      + "; BSE graphite anchor = " + ", ".join(f"{r.BSE_anchor_graphite:.0f}" for r in d.itertuples()))
-    L += ["", "## Figures", "", "`effects_BSE.png`, `effects_Inlens.png`, `effects_SE_type.png` (raw | nyul | basic for every site, mask overlaid),",
+    L += ["", "## Figures", "", "`effects_BSE.png`, `effects_Inlens.png`, `effects_SE_type.png` (" + " | ".join(m for m in s.index if m != "hybrid") + " for every site, mask overlaid),",
           "`crops_gallery.png`, `hist_by_method.png`, `black_level_by_method.png`, `fractions_by_method.png`."]
     (out / "REPORT.md").write_text("\n".join(L) + "\n")
 

@@ -52,6 +52,14 @@ valid = clean.valid_for_kpis(mask)  # never compute statistics/KPIs on masked pi
 #    (gitignored): python scripts/build_harmonise_ext.py   (~6 min, after build_clean.py)
 from pmdb.harmonise_ext import load_ext
 img, mask3 = load_ext("Batch_3", "71vgq3fw", method="nyul")  # img (H, W, 3) uint8 [BSE, Inlens, SE_type], mask3 (H, W, 3) uint16
+
+# 7. Non-intensity ("shift") harmonisation (fourth route, see docs/harmonisation_shift.md): "spectrum" = radial
+#    amplitude-spectrum (MTF/NPS) matching filter, DC kept, equalises blur/noise texture across sites; "fda" = Fourier
+#    Domain Adaptation (published control). Fitted on labelled sites, applied unchanged to held-out. Arrays are rebuilt
+#    locally (gitignored): python scripts/build_harmonise_shift.py   (~4 min, after build_clean.py). Feature-level
+#    ComBat tables: outputs/harmonisation_shift/combat/ (scripts/run_combat_features.py).
+from pmdb.harmonise_shift import load_shift
+img, mask3 = load_shift("Batch_3", "71vgq3fw", method="spectrum")  # same shapes as load_ext
 ```
 
 ### Dataset Specifications
@@ -71,6 +79,7 @@ img, mask3 = load_ext("Batch_3", "71vgq3fw", method="nyul")  # img (H, W, 3) uin
   - **Physical clean pipeline** (`pmdb/clean.py`, `scripts/build_clean.py`, `scripts/eval_clean.py`): per-site dark level / graphite flat-field normalisation, FOV/scan-band/charging masks, downward resolution + noise harmonisation to the four unflagged Batch 3 references. Params/summary/acceptance under `outputs/clean/` are committed, arrays are rebuilt locally. See [`docs/clean.md`](docs/clean.md).
   - **Patch-embedding batch classifier** (`pmdb/patch_mil.py`, `pmdb/patch_embed.py`, `modal_patch_mil.py`): frozen MicroNet ResNet50 patch features on affine2-harmonised BSE+Inlens, calibrated kNN per batch, strict LOO + held-out predictions under `outputs/patch_mil/`. See [`docs/patch_mil.md`](docs/patch_mil.md).
   - **Imported harmonisation pipelines** (`pmdb/harmonise_ext.py`, `scripts/build_harmonise_ext.py`, `scripts/eval_harmonise_ext.py`): N4 + Nyúl–Udupa and BaSiC as published, for comparison with the in-house routes; results and the crop/mask gallery (`crops_gallery.png`, `effects_<detector>.png`) in `outputs/harmonisation_ext/`. No field in `data/` or `data_heldout/` contains a Cu collector or the free surface; only border/marker columns are cropped, everything else is masked. See [`docs/harmonisation_ext.md`](docs/harmonisation_ext.md).
+  - **Shift (non-intensity) harmonisation** (`pmdb/harmonise_shift.py`, `scripts/build_harmonise_shift.py`, `scripts/run_combat_features.py`, `scripts/modal_cut.py`): the strong session also has ~6 % (BSE) / ~40 % (Inlens) less high-frequency power and higher noise σ, which intensity routes leave in place. `spectrum` removes it (hf-ratio CV across sites 0.11 → 0.007) without changing phase fractions; it does not fix the grey offset/gain, so stack it on `hybrid`/`clean`. `fda` is a control, ComBat is feature-level only, CUT/FastCUT is experimental. Results in `outputs/harmonisation_shift/`, method in [`docs/harmonisation_shift.md`](docs/harmonisation_shift.md).
   - **Parent images**: the 31 labelled sites are crops of 13 parent images (plus held-out siblings); mapping in [outputs/parent_groups.csv](outputs/parent_groups.csv), see docs/patch_mil.md. Use leave-one-parent-out CV.
   - Visual QC overviews are available in [`outputs/qc_contact_sheet.png`](outputs/qc_contact_sheet.png) and [`outputs/raw_stats_by_batch.png`](outputs/raw_stats_by_batch.png).
 

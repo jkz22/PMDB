@@ -65,14 +65,19 @@ def combat_fit_apply(train: pd.DataFrame, held: pd.DataFrame | None, cols: list[
     if held is not None and len(held):
         # harmonizationApply builds its design from the SITE levels present, so the held-out rows are
         # applied together with the training rows (same design columns) and sliced out afterwards.
+        # Policy for a SITE level absent from training (no session parameters exist; neuroHarmonize
+        # would return NaN): the row is left uncorrected.
         cov_h = _covars(held)
         cov_h[["Batch_2", "Batch_3"]] = 0.0  # held-out batch unknown -> reference level, nothing protected
-        cov = pd.concat([_covars(train), cov_h], ignore_index=True)
-        Xa = np.vstack([X, held[cols].to_numpy(dtype=float)])
+        seen = cov_h["SITE"].isin(set(_covars(train)["SITE"])).to_numpy()
         hout = held.copy()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            hout[cols] = harmonizationApply(Xa, cov, model)[len(train):]
+        hout["combat_applied"] = seen
+        if seen.any():
+            cov = pd.concat([_covars(train), cov_h[seen]], ignore_index=True)
+            Xa = np.vstack([X, held.loc[seen, cols].to_numpy(dtype=float)])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                hout.loc[seen, cols] = harmonizationApply(Xa, cov, model)[len(train):]
     return out, hout, cols
 
 
@@ -87,18 +92,21 @@ def _clf():
 
 def _nested_lopo(train: pd.DataFrame, cols: list[str]) -> dict:
     """Leave-one-parent-out: ComBat is refitted on the training parents only and the held-out parent
-    is transformed with its batch *unknown* (reference level), exactly as a real held-out site is;
+    is transformed with its batch *unknown* (reference level), exactly as a real held-out site is
+    (a session level unseen in training - the strong parent fold - stays uncorrected, see combat_fit_apply);
     classifiers are then fitted on the fold's transformed training rows. No test label enters the
     transform."""
     parents = _parents(train)
     y_sess = np.array([session(s) for s in train.site])
     y_batch = train.batch.to_numpy()
     pred = {k: np.empty(len(train), dtype=object) for k in ("session", "strong", "batch")}
+    n_uncorrected = 0
     for p in np.unique(parents):
         te, tr = parents == p, parents != p
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             a_tr, a_te, c = combat_fit_apply(train[tr].reset_index(drop=True), train[te].reset_index(drop=True), cols)
+        n_uncorrected += int((~a_te["combat_applied"]).sum())
         Xtr, Xte = np.nan_to_num(a_tr[c].to_numpy(float)), np.nan_to_num(a_te[c].to_numpy(float))
         for key, y in (("session", y_sess), ("strong", y_sess == "strong"), ("batch", y_batch)):
             if len(np.unique(y[tr])) < 2:
@@ -107,7 +115,9 @@ def _nested_lopo(train: pd.DataFrame, cols: list[str]) -> dict:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 pred[key][te] = _clf().fit(Xtr, y[tr]).predict(Xte)
-    return {"session_lopo_acc_nested": float((pred["session"] == y_sess).mean()),
+    return {"nested_folds": len(np.unique(parents)),
+            "nested_rows_uncorrected": int(n_uncorrected),
+            "session_lopo_acc_nested": float((pred["session"] == y_sess).mean()),
             "strong_vs_rest_lopo_acc_nested": float((pred["strong"].astype(bool) == (y_sess == "strong")).mean()),
             "batch_lopo_acc_logreg_nested": float((pred["batch"] == y_batch).mean())}
 

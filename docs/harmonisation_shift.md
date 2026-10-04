@@ -125,8 +125,43 @@ structure check (pore/Si masks before vs after). Results land in a follow-up PR;
 
 ## 6. Results
 
-(filled in by `scripts/eval_harmonise_ext.py --out outputs/harmonisation_shift`; see
-`outputs/harmonisation_shift/REPORT.md`.)
+`python scripts/eval_harmonise_ext.py --methods none spectrum fda hybrid --out outputs/harmonisation_shift`
+(full table, per-site metrics and figures in `outputs/harmonisation_shift/`; `hybrid` = the in-house LUT
+route for reference). Texture metrics are measured on the valid BSE pixels of every labelled site.
+
+| metric (labelled, BSE unless stated) | none | spectrum | fda | hybrid |
+|---|---|---|---|---|
+| hf-ratio gap strong vs rest (0 = texture shift removed) | −0.064 | **−0.002** | −0.066 | −0.060 |
+| hf-ratio gap strong vs rest, Inlens | −0.41 | **−0.02** | −0.42 | −0.16 |
+| hf-ratio CV across sites | 0.111 | **0.007** | 0.111 | 0.110 |
+| noise σ CV across sites | 0.153 | **0.030** | 0.153 | 0.125 |
+| edge σ SD across sites (px) | 0.024 | **0.001** | 0.024 | 0.023 |
+| texture-only shortcut: strong-vs-rest LOO acc (chance 0.87) | 1.00 | **0.84** | 1.00 | 0.97 |
+| texture-only shortcut: batch LOO acc (chance 0.45) | 0.68 | 0.68 | 0.68 | 0.65 |
+| grey shortcut: batch LOO acc | 0.61 | 0.65 | 0.68 | **0.55** |
+| black-level gap strong (grey) | 22.0 | 11.6 | 11.7 | **1.2** |
+| p90−p10 gap strong (gain) | −9.3 | **−2.1** | −6.6 | 3.9 |
+| Si/graphite contrast change on clean sites | 0 | 1.6 % | 4.1 % | 0.3 % |
+| fixed-threshold Si fraction vs segmenter, r | 0.94 | 0.90 | 0.92 | 0.91 |
+| mean abs pixel change, clean / strong (grey) | 0 / 0 | 1.2 / 2.7 | 4.6 / 6.8 | 3.5 / 6.8 |
+
+Held-out (`3e122cbj`, `fn0mhxef`, `xrv9xvzb`, models fitted on labelled sites only): `spectrum` moves
+the BSE hf-ratio of the three fields to 0.19 (labelled median), graphite anchors unchanged (52–60 →
+53–60), BSE p1 within ±4 grey.
+
+Reading: `spectrum` does what it is for — the strong group's high-frequency deficit (−6 % BSE, −41 %
+Inlens) and the across-site spread of blur / noise texture vanish (CV 0.11 → 0.007, noise CV 0.15 →
+0.03), the texture-only strong-vs-rest classifier drops from 1.00 to 0.84 (chance 0.87), and it
+changes clean sites by ~1 grey level with a 1.6 % contrast change. Because DC is kept it is *not* an
+intensity fix: the black-level gap only halves (22 → 12, via the uniform amplitude part of the filter)
+and the grey-statistics batch shortcut is unchanged, so for modelling it should be stacked on an
+intensity route (`hybrid` or `clean`), which this build does not do yet. `fda` with β = 0.01 is a pure
+low-frequency/shading swap: texture metrics are identical to `none`, black-level gap 22 → 12, but it
+moves clean-site contrast by 4 % and pixels by 4.6 grey, and on Inlens it *creates* a strong-group
+black-level gap (1 → 37 grey) because the swapped low-frequency window carries the reference's shading
+into a detector whose strong sites are not affine — kept as the published control, not recommended. Texture does not identify the *batch* under any route (0.68 → 0.68, the three batches
+differ in texture only through the strong session), which is consistent with the shift being an
+acquisition-session effect. `combat` is feature-level only (see §4).
 
 ## 7. Survey — methods considered for the shift problem
 
