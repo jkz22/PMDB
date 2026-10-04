@@ -129,3 +129,4 @@ header.top nav button { white-space: nowrap; }
 .ev-name { text-align: center; color: var(--ink2); }
 .ev-l { display: flex; justify-content: flex-end; } .ev-l i, .ev-r i { display: block; height: 8px; border-radius: 3px; }
 .ev-l i { background: #2a78d6; } .ev-r i { background: #c93434; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
