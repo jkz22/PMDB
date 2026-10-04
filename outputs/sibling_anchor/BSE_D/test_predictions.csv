@@ -1,0 +1,7 @@
+site,parent,f,assigned,confidence,cut_rule_call,anchored_call,anchored_p_B1,anchored_p_B2,anchored_p_B3,siblings
+0eryguqq,G1612,16.249352256301872,Batch_3,high,Batch_3,Batch_3,0.0,0.1492136654645041,0.8507863345354959,ptg8lmto (3) +16.50; xgj4xftb (3) +18.86
+4hq27w4c,G2148,-1.6251855467179988,Batch_1,high,Batch_1,Batch_1,1.0,0.0,0.0,f1vzngrs (1) -0.95; epqdaau9 (2) -0.09
+fhwrjtet,G1612,18.28998160852632,Batch_3,high,Batch_3,Batch_3,0.0,0.0,1.0,ptg8lmto (3) +16.50; xgj4xftb (3) +18.86
+fspqbkxl,G2148,0.6652564912052039,Batch_1,high,Batch_1,Batch_1,0.3835783572880959,0.23869779986650114,0.37772384284540284,f1vzngrs (1) -0.95; epqdaau9 (2) -0.09
+soo2ax3r,G2156,10.554411049980269,Batch_3,low,Batch_3,Batch_1,0.7019868401581929,0.0,0.29801315984180704,fzrt2k6r (1) +10.29; b3esycq1 (2) +11.48
+y59rxmxl,G1880,5.054829537590479,Batch_2,low,Batch_2,Batch_1,0.5823837759919872,0.4176162240080128,0.0,uhdslk0o (1) +5.37
