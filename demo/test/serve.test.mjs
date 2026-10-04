@@ -21,7 +21,8 @@ test('parseRange bounds', () => {
   assert.deepEqual(parseRange('bytes=2-4', 10), { start: 2, end: 4 });
   assert.deepEqual(parseRange('bytes=5-', 10), { start: 5, end: 9 });
   assert.deepEqual(parseRange('bytes=-3', 10), { start: 7, end: 9 });
-  for (const h of ['bytes=5-2', 'bytes=0-10', 'bytes=10-', 'bytes=20-30']) assert.equal(parseRange(h, 10), 'invalid', h);
+  for (const h of ['bytes=5-2', 'bytes=10-', 'bytes=20-30']) assert.equal(parseRange(h, 10), 'invalid', h);
+  assert.deepEqual(parseRange('bytes=0-10', 10), { start: 0, end: 9 });
   assert.equal(parseRange('junk', 10), null);
 });
 
@@ -32,6 +33,11 @@ test('out-of-range request gets 416 with Content-Range', async () => {
   const ok = await get('/a.txt', { Range: 'bytes=2-4' });
   assert.equal(ok.status, 206);
   assert.equal(await ok.text(), '234');
+  const clamped = await get('/a.txt', { Range: 'bytes=7-999' });
+  assert.equal(clamped.status, 206);
+  assert.equal(clamped.headers.get('content-range'), 'bytes 7-9/10');
+  assert.equal(await clamped.text(), '789');
+  assert.equal(await (await get('/a.txt')).text(), '0123456789');
 });
 
 test('symlink escaping the root is rejected with 403', async () => {
