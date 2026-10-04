@@ -39,3 +39,4 @@ PyYAML==6.0.3
 
 # Testing
 pytest
+imageio-ffmpeg  # bundled ffmpeg for scripts/make_clips.py and demo/assemble_pitch_video.py
