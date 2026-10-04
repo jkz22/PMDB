@@ -32,9 +32,11 @@ BATCHES = ("Batch_1", "Batch_2", "Batch_3")
 CLS_RUNS = Path(os.environ.get("PMDB_CLS_RUNS", RUNS.parent / "cls_runs"))  # beside PMDB_RUNS (/vol/runs on Modal)
 DEFAULTS = dict(task="cls", arch="resnet18_imnet", view="stack", input="raw", harmonise=False, aug="aug1",
                 fold=0, n_folds=5, split="strat", steps=1500, batch_size=64, lr=None, seed=SEED, label_smoothing=0.1,
-                save=False, dequant=0.0)
+                save=False, dequant=0.0, labels="batch")
 NOHASH = ("save",)  # bookkeeping flags that do not change the trained model
-NOHASH_IF_DEFAULT = ("dequant",)  # later additions: keep earlier hashes stable when left at default
+NOHASH_IF_DEFAULT = ("dequant", "labels")  # later additions: keep earlier hashes stable when left at default
+# labels='batch': 3-class Batch_1/2/3; labels='off': Batch_3 (supplier baseline) vs Batch_1+2 ('off')
+OFF_CLASSES = ("Batch_1+2", "Batch_3")
 LR = {"resnet18_scratch": 1e-3, "resnet18_imnet": 3e-4, "effb4_imnet": 3e-4, "effb4_micronet": 3e-4,
       "dinov2_ft": 5e-5, "dinov2_linear": 1e-3}
 
@@ -90,7 +92,13 @@ class Classifier(nn.Module):
         return self.m(x)
 
 
-def _labels(fields: pd.DataFrame) -> torch.Tensor:
+def classes_of(c: dict) -> tuple[str, ...]:
+    return BATCHES if c.get("labels", "batch") == "batch" else OFF_CLASSES
+
+
+def _labels(fields: pd.DataFrame, c: dict | None = None) -> torch.Tensor:
+    if c is not None and c.get("labels", "batch") == "off":
+        return torch.tensor([int(b == "Batch_3") for b in fields.batch])
     return torch.tensor([BATCHES.index(b) for b in fields.batch])
 
 
@@ -116,21 +124,22 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
         m["fold"] = grouped_folds(m.group_id.to_numpy(), c["n_folds"], c["seed"])
     tr_f, te_f = m[m.fold != c["fold"]], m[m.fold == c["fold"]]
     tr = CropDataset(FieldStore(tr_f, c["input"], harmonise=c["harmonise"]), c["view"], random_offset=c["aug"] != "aug0")
-    y_crop = _labels(tr_f)[torch.tensor([i for i, _, _ in tr.index])].to(dev)
+    classes = classes_of(c); n_cls = len(classes)
+    y_crop = _labels(tr_f, c)[torch.tensor([i for i, _, _ in tr.index])].to(dev)
     g = torch.Generator().manual_seed(c["seed"])
     dl = GPUCropLoader(tr, c["batch_size"], dev, g)
     fr_path = OUT / "imaging_stats" / "forward_ranges.json"
     fr = ForwardRanges.from_json(fr_path) if fr_path.exists() else None
     gen = torch.Generator(device=dev).manual_seed(c["seed"])
 
-    model = Classifier(c["arch"]).to(dev)
+    model = Classifier(c["arch"], n_cls=n_cls).to(dev)
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=c["lr"], weight_decay=0.05)
     warm = max(1, c["steps"] // 20)
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lambda s: min(1, (s + 1) / warm) * 0.5 * (1 + math.cos(math.pi * min(1.0, s / c["steps"]))))
     # class weights: fields per batch are 7/7/17, so weight inversely by training-crop frequency
-    cnt = torch.bincount(y_crop, minlength=3).float()
-    w = (cnt.sum() / (3 * cnt.clamp_min(1))).to(dev)
+    cnt = torch.bincount(y_crop, minlength=n_cls).float()
+    w = (cnt.sum() / (n_cls * cnt.clamp_min(1))).to(dev)
     log, t0, step = open(d / "train_log.jsonl", "w"), time.time(), 0
     model.train()
     while step < c["steps"]:
@@ -159,7 +168,7 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     # ---- evaluate on the held-out fold: non-overlapping eval grid
     model.eval()
     te = CropDataset(FieldStore(te_f, c["input"], harmonise=c["harmonise"]), c["view"], stride=CROP)
-    y_te = _labels(te_f)[torch.tensor([i for i, _, _ in te.index])].numpy()
+    y_te = _labels(te_f, c)[torch.tensor([i for i, _, _ in te.index])].numpy()
     logits = []
     with torch.no_grad():
         for i in range(0, len(te), 128):
@@ -172,19 +181,20 @@ def run_cls(cfg: dict, status_cb=None) -> Path:
     P = torch.softmax(torch.from_numpy(L), 1).numpy()
     pred = L.argmax(1)
     meta = pd.DataFrame({"group_id": te.group, "batch": te.batch, "y_true": y_te, "y_pred": pred,
-                         **{f"p_{b}": P[:, k] for k, b in enumerate(BATCHES)}})
+                         **{f"p_{b}": P[:, k] for k, b in enumerate(classes)}})
     meta.to_csv(d / "crop_predictions.csv", index=False)
-    fld = meta.groupby("group_id").agg(y_true=("y_true", "first"), **{f"p_{b}": (f"p_{b}", "mean") for b in BATCHES})
-    fld["y_pred"] = fld[[f"p_{b}" for b in BATCHES]].to_numpy().argmax(1)
+    fld = meta.groupby("group_id").agg(y_true=("y_true", "first"), **{f"p_{b}": (f"p_{b}", "mean") for b in classes})
+    fld["y_pred"] = fld[[f"p_{b}" for b in classes]].to_numpy().argmax(1)
+    labs = list(range(n_cls))
     from sklearn.metrics import confusion_matrix, f1_score, log_loss
     out = {**c, "hash": h, "train_sec": train_sec, "n_train_fields": len(tr_f), "n_test_fields": len(te_f),
            "n_test_crops": len(te), "test_fields": te_f.group_id.tolist(),
            "crop_acc": float((pred == y_te).mean()), "crop_f1_macro": float(f1_score(y_te, pred, average="macro")),
-           "crop_logloss": float(log_loss(y_te, P, labels=[0, 1, 2])),
+           "crop_logloss": float(log_loss(y_te, P, labels=labs)),
            "field_acc": float((fld.y_pred == fld.y_true).mean()),
            "field_f1_macro": float(f1_score(fld.y_true, fld.y_pred, average="macro")),
-           "field_confusion": confusion_matrix(fld.y_true, fld.y_pred, labels=[0, 1, 2]).tolist(),
-           "crop_confusion": confusion_matrix(y_te, pred, labels=[0, 1, 2]).tolist(),
+           "field_confusion": confusion_matrix(fld.y_true, fld.y_pred, labels=labs).tolist(),
+           "crop_confusion": confusion_matrix(y_te, pred, labels=labs).tolist(), "classes": list(classes),
            "n_params_trained": sum(p.numel() for p in model.parameters() if p.requires_grad)}
     (d / "metrics.json").write_text(json.dumps(out, indent=2, default=float))
     if c["save"]:

@@ -8,6 +8,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 from src.v2.common import CLEAN_METHODS, CROP, SEED, STRIDE_TRAIN, grid, harm_method, load_half_clean, load_half_raw, manifest
@@ -77,9 +78,10 @@ class FieldStore:
     cache/harmonised/<method>/half (PR #16)."""
 
     def __init__(self, fields: pd.DataFrame, input_mode: str = "raw", harmonise=False, phase: bool = False):
-        assert input_mode in ("raw", "norm", "naive")
+        assert input_mode in ("raw", "norm", "naive", "extreme")
         self.fields = fields.reset_index(drop=True)
-        self.naive = input_mode == "naive"
+        self.naive = input_mode in ("naive", "extreme")
+        self.naive_blur = NAIVE_BLUR if input_mode == "extreme" else 0.0
         self.harm = harm_method(harmonise)
         hp = harmonise_params().set_index(["group_id", "channel"]) if self.harm == "gmm" else None
         self.images, self.valid, self.phase = [], [], ([] if phase else None)
@@ -105,16 +107,31 @@ class FieldStore:
 
 
 NAIVE_SIGMA = 0.1  # ~25 grey levels of Gaussian noise on the per-crop p1-p99 rescaled [0,1] image
+NAIVE_BLUR = 1.0   # 'extreme' route: Gaussian blur sigma (px) applied before the noise, > the Batch_3 focus difference
 
 
-def naive_transform(x: torch.Tensor, gen: torch.Generator, sigma: float = NAIVE_SIGMA) -> torch.Tensor:
+def gaussian_blur(x: torch.Tensor, sigma: float) -> torch.Tensor:
+    """Separable Gaussian blur of (B, C, H, W), reflect-padded."""
+    r = int(3 * sigma + 0.5)
+    t = torch.arange(-r, r + 1, device=x.device, dtype=x.dtype)
+    k = torch.exp(-0.5 * (t / sigma) ** 2); k = k / k.sum()
+    C = x.shape[1]
+    y = F.pad(x, (r, r, r, r), mode="reflect")
+    y = F.conv2d(y, k.view(1, 1, 1, -1).repeat(C, 1, 1, 1), groups=C)
+    return F.conv2d(y, k.view(1, 1, -1, 1).repeat(C, 1, 1, 1), groups=C)
+
+
+def naive_transform(x: torch.Tensor, gen: torch.Generator, sigma: float = NAIVE_SIGMA, blur: float = 0.0) -> torch.Tensor:
     """Naive harmonisation baseline, applied per crop and channel at train *and* test time: rescale to the
-    crop's own p1-p99 (clipped to [0,1], ~min-max) and add N(0, sigma) noise so that grey level, gain and
-    the fine noise/sharpness texture are all swamped. ``x``: (B, C, H, W) float in [0,1]."""
+    crop's own p1-p99 (clipped to [0,1], ~min-max), optionally blur (``extreme`` route: pushes every crop
+    below the sharpest site's resolution) and add N(0, sigma) noise so that grey level, gain and the fine
+    noise/sharpness texture are all swamped. ``x``: (B, C, H, W) float in [0,1]."""
     flat = x.flatten(2)
     q = torch.quantile(flat, torch.tensor([0.01, 0.99], device=x.device, dtype=x.dtype), dim=2)
     lo, hi = q[0][..., None, None], q[1][..., None, None]
     y = ((x - lo) / (hi - lo).clamp_min(1e-3)).clamp(0, 1)
+    if blur > 0:
+        y = gaussian_blur(y, blur)
     return y + sigma * torch.randn(y.shape, generator=gen, device=y.device, dtype=y.dtype)
 
 
@@ -167,7 +184,7 @@ class GPUCropLoader:
             xs = torch.stack([self.images[a][:, b:b + S, c:c + S] for a, b, c in zip(i.tolist(), y.tolist(), x.tolist())])
             out = {"x": xs.index_select(1, self.ch), "idx": j.to(self.dev)}
             if self.naive:
-                out["x"] = naive_transform(out["x"], self.ng)
+                out["x"] = naive_transform(out["x"], self.ng, blur=self.ds.store.naive_blur)
             if self.kpi is not None:
                 out["kpi"] = self.kpi[j.to(self.dev)]
             if self.phase is not None:
@@ -209,7 +226,7 @@ class CropDataset(Dataset):
             y = int(np.clip(y + g[0], 0, h - self.size)); x = int(np.clip(x + g[1], 0, w - self.size))
         c = torch.from_numpy(np.ascontiguousarray(im[y:y + self.size, x:x + self.size][..., self.ch])).permute(2, 0, 1)
         if getattr(self.store, "naive", False):  # deterministic per-crop noise at evaluation time
-            c = naive_transform(c[None], torch.Generator().manual_seed(1_000_003 * j + 17))[0]
+            c = naive_transform(c[None], torch.Generator().manual_seed(1_000_003 * j + 17), blur=self.store.naive_blur)[0]
         out = {"x": c, "idx": j}
         if self.kpi is not None:
             out["kpi"] = torch.from_numpy(self.kpi[j])

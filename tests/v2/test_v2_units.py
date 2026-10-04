@@ -112,3 +112,21 @@ def test_naive_transform_rescales_and_is_deterministic():
         q = torch.quantile(clean[b].flatten(1), torch.tensor([0.01, 0.99]), dim=1)
         assert torch.allclose(q[0], torch.zeros(3), atol=0.02) and torch.allclose(q[1], torch.ones(3), atol=0.02)
     assert abs(float((y - clean).std()) - NAIVE_SIGMA) < 0.01
+
+
+def test_extreme_blur_and_binary_labels():
+    import pandas as pd
+    import torch
+    from src.v2.classify import _labels, cfg_hash, classes_of
+    from src.v2.data import naive_transform
+
+    x = torch.rand(1, 3, 64, 64)
+    g = torch.Generator().manual_seed(0)
+    sharp = naive_transform(x, g, sigma=0.0)
+    soft = naive_transform(x, g, sigma=0.0, blur=1.0)
+    assert soft.shape == x.shape and float(soft.std()) < 0.5 * float(sharp.std())
+    f = pd.DataFrame({"batch": ["Batch_1", "Batch_2", "Batch_3"]})
+    assert _labels(f, {"labels": "off"}).tolist() == [0, 0, 1] and _labels(f).tolist() == [0, 1, 2]
+    assert classes_of({"labels": "off"}) == ("Batch_1+2", "Batch_3")
+    base = dict(task="cls", arch="resnet18_imnet", view="stack", harmonise="hybrid", fold=0)
+    assert cfg_hash(base) == cfg_hash({**base, "labels": "batch"}) != cfg_hash({**base, "labels": "off"})
