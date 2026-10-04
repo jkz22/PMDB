@@ -1,7 +1,7 @@
 import * as fp from '/lib/fingerprint.js';
 import * as cf from '/lib/confound.js';
 import { el, lineChart, stripPlot, histogram, scatter, BATCH_COLOR, BATCH_LABEL } from './charts.js';
-import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs } from './embed_logic.js';
+import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs, reopenSite } from './embed_logic.js';
 
 const BATCHES = ['Batch_1', 'Batch_2', 'Batch_3'];
 const short = (b) => b.replace('Batch_', 'Batch ').replace('heldout', 'held-out');
@@ -384,10 +384,14 @@ function render() {
   const root = viewEls[v];
   const focused = document.activeElement && document.activeElement.id;
   const scroll = root.scrollTop;
+  const reopen = openSite;
+  closeCard(false);
   root.replaceChildren();
   let ok = true;
   try { R[v](root); } catch (e) { ok = false; root.append(card('Could not render this view', h('pre', { class: 'mono' }, String(e.stack || e)))); console.error(e); }
   root.scrollTop = scroll;
+  const again = reopenSite(reopen, v, [...root.querySelectorAll('.emb-stories .call')].map((n) => n.dataset.site));
+  if (again) openCard(root.querySelector(`.emb-stories .call[data-site="${again}"]`));
   if (focused) document.getElementById(focused)?.focus();
   return ok;
 }
@@ -489,13 +493,20 @@ function pcStory(label, r2, explained) {
   return `Patches high on this dimension show ${parts.join(' and ')} (KPIs explain ${Math.round(r2 * 100)}% of it).`;
 }
 
+let openSite = null;
+function closeCard(restoreFocus) {
+  document.querySelector('.card-overlay')?.remove();
+  const site = openSite; openSite = null;
+  if (restoreFocus && site) document.querySelector(`.emb-stories .call[data-site="${site}"]`)?.focus();
+}
 function openCard(card) {
   document.querySelector('.card-overlay')?.remove();
+  openSite = card.dataset.site || null;
   const big = card.cloneNode(true); big.classList.add('open'); big.removeAttribute('title');
-  const ov = h('div', { class: 'card-overlay', onclick: (e) => { if (e.target === ov) ov.remove(); } }, big);
+  const ov = h('div', { class: 'card-overlay', onclick: (e) => { if (e.target === ov) closeCard(true); } }, big);
   document.body.append(ov); big.focus();
 }
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelector('.card-overlay')?.remove(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openSite) closeCard(true); });
 
 R.embeddings = (root) => {
   const P = M.D.probeTest || [], C = M.D.probeContrib || [];
@@ -507,7 +518,7 @@ R.embeddings = (root) => {
     const bars = h('div', { class: 'pbar' }, ...['Batch_1', 'Batch_2', 'Batch_3'].map((b) =>
       h('span', { style: `width:${(+s[`p_${b}`] * 100).toFixed(1)}%;background:${BATCH_COLOR[b]}`, title: `${short(b)} ${(+s[`p_${b}`]).toFixed(2)}` })));
     const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
-    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', role: 'button', title: 'Click to expand',
+    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', role: 'button', title: 'Click to expand', 'data-site': s.site,
       onclick: (e) => { if (e.target.closest('a')) return; openCard(e.currentTarget); },
       onkeydown: (e) => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(e.currentTarget); } } },
       h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),

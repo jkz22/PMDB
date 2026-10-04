@@ -46,3 +46,11 @@ test("topPcs ranks over the displayed sites only", () => {
   assert.deepEqual(topPcs(r, ["a"], 2), ["PC2", "PC1"]);
   assert.deepEqual(topPcs(r, ["a"], 1), ["PC2"]);
 });
+
+test("reopenSite keeps the overlay only for a displayed site on the calls view", async () => {
+  const { reopenSite } = await import("../public/embed_logic.js");
+  assert.equal(reopenSite("a", "embeddings", ["a", "b"]), "a");
+  assert.equal(reopenSite("a", "embeddings", ["b"]), null);
+  assert.equal(reopenSite("a", "proof", ["a"]), null);
+  assert.equal(reopenSite(null, "embeddings", ["a"]), null);
+});

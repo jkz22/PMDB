@@ -37,3 +37,8 @@ export function topPcs(rows, sites, n) {
   for (const r of rows) if (keep.has(r.site)) tot[r.pc] = (tot[r.pc] || 0) + Math.abs(+r.contribution);
   return Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, n);
 }
+
+// Site whose overlay should be rebuilt after a re-render: only on the test-calls view and only if still displayed.
+export function reopenSite(openSite, view, displayedSites) {
+  return openSite && view === 'embeddings' && displayedSites.includes(openSite) ? openSite : null;
+}
