@@ -263,3 +263,11 @@ Same probe, but each parent's mean patch embedding (all patches of all its sites
 Held-out LOPO calls (centred): fn0mhxef B1 correct (p 0.37/0.30/0.32), xrv9xvzb B3 correct (0.35/0.30/0.35), 3e122cbj B2 wrong -> B3 (0.32/0.31/0.37); near-uniform probabilities. Singleton parents iv6g2oq0 and uhdslk0o: 0/2 centred (both B3) vs 1/2 uncentred.
 
 Verdict: parent centring hurts (acc 0.71 -> 0.53, not significant under permutation); the between-parent offset carries batch signal that the probe uses, so it is not adopted.
+
+### Sibling-excluded test predictions (`--mode explain-test`)
+
+Each of the 6 test sites and 3 held-out sites is scored by a probe refitted (`fit_full_probe` config) on the 34 labelled sites excluding every site of its parent image (one fit per distinct parent), the validated LOPO setting; test parents come from height + detector + BSE grey step matching.
+Because each fold has its own PCA, the PC-to-KPI OLS (same 6 KPIs, graphite excluded, `patch_kpis.csv`, training patches only) is recomputed per fold; `r2`, `label`, `explained` (R2 >= 0.2) in `test_contributions.csv` are fold specific.
+`contribution_pc = (w_call - w_runner)_pc * zbar_pc` (PCA scores are already centred on the training mean); contributions plus the intercept term sum exactly to the log-prob `margin` (asserted).
+KPI-netted effect: `net_k = sum_{pc explained} contribution_pc * b_{k,pc}`, with `b` the standardised coefficient of the PC on z-scored KPI k (effect of +1 SD of KPI k in PC SD units); positive means the KPI pushes towards the call over the runner-up.
+Outputs: `outputs/probe_explain/test_final_predictions.csv`, `test_contributions.csv`.

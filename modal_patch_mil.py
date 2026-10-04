@@ -14,6 +14,7 @@ Run:
     modal run modal_test_prep.py::main           # prerequisite of --mode test: preprocess data_test/ on Modal
     modal run modal_patch_mil.py --mode probe    # supervised linear probe, LOPO, 34 sites
     modal run modal_patch_mil.py --mode explain    # KPI-language explanation of the 34-site probe
+    modal run modal_patch_mil.py --mode explain-test  # sibling-excluded probe + KPI explanation of the 6 test + 3 held-out sites
     modal run modal_patch_mil.py --mode test     # embed + score new organiser test sites with the frozen selection
 
 See docs/patch_mil.md.
@@ -389,6 +390,52 @@ def probe_explain_fit(tag: str, labels: list[dict], kpi_records: list[dict]) -> 
             "elapsed_s": round(time.time() - t0, 2)}
 
 
+@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=3000)
+def probe_explain_test_fit(tag: str, labels: list[dict], kpi_records: list[dict], targets: list[dict]) -> dict:
+    """Per distinct parent: refit the probe on the labelled sites outside that parent (fit_full_probe config), redo the
+    PC->KPI regression on those training patches, explain each target site of that parent."""
+    import numpy as np
+    import pandas as pd
+
+    from pmdb import patch_probe as pp
+    from pmdb import probe_explain as pe
+
+    t0 = time.time()
+    out_vol.reload()
+    Xall = {r["site"]: _load_emb(tag, r["batch"], r["site"])[0] for r in labels}
+    sb = {r["site"]: r["label"] for r in labels}
+    K = pd.DataFrame(kpi_records)
+    pred, contrib_rows, pcs = [], [], []
+    for par in sorted({t["parent"] for t in targets}):
+        train = [r["site"] for r in labels if r["parent"] != par]
+        sc, pca, clf = pp.fit_full_probe({s: Xall[s] for s in train}, {s: sb[s] for s in train})
+        Zs = {s: pca.transform(sc.transform(Xall[s])) for s in train}
+        parts = []
+        for s in train:
+            k = K[K["site"] == s].sort_values("i")
+            assert len(k) == len(Zs[s]) and (k["i"].to_numpy() == np.arange(len(k))).all()
+            parts.append(k)
+        pc, _ = pe.pc_kpi_regression(np.concatenate([Zs[s] for s in train]), pd.concat(parts, ignore_index=True), pe.KPI_COLS)
+        kept = pe._kept(pc)
+        expl = pc["explained"].to_numpy(bool)
+        Bz = pc[[f"b_{k}" for k in kept]].to_numpy()
+        for t in [t for t in targets if t["parent"] == par]:
+            feat = _load_emb(tag, t["batch"], t["site"])[0]
+            Zt = pca.transform(sc.transform(feat))
+            e = pe.explain_site(Zt, clf, pc)
+            c = e.pop("contrib")
+            net = (c[expl, None] * Bz[expl]).sum(0)
+            pred.append({"site": t["site"], "batch": t["batch"], "parent": par, "n_train_sites": len(train),
+                         **{k: v for k, v in e.items() if k not in ("sentence", "top_pcs")},
+                         **{f"net_{k}": float(v) for k, v in zip(kept, net)}})
+            zbar = Zt.mean(0)
+            for j in range(len(c)):
+                contrib_rows.append({"site": t["site"], "parent": par, "pc": f"PC{j + 1}", "contribution": float(c[j]),
+                                     "z": float(zbar[j]), "r2": float(pc.loc[j, "r2"]), "label": pc.loc[j, "label"],
+                                     "explained": bool(expl[j])})
+    return {"predictions": pred, "contributions": contrib_rows, "elapsed_s": round(time.time() - t0, 2)}
+
+
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -403,14 +450,17 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
     from pmdb.parents import write_parent_groups
     from pmdb.patch_mil import fingerprint_comparison
 
-    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain"):
-        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain")
+    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain", "explain-test"):
+        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain | explain-test")
     root = Path(__file__).resolve().parent
     if mode == "probe":
         _probe(root, n_perm, centre)
         return
     if mode == "explain":
         _explain(root)
+        return
+    if mode == "explain-test":
+        _explain_test(root)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -535,6 +585,34 @@ def _explain(root: Path) -> None:
     for s in ("3e122cbj", "fn0mhxef", "xrv9xvzb"):
         print(s, se.loc[se["site"] == s, "sentence"].iloc[0])
     print(f"wall {time.time() - t0:.0f}s, remote fit {res['elapsed_s']}s")
+
+
+TEST_PARENTS = {"0eryguqq": "h1612_ETD_s1", "fhwrjtet": "h1612_ETD_s1", "4hq27w4c": "h2148_ETD_s1",
+                "fspqbkxl": "h2148_ETD_s1", "soo2ax3r": "h2156_ETD_s2", "y59rxmxl": "h1880_ETD_s1"}
+
+
+def _explain_test(root: Path) -> None:
+    import pandas as pd
+
+    from pmdb.batch_menu import labelled_sites
+
+    t0 = time.time()
+    lab = labelled_sites()
+    pg = pd.read_csv(root / "outputs" / "parent_groups.csv", dtype={"site": str}).set_index("site")["parent_id"]
+    lab["parent"] = lab["site"].map(pg)
+    assert lab["parent"].notna().all() and len(lab) == 34
+    out = root / "outputs" / "probe_explain"
+    K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
+    targets = [{"batch": "Batch_test", "site": s, "parent": p} for s, p in TEST_PARENTS.items()]
+    targets += [{"batch": "Batch_heldout", "site": s, "parent": pg[s]} for s in ("3e122cbj", "fn0mhxef", "xrv9xvzb")]
+    res = probe_explain_test_fit.remote("full", lab.to_dict("records"), K.to_dict("records"), targets)
+    pr = pd.DataFrame(res["predictions"])
+    cols = ["site", "parent", "call", "runner_up", "p_Batch_1", "p_Batch_2", "p_Batch_3", "margin", "intercept_term",
+            "explained_share"] + [c for c in pr.columns if c.startswith("net_")]
+    _atomic_write(out / "test_final_predictions.csv", pr[cols].to_csv(index=False).encode())
+    _atomic_write(out / "test_contributions.csv", pd.DataFrame(res["contributions"]).to_csv(index=False).encode())
+    print(pr[cols].to_string())
+    print(f"wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
 
 
 def _menu_or_test(mode: str, root: Path) -> None:
