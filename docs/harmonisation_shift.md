@@ -172,13 +172,55 @@ Inlens) and the across-site spread of blur / noise texture vanish (CV 0.11 → 0
 changes clean sites by ~1 grey level with a 1.6 % contrast change. Because DC is kept it is *not* an
 intensity fix: the black-level gap only halves (22 → 12, via the uniform amplitude part of the filter)
 and the grey-statistics batch shortcut is unchanged, so for modelling it should be stacked on an
-intensity route (`hybrid` or `clean`), which this build does not do yet. `fda` with β = 0.01 is a pure
+intensity route (`hybrid` or `clean`) — that is `hybrid_spectrum`, evaluated in §6b. `fda` with β = 0.01 is a pure
 low-frequency/shading swap: texture metrics are identical to `none`, black-level gap 22 → 12, but it
 moves clean-site contrast by 4 % and pixels by 4.6 grey, and on Inlens it *creates* a strong-group
 black-level gap (1 → 37 grey) because the swapped low-frequency window carries the reference's shading
 into a detector whose strong sites are not affine — kept as the published control, not recommended. Texture does not identify the *batch* under any route (0.68 → 0.68, the three batches
 differ in texture only through the strong session), which is consistent with the shift being an
 acquisition-session effect. `combat` is feature-level only (see §4).
+
+## 6b. Results — `hybrid_spectrum` vs `hybrid` vs `none`
+
+`python scripts/eval_harmonise_ext.py --methods none hybrid hybrid_spectrum --out outputs/harmonisation_shift_stack`
+(same metrics as §6; per-site table, held-out table and figures in `outputs/harmonisation_shift_stack/`).
+
+| metric (labelled, BSE unless stated) | none | hybrid | hybrid_spectrum |
+|---|---|---|---|
+| hf-ratio gap strong vs rest (0 = texture shift removed) | −0.064 | −0.060 | **−0.006** |
+| hf-ratio gap strong vs rest, Inlens / SE | −0.41 / −0.06 | −0.16 / −0.06 | **−0.02 / −0.001** |
+| hf-ratio CV across sites | 0.111 | 0.110 | **0.009** |
+| noise σ CV across sites | 0.153 | 0.125 | **0.039** |
+| edge σ SD across sites (px) | 0.024 | 0.023 | **0.002** |
+| texture-only shortcut: strong-vs-rest LOO acc (chance 0.87) | 1.00 | 0.97 | **0.94** |
+| black-level (p1) gap strong (grey) | 22.0 | **1.2** | 3.4 |
+| black-level (p1) gap strong, Inlens | 1.1 | −5.7 | 16.9 (see below) |
+| p90−p10 gap strong (gain) | −9.3 | 3.9 | **−0.1** |
+| grey shortcut: batch LOO acc (chance 0.45) | 0.61 | **0.55** | 0.68 |
+| Si/graphite contrast change on clean sites | 0 | **0.3 %** | 1.4 % |
+| fixed-threshold Si / pore fraction gap strong | 0.016 / −0.032 | 0.026 / −0.009 | 0.020 / −0.016 |
+| mean abs pixel change, clean / strong (grey) | 0 / 0 | 3.5 / 6.8 | 3.8 / 6.3 |
+
+Held-out (models fitted on labelled sites only, applied as-is): BSE hf-ratio 0.187 / 0.178 / 0.162 →
+0.180 / 0.180 / 0.184 for `3e122cbj` / `fn0mhxef` / `xrv9xvzb` (labelled reference 0.18), noise σ 6.3 /
+5.6 / 4.0 → 5.3 / 6.0 / 5.6, graphite anchor 56 / 52 / 60 → 57 / 58 / 57, BSE p1 ≤ 2 grey.
+
+Reading: the stack does both jobs on BSE — black level and gain fixed (p1 gap 22 → 3, p90−p10 gap −9 →
+0), and the texture shift gone (hf-ratio gap −0.064 → −0.006, across-site CV 0.11 → 0.009, edge-σ SD
+0.024 → 0.002), with 1.4 % contrast change on clean sites and phase fractions within the `hybrid` range.
+Two honest caveats. (i) The grey-statistics batch shortcut goes 0.61 → 0.68 (chance 0.45): the LUT makes
+the strong group look like the rest, but the spectrum filter maps every site to one noise level, so the
+per-site grey *spread* (p1, p99, std) is now a cleaner function of the parent image and the NB
+classifier picks it up — texture no longer identifies the batch (0.68 → 0.68) and the strong session is
+hidden (strong-vs-rest 1.00 → 0.94 vs chance 0.87), so this is a parent effect, not an imaging one;
+model it with leave-one-parent-out, not with a grey-stat shortcut check. (ii) On Inlens the 1st
+percentile is a noise-floor measure, not a black level: the strong sites' Inlens high-frequency deficit
+is −41 %, so matching their spectrum to the reference adds high-frequency amplitude and their p1 rises
+from 9 to 24–27 (raw clean sites sit at 15–32), while eight clean sites that were *smoothed* towards the
+reference drop to p1 0–9 with ≤ 1 % new 0-clipping — medians and graphite anchors are unchanged. Use
+BSE (and SE) as the primary channels, and read Inlens p1 differences as tail noise. `hybrid_spectrum`
+remains the recommended single input; `hybrid` alone is the choice if only grey-level statistics matter
+and texture is irrelevant to the model.
 
 ## 7. Survey — methods considered for the shift problem
 
