@@ -3,7 +3,7 @@
     python scripts/plot_parents.py
 
 Reads outputs/stitching/chains.csv (left-to-right crop order per parent, from
-scripts/stitch_seams.py) and the half-res BSE cache. Crops inside a chain abut
+scripts/stitch_report.py) and the half-res BSE cache. Crops inside a chain abut
 (seam |dy| <= 5 full-res px, drawn as 0); separate chains of one parent have an
 unknown gap and are drawn apart with a "gap unknown" marker.
 
@@ -38,7 +38,7 @@ ORDER = ["G2316", "G2088", "G2048", "G2080", "G2068SE", "G2148", "G2156", "G2272
 
 
 def _bse(batch: str, site: str) -> np.ndarray:
-    kw = dict(data_root="data_heldout", cache_root="cache_heldout") if batch == "Batch_heldout" else {}
+    kw = dict(data_root=ROOT / "data_heldout", cache_root=ROOT / "cache_heldout") if batch == "Batch_heldout" else {}
     img = load_site(batch, site, resolution="half", **kw).image[..., 0]
     h, w = (img.shape[0] // 4) * 4, (img.shape[1] // 4) * 4
     return img[:h, :w].reshape(h // 4, 4, w // 4, 4).mean(axis=(1, 3))

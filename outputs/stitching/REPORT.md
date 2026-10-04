@@ -6,12 +6,14 @@ Seven parents reassemble completely into one strip. No pair from different paren
 Scripts: `scripts/stitch_seams.py` (Modal: `modal run scripts/stitch_seams.py`; full-res TIFFs in the new volume `pmdb-fullres`), `scripts/stitch_report.py` (local calibration, chains, previews).
 
 ## Method
-- **Data:** full-res raw TIFFs (25 nm/px), 3 channels (BSE, Inlens, ETD|SE). On every edge we skip the artefact border before taking the strip: 3 columns on left/right, 1 row on top/bottom. 15 sites have a bright artefact column 0-1 px wide on one side, and a couple have up to 4-6 deviating columns (`sites.csv`: `art_left`, `art_right`). The smallest physical gap a true left/right seam can have is therefore 6 px.
+- **Data:** full-res raw TIFFs (25 nm/px), 3 channels (BSE, Inlens, ETD|SE). On every edge we skip the artefact border before taking the strip: 3 columns on left/right, 1 row on top/bottom. 15 sites have a bright artefact column 0-1 px wide on one side, and a couple have up to 4-6 deviating columns (`sites.csv`: `art_left`, `art_right`). Because `SKIP_LR` = 3 (`stitch_seams.py:32`), some artefact columns stay inside the profile for x77cy643, ufdvpb81 and fzrt2k6r; no verdict changes. The smallest physical gap a true left/right seam can have is therefore 6 px.
 - **Edge profile:** for each edge, take the mean of the 4 px nearest the edge per channel, then band-pass it (subtract a Gaussian with sigma = 25, smooth with sigma = 4). This keeps the particle-scale signal: particles cut by the boundary should continue on the other side.
 - **Score `mp`:** the channel-mean Pearson r between two edge profiles, maximised over the shift along the edge (|shift| <= 64 px for L/R edges, any shift with >= 2000 px overlap for T/B edges). We tested the 4 unflipped placements (A|B, B|A, A over B, B over A) and, as a secondary check, all 12 flipped or reversed edge combinations.
 - **Positive control:** each crop is split internally at 25/50/75 % of its width and height, with a known gap. The halves are scored with the exact same function and shift search.
-- **Null:** (a) all 1054 different-parent pairs x placements, per orientation; (b) the 3 wrong placements of every same-parent pair (102). `z` = (mp - null mean) / null sd. The empirical p is computed against null (a).
+- **Null:** (a) all 2108 different-parent unflipped placements (1054 per orientation; the 6324 flipped placements also all fail); (b) the 3 wrong placements of every same-parent pair (102). `z` = (mp - null mean) / null sd. The empirical p is computed against null (a).
 - **Verdict ABUT:** z > 4, |shift| <= 8 px, and a left/right placement.
+
+**Threshold robustness.** The empirical p sits at its floor (1/1055) for all 17 seams, and across 136 tests that floor alone cannot support significance (Bonferroni gives about 0.13). The verdict therefore rests on the margin between groups, not on p. Among different-parent left/right placements with |dy| <= 8, the highest z is 3.01. The smallest abutting z is 5.60, and the best non-abutting same-parent pair has z 1.64. Any z threshold between 3.02 and 5.60 gives identical verdicts, so Z_MIN = 4 is not a fine-tuned choice. Every seam's mp (0.389 to 0.691) is above the highest different-parent left/right null (0.348).
 
 ## Score levels
 | | mp median (min) |
@@ -24,7 +26,7 @@ Scripts: `scripts/stitch_seams.py` (Modal: `modal run scripts/stitch_seams.py`; 
 | Null, different parent, T/B | mean 0.195, sd 0.032, max 0.343 |
 | Null, same-parent wrong placements | mean 0.151, sd 0.052, max 0.253 |
 
-Three different-parent placements reach z > 4, but their best shift is far from 0 (|dy| >= 38). None passes the |dy| <= 8 test. The 17 detected seams have mp 0.39-0.69. That matches the gap ~6-12 px controls, so the crops were cut directly next to each other: the only missing material is the artefact columns.
+Five different-parent placements reach z > 4, but none is a plausible seam: three left/right placements have |dy| >= 43, and two are top/bottom placements. None passes the |dy| <= 8 test. The 17 detected seams have mp 0.39-0.69. That matches the gap ~6-12 px controls, so the crops were cut directly next to each other: the only missing material is the artefact columns.
 
 ## Per-pair verdicts (same parent; full table in `same_parent_verdicts.csv`)
 | parent | left crop (batch) | right crop (batch) | mp | dy | z | verdict |
@@ -65,15 +67,15 @@ All other same-parent pairs have z < 1.7, including G1612 (ptg8lmto/xgj4xftb), G
 
 `stitched_all_parents.png` shows the BSE channel from the half-res cache, stretched per crop and reduced 4x, one row per parent. In the 1:1 zooms (`seam_zooms.png`, half-res, seam at x = 400 in each panel) the seam cannot be seen: particles continue across it.
 
-The bright artefact column fits the chain order. At 8 of the 9 outer chain ends it sits on the open side (x7u69zsw L, 71vgq3fw R, vc2whyaq L, ufdvpb81 L, 0grcilhi R, ffwubibz R, f1vzngrs L, fn0mhxef L). The one exception is mgxahqnk R, which sits at an interior seam. The artefact therefore usually marks a parent border. This also fits the unlinked crops: avn74qx1 (R) is the right end of G2048, and the pairs that do not abut (xgj4xftb L / ptg8lmto R, i9jiqjwl L, fzrt2k6r L+R) look like the two ends of a parent whose middle crop(s) were not released.
+The bright artefact column fits the chain order. On chained crops there are 10 artefact sides; 8 sit on an open chain end (x7u69zsw L, 71vgq3fw R, vc2whyaq L, ufdvpb81 L, 0grcilhi R, ffwubibz R, f1vzngrs L, fn0mhxef L). The two exceptions are interior: mgxahqnk R and x77cy643 R (columns 2-5). The artefact therefore usually marks a parent border. This also fits the unlinked crops: avn74qx1 (R) is the right end of G2048, and the pairs that do not abut (xgj4xftb L / ptg8lmto R, i9jiqjwl L, fzrt2k6r L+R) look like the two ends of a parent whose middle crop(s) were not released.
 
 ## Implications
-- **Grouping confirmed.** All 17 detected seams fall inside the proposed parent groups. 0 of the 1054 different-parent placements pass. The four non-adjacent groups (G1612, G2156, G2272, and avn74qx1 in G2048) are not refuted. Their grouping rests on fingerprints only.
-- **Batches are not parent-coherent.** Of the 13 seams between two labelled crops, 4 cross a batch boundary (rxax5ozo B2 | utfgcjfa B3; cfe5vt7s B3 | r17byphk B2 | ffwubibz B1; f1vzngrs B1 | epqdaau9 B2). Physically contiguous material therefore carries different batch labels. The organisers' batches are an artificial regrouping, and adjacency alone does not determine the batch.
+- **Grouping confirmed.** All 17 detected seams fall inside the proposed parent groups. 0 of the 2108 different-parent placements pass. The four non-adjacent groups (G1612, G2156, G2272, and avn74qx1 in G2048) are not refuted. Their grouping rests on fingerprints only.
+- **Batches are not parent-coherent.** Of the 12 seams between two labelled crops (5 of the 17 involve a held-out crop), 4 cross a batch boundary (utfgcjfa B3 | rxax5ozo B2; cfe5vt7s B3 | r17byphk B2 | ffwubibz B1; f1vzngrs B1 | epqdaau9 B2). Physically contiguous material therefore carries different batch labels. The organisers' batches are an artificial regrouping, and adjacency alone does not determine the batch.
 - **Held-out sites.** Each held-out crop is physically wedged between, or attached to, crops of a single labelled batch:
   - 3e122cbj lies between two Batch_1 crops (G2316 is all Batch_1).
   - xrv9xvzb lies between two Batch_3 crops (G2088 is all Batch_3).
   - fn0mhxef is the left neighbour of 3806gxp0 (Batch_2; G2048 is all Batch_2).
 
-  If the organisers kept each parent's crops in one batch, as they did for 7 of 11 multi-crop parents, the best guesses are 3e122cbj -> Batch 1, xrv9xvzb -> Batch 3 and fn0mhxef -> Batch 2. The mixed parents (G2068SE, G2080, G2148, G2156, G2272) show that this is a prior, not proof. This analysis only reads the held-out sites' edges; nothing is trained on them.
+  If the organisers kept each parent's crops in one batch, as they did for 6 of 11 multi-crop parents (G1612, G1904, G2048, G2060, G2088, G2316), the best guesses are 3e122cbj -> Batch 1, xrv9xvzb -> Batch 3 and fn0mhxef -> Batch 2. The mixed parents (G2068SE, G2080, G2148, G2156, G2272) show that this is a prior, not proof. This analysis only reads the held-out sites' edges; nothing is trained on them.
 - **Leakage warning.** Neighbouring crops are contiguous material, so any cross-validation that splits crops of one parent across train and test leaks information. Split by parent (`GROUPS` in `scripts/stitch_seams.py`).
