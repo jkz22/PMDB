@@ -1,0 +1,13 @@
+batch,site,orientation,s,metric,value_100nm,value_50nm,rel_diff,limit,pass
+Batch_3,vc2whyaq,bottom,0.5,swelling,0.0842102,0.0836721,0.00643116,0.1,True
+Batch_3,vc2whyaq,bottom,0.5,sxx_mean_MPa,-1540.69,-1517.15,0.0155156,0.1,True
+Batch_3,vc2whyaq,bottom,0.5,porosity_change,-0.00285413,-0.00268022,0.0648864,0.1,True
+Batch_3,vc2whyaq,bottom,0.5,J_si_mean_minus_1,0.543111,0.545562,0.00449152,0.1,True
+Batch_3,vc2whyaq,bottom,0.5,vm_si_p50_MPa,18934.6,19034,0.00522138,0.2,True
+Batch_3,vc2whyaq,bottom,0.5,vm_si_p95_MPa,23806.2,23805.8,1.84107e-05,0.2,True
+Batch_3,vc2whyaq,bottom,1,swelling,0.124886,0.12437,0.00414795,0.1,True
+Batch_3,vc2whyaq,bottom,1,sxx_mean_MPa,-2762.78,-2723.15,0.0145537,0.1,True
+Batch_3,vc2whyaq,bottom,1,porosity_change,-0.00434999,-0.00415547,0.0468094,0.1,True
+Batch_3,vc2whyaq,bottom,1,J_si_mean_minus_1,0.653838,0.659126,0.00802229,0.1,True
+Batch_3,vc2whyaq,bottom,1,vm_si_p50_MPa,19627.8,19830.3,0.0102103,0.2,True
+Batch_3,vc2whyaq,bottom,1,vm_si_p95_MPa,26923.1,27293.5,0.0135686,0.2,True
