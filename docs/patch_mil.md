@@ -212,3 +212,16 @@ Held-out sites, LOPO-fold calls (truth in brackets):
 Permutation test (probe, 200 site-label permutations, parents fixed, seed 0): observed accuracy 0.706, null mean 0.337, p = 0.005.
 
 Verdict: probe+ensemble beats the ensemble on LOPO rubric all-high (1.412 vs 1.235) and balanced accuracy (0.630 vs 0.597), so by the pre-set criterion it is adopted as the better candidate. Caveats: 34 sites from 13 parents, one configuration, and the improvement is a few sites; Batch 1 recall remains weak for the probe alone (0.38). Prior evidence: the v2 fine-tune reached only 0.64 accuracy with Batch 2 recall 0.20 under field-grouped CV, so a frozen-feature linear probe is the better-behaved supervised route.
+
+### Parent-centred probe
+
+Same probe, but each parent's mean patch embedding (all patches of all its sites, test site included, labels never read) is subtracted before the per-fold scaler/PCA/LR (`--centre parent`, outputs in `outputs/patch_probe_centred/`, no ensemble).
+
+| | acc | bal acc | macro-F1 | recall B1/B2/B3 | rubric all-high | rubric p_max>=0.5 | perm p |
+|---|---|---|---|---|---|---|---|
+| probe | 0.706 | 0.630 | 0.622 | 0.38/0.62/0.89 | 1.412 | 1.412 | 0.005 |
+| probe_centred | 0.529 | 0.403 | 0.365 | 0.38/0.00/0.83 | 1.059 | 1.000 (0 high) | 0.109 |
+
+Held-out LOPO calls (centred): fn0mhxef B1 correct (p 0.37/0.30/0.32), xrv9xvzb B3 correct (0.35/0.30/0.35), 3e122cbj B2 wrong -> B3 (0.32/0.31/0.37); near-uniform probabilities. Singleton parents iv6g2oq0 and uhdslk0o: 0/2 centred (both B3) vs 1/2 uncentred.
+
+Verdict: parent centring hurts (acc 0.71 -> 0.53, not significant under permutation); the between-parent offset carries batch signal that the probe uses, so it is not adopted.

@@ -281,7 +281,7 @@ def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[di
 
 
 @app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=1800)
-def probe_lopo(tag: str, labels: list[dict], parents: list[dict], menu: list[dict], n_perm: int = 200) -> dict:
+def probe_lopo(tag: str, labels: list[dict], parents: list[dict], menu: list[dict], n_perm: int = 200, centre: str = "none") -> dict:
     import numpy as np
     import pandas as pd
 
@@ -297,6 +297,8 @@ def probe_lopo(tag: str, labels: list[dict], parents: list[dict], menu: list[dic
         sb[r["site"]] = r["label"]
         sp[r["site"]] = par[(r["batch"], r["site"])]
     assert len(X) == 34
+    if centre == "parent":
+        X = pp.centre_by_parent(X, sp)
     df = pp.lopo_probe(X, sb, sp)
     m = pd.DataFrame(menu)
     pe = [f"p_ens_{b}" for b in pp.BATCHES]
@@ -334,7 +336,7 @@ def _atomic_write(path: Path, data: bytes) -> None:
 
 
 @app.local_entrypoint()
-def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
+def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str = "none"):
     import pandas as pd
 
     from pmdb.parents import write_parent_groups
@@ -344,7 +346,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
         raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe")
     root = Path(__file__).resolve().parent
     if mode == "probe":
-        _probe(root)
+        _probe(root, centre)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -419,7 +421,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
             print(f"  {r['site']} -> {r['assigned']} ({r['confidence_flag']})")
 
 
-def _probe(root: Path) -> None:
+def _probe(root: Path, centre: str = "none") -> None:
     import pandas as pd
 
     from pmdb.batch_menu import labelled_sites
@@ -429,8 +431,8 @@ def _probe(root: Path) -> None:
     lab = labelled_sites()
     menu = pd.read_csv(root / "outputs" / "menu" / "menu_predictions.csv", dtype={"site": str})
     res = probe_lopo.remote("full", lab.to_dict("records"), parent_groups().to_dict("records"),
-                            menu.to_dict("records"))
-    out = root / "outputs" / "patch_probe"
+                            menu.to_dict("records"), centre=centre)
+    out = root / "outputs" / ("patch_probe_centred" if centre == "parent" else "patch_probe")
     ev = {k: res[k] for k in ("metrics", "heldout", "permutation", "elapsed_s")}
     _atomic_write(out / "evaluation.json", json.dumps(ev, indent=2).encode())
     _atomic_write(out / "predictions.csv", pd.DataFrame(res["predictions"]).to_csv(index=False).encode())

@@ -12,6 +12,17 @@ N_PCA = 64
 C = 0.1
 
 
+def centre_by_parent(X_by_site, site_parent):
+    """Subtract each parent's mean patch embedding (all patches of all its sites; labels never read)."""
+    out = {}
+    for par in set(site_parent[s] for s in X_by_site):
+        sites = [s for s in X_by_site if site_parent[s] == par]
+        mu = np.concatenate([X_by_site[s] for s in sites]).astype(np.float64).mean(0)
+        for s in sites:
+            out[s] = (X_by_site[s] - mu).astype(np.float32)
+    return {s: out[s] for s in X_by_site}
+
+
 def _prepare_folds(X_by_site, site_parent, seed):
     """Per parent: train/test site lists and PCA-projected patches (label independent, reusable)."""
     sites = list(X_by_site)

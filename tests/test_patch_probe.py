@@ -37,3 +37,33 @@ def test_permutation_runs():
     X, sb, sp = _data()
     r = pp.permutation_test(X, sb, sp, n_perm=3)
     assert 0 < r["p_value"] <= 1 and r["observed_accuracy"] == 1.0
+
+
+def _offset_data(seed=0):
+    rng = np.random.default_rng(seed)
+    X, sb, sp = {}, {}, {}
+    for pi in range(6):
+        off = rng.normal(size=80) * 8
+        for k, b in enumerate(pp.BATCHES):
+            s = f"s{pi}_{k}"
+            mu = np.zeros(80)
+            mu[k * 5:(k + 1) * 5] = 2.0
+            X[s] = (rng.normal(size=(30, 80)) + mu + off).astype(np.float32)
+            sb[s] = b
+            sp[s] = f"p{pi}"
+    return X, sb, sp
+
+
+def test_centred_parent_mean_zero():
+    X, sb, sp = _offset_data()
+    C = pp.centre_by_parent(X, sp)
+    for par in set(sp.values()):
+        m = np.concatenate([C[s] for s in sp if sp[s] == par]).mean(0)
+        assert np.abs(m).max() < 1e-4
+
+
+def test_centred_beats_uncentred():
+    X, sb, sp = _offset_data()
+    a0 = pp.site_metrics(pp.lopo_probe(X, sb, sp))["accuracy"]
+    a1 = pp.site_metrics(pp.lopo_probe(pp.centre_by_parent(X, sp), sb, sp))["accuracy"]
+    assert a1 > a0
