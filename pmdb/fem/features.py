@@ -48,28 +48,50 @@ def _quant(x: np.ndarray, qs) -> list[float]:
     return [float(v) for v in np.percentile(x, qs)]
 
 
-def region_metrics(r: SimResult, frame: int, cols: slice, orientation: str, p: dict) -> dict[str, float]:
+def _z_rows(H: int, px_um: float, z_edge_um: float) -> int:
+    """Image rows dropped at each of the top and bottom edges for a z_edge_um band (0 = none)."""
+    return int(round(z_edge_um / px_um)) if z_edge_um > 0 else 0
+
+
+def region_metrics(r: SimResult, frame: int, cols: slice, orientation: str, p: dict,
+                   z_edge_um: float = 0.0) -> dict[str, float]:
+    """Region statistics over columns ``cols``.
+
+    ``z_edge_um > 0`` drops that many micrometres of rows at the top and the bottom image edge from every
+    statistic (near-edge fields are window-boundary artefacts). Swelling is then the interior strain
+    (mean uz of the upper crop node row - mean uz of the lower crop node row) / cropped height, identical for both
+    orientations (uz is positive toward row 0), and surface_rough is the uz std over the upper crop row / cropped
+    height. With the default 0.0 the free-surface definitions below are used unchanged.
+    """
     if not bool(r.converged[frame]):
         return _nan_metrics()
     H, W = r.labels.shape
     h = r.px_um
-    H_um = H * h
-    lab = r.labels[:, cols]
-    F = {k: v[frame][:, cols] for k, v in r.fields.items()}
+    zc = _z_rows(H, h, z_edge_um)
+    rows = slice(zc, H - zc)
+    H_um = (H - 2 * zc) * h
+    lab = r.labels[rows, cols]
+    F = {k: v[frame][rows, cols] for k, v in r.fields.items()}
     out = _nan_metrics()
 
-    # Tier 1: free-edge surface
-    n_free = 1.0 if orientation == "bottom" else -1.0
-    row = 0 if orientation == "bottom" else H
-    uz = n_free * r.u_nodes[frame, row, cols.start:cols.stop + 1, 1].astype(np.float64)
-    out["swelling"] = float(uz.mean() / H_um)
-    out["surface_rough"] = float(uz.std() / H_um)
+    # Tier 1: free-edge surface (or interior strain when cropped)
+    if zc == 0:
+        n_free = 1.0 if orientation == "bottom" else -1.0
+        row = 0 if orientation == "bottom" else H
+        uz = n_free * r.u_nodes[frame, row, cols.start:cols.stop + 1, 1].astype(np.float64)
+        out["swelling"] = float(uz.mean() / H_um)
+        out["surface_rough"] = float(uz.std() / H_um)
+    else:
+        up = r.u_nodes[frame, zc, cols.start:cols.stop + 1, 1].astype(np.float64)
+        lo = r.u_nodes[frame, H - zc, cols.start:cols.stop + 1, 1].astype(np.float64)
+        out["swelling"] = float((up.mean() - lo.mean()) / H_um)
+        out["surface_rough"] = float(up.std() / H_um)
     out["sxx_mean_MPa"] = _mean(F["sxx"])
     out["syy_mean_MPa"] = _mean(F["syy"])
 
     pore = lab == PORE
     por = _porosity(F["J"], pore)
-    por0 = _porosity(r.fields["J"][0][:, cols], pore)
+    por0 = _porosity(r.fields["J"][0][rows, cols], pore)
     out["porosity"] = por
     out["porosity_change"] = por - por0
     out["porosity_rel_change"] = por / por0 - 1.0 if por0 and np.isfinite(por0) else float("nan")
@@ -114,20 +136,23 @@ def region_metrics(r: SimResult, frame: int, cols: slice, orientation: str, p: d
     return out
 
 
-def _first_pore_closure_s(r: SimResult, p: dict) -> float:
-    pore = r.labels == PORE
+def _first_pore_closure_s(r: SimResult, p: dict, z_edge_um: float = 0.0) -> float:
+    zc = _z_rows(r.labels.shape[0], r.px_um, z_edge_um)
+    rows = slice(zc, r.labels.shape[0] - zc)
+    pore = r.labels[rows] == PORE
     if not pore.any():
         return float("nan")
     for i, s in enumerate(r.s):
-        if bool(r.converged[i]) and np.any(r.fields["J"][i][pore] < p["pore"]["closure_J"]):
+        if bool(r.converged[i]) and np.any(r.fields["J"][i][rows][pore] < p["pore"]["closure_J"]):
             return float(s)
     return float("nan")
 
 
-def run_curves(r: SimResult, orientation: str, p: dict, window: bool) -> tuple[list[dict], list[dict]]:
+def run_curves(r: SimResult, orientation: str, p: dict, window: bool,
+               z_edge_um: float = 0.0) -> tuple[list[dict], list[dict]]:
     H, W = r.labels.shape
     feat = p["features"]
-    fpc = _first_pore_closure_s(r, p)
+    fpc = _first_pore_closure_s(r, p, z_edge_um)
     if window:
         tiles: list[slice] = []
         site_cols = slice(0, W)
@@ -141,10 +166,10 @@ def run_curves(r: SimResult, orientation: str, p: dict, window: bool) -> tuple[l
 
     site_rows, tile_rows = [], []
     for i in range(len(r.s)):
-        site_rows.append({**head(i), **region_metrics(r, i, site_cols, orientation, p)})
+        site_rows.append({**head(i), **region_metrics(r, i, site_cols, orientation, p, z_edge_um)})
         for t, sl in enumerate(tiles):
             tile_rows.append({**head(i), "tile": t, "tile_x0_um": sl.start * r.px_um,
-                              "tile_x1_um": sl.stop * r.px_um, **region_metrics(r, i, sl, orientation, p)})
+                              "tile_x1_um": sl.stop * r.px_um, **region_metrics(r, i, sl, orientation, p, z_edge_um)})
     return site_rows, tile_rows
 
 

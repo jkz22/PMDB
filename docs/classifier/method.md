@@ -24,7 +24,7 @@ flowchart LR
   L --> M[explanation: stage-1 importance x z vs Batch_3]
 ```
 
-The tile grid is the FEM grid: 6 tiles of equal width between 10 µm margins (200 px at 0.1 µm) of the central region (`fem_grid_slices`). KPIs are recomputed on this grid by `pmdb/classify/kpi_tiles.py` (a copy of the `pmdb.kpis` tile loop with the slices as an argument; `pmdb/kpis` is untouched). The FEM table is read through one loader (`load_fem_tile_curves`) that knows the `tile_curves.csv` schema of `fem-build.md` section 2.1 (`sym` rows, tiles 0..5, frames 0..10).
+The tile grid is the FEM grid: 6 tiles of equal width between 20 µm margins (200 px at 0.1 µm) of the central region (`fem_grid_slices`). KPIs are recomputed on this grid by `pmdb/classify/kpi_tiles.py` (a copy of the `pmdb.kpis` tile loop with the slices as an argument; `pmdb/kpis` is untouched). The FEM table is read through one loader (`load_fem_tile_curves`) that knows the `tile_curves.csv` schema of `fem-build.md` section 2.1 (`sym` rows, tiles 0..5, frames 0..10).
 
 ## 3. Features
 

@@ -247,3 +247,34 @@ def test_gif_synthetic_site():
     assert len(data) <= 2_000_000
     assert im.size[0] in (900, 720, 600)
     assert info["bytes"] == len(data)
+
+
+def test_features_z_edge_default_identical():
+    lab = np.full((20, 40), GRAPHITE, dtype=np.uint8)
+    lab[5, 5] = PORE
+    r = _synthetic(lab)
+    r.fields["J"][4, 5, 5] = 0.05
+    p = load_params()
+    for o in ("bottom", "top"):
+        a = run_curves(r, o, p, window=True)
+        b = run_curves(r, o, p, window=True, z_edge_um=0.0)
+        assert str(a) == str(b)
+        assert str(region_metrics(r, 5, slice(0, 40), o, p)) == str(region_metrics(r, 5, slice(0, 40), o, p, 0.0))
+
+
+@pytest.mark.parametrize("orientation", ["bottom", "top"])
+def test_features_z_edge_cropped(orientation):
+    lab = np.full((100, 40), GRAPHITE, dtype=np.uint8)
+    lab[2, 5] = PORE  # inside the 3 um (30 row) edge band
+    r = _synthetic(lab, orientation)
+    r.fields["J"][:, 2, 5] = 0.05
+    r.fields["vm"][5, :30, :] = 99.0
+    p = load_params()
+    m = region_metrics(r, 5, slice(0, 40), orientation, p, z_edge_um=3.0)
+    assert m["swelling"] == pytest.approx(0.1, rel=1e-5)  # linear uz: interior strain = slope
+    assert m["surface_rough"] == pytest.approx(0.0, abs=1e-9)
+    assert m["q99_vm_gr"] == pytest.approx(1.0)  # edge rows excluded
+    assert np.isnan(m["pore_closed_frac"])  # the only pore sits in the dropped band
+    site, _ = run_curves(r, orientation, p, window=True, z_edge_um=3.0)
+    assert np.isnan(site[0]["first_pore_closure_s"])
+    assert region_metrics(r, 5, slice(0, 40), orientation, p)["q99_vm_gr"] == pytest.approx(99.0)
