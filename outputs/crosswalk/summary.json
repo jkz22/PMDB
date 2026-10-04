@@ -1,0 +1,43 @@
+{
+  "F02_soc100_pore_loss~pore_closed_frac": {
+    "spearman": 0.7286478227654698,
+    "p": 1.0294946183929875e-06
+  },
+  "F02_soc100_pore_loss~porosity_rel_change": {
+    "spearman": -0.6051948051948052,
+    "p": 0.00014952666432833502
+  },
+  "K01_si_frac_adm~swelling": {
+    "spearman": 0.9052711993888465,
+    "p": 1.9473486062453437e-13
+  },
+  "K01_si_frac_adm~porosity_rel_change": {
+    "spearman": -0.5226890756302521,
+    "p": 0.001517337163749062
+  },
+  "F02_soc100_into_graphite~surface_rough": {
+    "spearman": -0.3567608861726509,
+    "p": 0.0383444444144098
+  },
+  "F02_soc100_into_graphite~porosity_rel_change": {
+    "spearman": 0.27333842627960275,
+    "p": 0.1177792787718892
+  },
+  "partial[pore_closed_frac~F02_soc100_pore_loss|K01]": {
+    "spearman": 0.492436974789916,
+    "p": 0.0030915796273152875
+  },
+  "partial[pore_closed_frac~F02_soc100_into_graphite|K01]": {
+    "spearman": -0.09304812834224599,
+    "p": 0.6006938539085438
+  },
+  "partial[porosity_rel_change~F02_soc100_pore_loss|K01]": {
+    "spearman": -0.45210084033613446,
+    "p": 0.007267477781498122
+  },
+  "partial[porosity_rel_change~F02_soc100_into_graphite|K01]": {
+    "spearman": -0.020932009167303284,
+    "p": 0.9064631214144443
+  },
+  "n_sites": 34
+}

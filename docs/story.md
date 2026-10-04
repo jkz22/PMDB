@@ -139,3 +139,13 @@ backbone (as in v2) is the right model for the lithiation geometry: no. The cons
 five mask fractions at site R² 0.91 and a spine adds nothing; pore loss gains ≈ 0.05 site R² from
 MicroNet features (n.s. on 31 fields). MicroNet > DINOv2 throughout, as in v2. The segmentation is the
 model; the deep embedding is a lossy re-estimate of it.
+
+**Addendum (cross-session crosswalk, `docs/crosswalk.md`).** Put next to each other: (i) the held-out calls
+of every session agree on 3e122cbj (Batch 1, the only field outside the Batch 3 baseline) and fn0mhxef
+(Batch 3); xrv9xvzb splits exactly along the story's fault line — arrangement-reading methods say Batch 2,
+scalar composition/geometry methods say Batch 3. (ii) The 13-second geometric swelling test predicts the
+FEM's pore closure at ρ 0.73 (0.49 after removing Si fraction), so pore-closure ranking does not need the
+FEM. (iii) Run per depth band, pore loss follows the fingerprint's depth profile (Batch 2 mid-depth dip,
+KW p 0.003; constrained share depth-independent): the arrangement difference *is* the depth profile of
+pore-closure risk.
+
