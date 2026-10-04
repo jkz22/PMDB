@@ -76,6 +76,15 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 - D17 (user, 2026-10-03: "this is a hackathon, not a scientific paper") SCOPE CUT: D13 SiOx full run and D14 robustness
   sweeps are REMOVED. Only the default pure-Si configuration runs (34 sites × 2 foil orientations). D13/D14 above are
   superseded; no SiOx gate (G4x), no sweep config/mode, no Spearman robustness filter. Prefer pragmatic scope.
+- D20 (Claude under delegated physics judgment + full autonomy, 2026-10-04 ~01:00) MECHANICS MODEL SWITCH: production
+  uses SMALL-STRAIN LINEAR ELASTICITY with LOGARITHMIC eigenstrain (ε* = ln λ per axis, out-of-plane ε*_yy -> σ_yy,
+  plane strain), one linear MUMPS solve per SOC frame, phase properties evaluated at each frame's s. Supersedes the
+  finite-strain choice (lit review: finite strain needed for accurate Si magnitudes). Reason: finite-strain NH with
+  void-soft pores cannot converge on real microstructures — Si crushes thin pore slivers to J -> 0 within s ≈ 0.02-0.08;
+  ladder rungs 1-3 and a C1 compaction barrier (P30) all failed (fem-build.implementer-s7.md); contact mechanics is out of
+  hackathon scope. Consequences (document in method.md limitations): absolute stresses not physical (relative features
+  only); linear J = 1 + ε_xx + ε_zz can fall below 0 in pores ("over-closure", caught by the closure flag); features,
+  tiles, GIFs, schema unchanged. Finite-strain path kept in code as a reference (unit tests), not used in production.
 - D18 (user, 2026-10-03) CLASSIFIER ARCHITECTURE:
   - Input: curated summaries, ~10-20 physically meaningful scalars per tile from tile_curves (e.g. swelling @50%/100%
     SOC, pore area left @100%, first pore-closure SOC, p95 Si von Mises @100%, interface stress, curve slopes 0-25% and

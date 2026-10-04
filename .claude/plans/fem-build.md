@@ -595,3 +595,13 @@ Decision P30 — **pore compaction barrier** (PORE phase only): ψ_pore = ψ_NH(
 Fallback if the window still fails before s = 1: J_c 0.5 and κ = 5000 MPa (one run), then rung 4 (accept NaN frames).
 Unit test: 1-cell pore under prescribed compression — energy and stress identical to plain NH for J ≥ J_c, finite and
   increasing for J < J_c; and test_t6_soft_pores must still pass (its frame-1 assertions at J ≥ 0.43 are unaffected).
+
+### Round 5 (2026-10-04, dispatcher decision D20) — trigger: P30 made convergence worse (fem-build.implementer-s7.md)
+P31 — production mechanics = small-strain linear elasticity, plane strain, logarithmic eigenstrain:
+  ε_e(3D) = [sym∇u − diag(ln λx, ln λz)] in-plane, ε_e,yy = −ln λy; σ = λ_L tr(ε_e) I + 2μ ε_e (3D, report sxx, szz, sxz, syy);
+  μ, λ_L per phase from E(s), ν(s) at the frame's s (DG0, same props_fn and label map). One dolfinx LinearProblem (MUMPS)
+  per frame, frames = 11 targets (no substepping; s* extra target not needed). Same BCs/orientations, same SimResult schema:
+  u_nodes, J := 1 + ε_xx + ε_zz (total small strain), vm, p from σ, converged = True unless the solve raises (then NaN frame,
+  error recorded). No compaction barrier. fem.yaml: `mechanics: linear` (finite path selectable for tests).
+Tests: free-expansion T1a for linear = total strain equals ln λ, stress < 1e-8·E; bilayer small-strain closed forms
+  unchanged; finite-strain tests keep running against the finite solver. Pore-closure flag: J < closure_J (may be ≤ 0).
