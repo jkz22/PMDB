@@ -2,6 +2,7 @@
 domain A = strong-session PMDB BSE tiles (hybrid-corrected), domain B = all other labelled sites; then translate
 the full strong-site BSE images A->B. Experimental route; see docs/harmonisation_shift.md."""
 import modal, os, sys
+from pathlib import Path
 
 app = modal.App("pmdb-cut")
 vol = modal.Volume.from_name("pmdb-cut", create_if_missing=True)
@@ -31,14 +32,14 @@ def train(n_epochs: int = 60, n_decay: int = 20, mode: str = "FastCUT"):
     return r.returncode
 
 @app.function(gpu="T4", timeout=3600, image=image, volumes={"/data": vol})
-def translate(epoch: str = "latest"):
+def translate(epoch: str = "latest", inputs: str = "strong_full.npz"):
     import numpy as np, torch, sys
     sys.path.insert(0, "/cut"); os.chdir("/cut")
     from models import networks
     G = networks.define_G(3, 3, 64, "resnet_9blocks", "instance", False, "xavier", 0.02, no_antialias=False, no_antialias_up=False, gpu_ids=[0], opt=None)
     sd = torch.load(f"/data/checkpoints/pmdb_cut/{epoch}_net_G.pth", map_location="cuda")
     G.load_state_dict(sd); G.eval()
-    z = np.load("/data/strong_full.npz"); out = {}
+    z = np.load(f"/data/{inputs}"); out = {}
     with torch.no_grad():
         for k in z.files:
             img = z[k].astype(np.float32) / 127.5 - 1
@@ -53,13 +54,18 @@ def translate(epoch: str = "latest"):
             res = np.where(cnt > 0, res / np.maximum(cnt, 1), img)
             out[k] = np.clip((res + 1) * 127.5, 0, 255).astype(np.uint8)
             print(k, "done", flush=True)
-    np.savez_compressed(f"/data/translated_{epoch}.npz", **out)
+    tag = Path(inputs).stem
+    np.savez_compressed(f"/data/translated_{epoch}_{tag}.npz" if tag != "strong_full" else f"/data/translated_{epoch}.npz", **out)
     vol.commit()
     return list(out)
 
 @app.local_entrypoint()
-def main(stage: str = "train", epochs: int = 60, decay: int = 20):
-    if stage == "upload":
+def main(stage: str = "train", epochs: int = 60, decay: int = 20, inputs: str = "strong_full.npz"):
+    if stage == "upload-inputs":  # extra translation inputs, e.g. translate_inputs.npz from eval_cut.py --prepare-inputs
+        with vol.batch_upload(force=True) as b:
+            b.put_file(inputs, "/" + Path(inputs).name)
+        print("uploaded", inputs)
+    elif stage == "upload":
         with vol.batch_upload(force=True) as b:
             b.put_file("patches.npz", "/patches.npz"); b.put_file("strong_full.npz", "/strong_full.npz")
         print("uploaded")
@@ -68,5 +74,5 @@ def main(stage: str = "train", epochs: int = 60, decay: int = 20):
         print("train rc", rc)
         if rc == 0:
             print(translate.remote("latest"))
-    else:
-        print(translate.remote(stage))
+    else:  # stage = checkpoint epoch tag ("latest", "8", ...)
+        print(translate.remote(stage, Path(inputs).name))

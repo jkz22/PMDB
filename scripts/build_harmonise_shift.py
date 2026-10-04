@@ -49,6 +49,12 @@ def _load_all(sites: pd.DataFrame, clean_root: Path | None):
     return data
 
 
+def _lut_all(sites: pd.DataFrame, data) -> dict:
+    """hybrid_spectrum input: the same grey after the per-site hybrid LUT (masks unchanged)."""
+    return {(b, s, d): (S.hybrid_lut_grey(b, s, d, data[(b, s, d)][0]), data[(b, s, d)][1])
+            for b, s in zip(sites.batch, sites.site) for d in S.DETECTORS}
+
+
 def _fit(method: str, sites: pd.DataFrame, data, fda_sites: list[str]) -> dict:
     models = {}
     for d in S.DETECTORS:
@@ -56,9 +62,9 @@ def _fit(method: str, sites: pd.DataFrame, data, fda_sites: list[str]) -> dict:
         keys = [f"{b}/{s}" for b, s in zip(sites.batch, sites.site)]
         imgs = [data[(b, s, d)][0] for b, s in zip(sites.batch, sites.site)]
         vals = [C.valid_for_stats(data[(b, s, d)][1]) for b, s in zip(sites.batch, sites.site)]
-        if method == "spectrum":
+        if method in S.SPECTRUM_METHODS:
             models[d] = S.spectrum_fit(imgs, vals, keys)
-            print(f"  spectrum/{d}: reference amplitude at f=0.1/0.3/0.5 c/px = "
+            print(f"  {method}/{d}: reference amplitude at f=0.1/0.3/0.5 c/px = "
                   f"{models[d].reference[13]:.1f}/{models[d].reference[38]:.1f}/{models[d].reference[63]:.1f} ({time.time() - t0:.0f}s)", flush=True)
         else:
             sel = [i for i, s in enumerate(sites.site) if s in fda_sites]
@@ -76,7 +82,7 @@ def _apply(method: str, sites: pd.DataFrame, data, models: dict, root: Path) -> 
         for d in S.DETECTORS:
             img, mask = data[(b, s, d)]
             valid = C.valid_for_stats(mask)
-            if method == "spectrum":
+            if method in S.SPECTRUM_METHODS:
                 out, h = S.spectrum_apply(img, valid, models[d])
                 for i in REPORT_BINS:
                     row[f"{d}_H_f{f[i]:.2f}"] = float(h[i])
@@ -124,12 +130,16 @@ def main() -> None:
             print(f"  no held-out clean outputs under {hroot}; skipping", flush=True)
     for m in args.methods:
         print(f"== {m}", flush=True)
-        models = _fit(m, sites, data, fda_sites)
+        dm, hm = (data, hdata if heldout is not None else None)
+        if m == "hybrid_spectrum":
+            dm = _lut_all(sites, data)
+            hm = _lut_all(heldout, hdata) if heldout is not None else None
+        models = _fit(m, sites, dm, fda_sites)
         S.save_models(Path(args.out), m, models)
-        _apply(m, sites, data, models, Path(args.out))
+        _apply(m, sites, dm, models, Path(args.out))
         if heldout is not None:
             S.save_models(Path(args.out_heldout), m, models)
-            _apply(m, heldout, hdata, models, Path(args.out_heldout))
+            _apply(m, heldout, hm, models, Path(args.out_heldout))
     print("done")
 
 

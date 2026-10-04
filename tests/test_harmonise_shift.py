@@ -126,3 +126,14 @@ def test_corner_frequencies_do_not_enter_the_nyquist_bin():
     prof = lambda a: np.bincount(bins.ravel(), a.ravel(), minlength=S.N_BINS + 1)[:S.N_BINS]
     assert np.array_equal(prof(F), prof(F2))
     assert bins.max() == S.N_BINS and (bins == S.N_BINS).sum() > 0
+
+
+def test_hybrid_spectrum_is_a_spectrum_model_and_lists_as_a_method(tmp_path):
+    assert "hybrid_spectrum" in S.METHODS and "hybrid_spectrum" in S.SPECTRUM_METHODS
+    rng = np.random.default_rng(0)
+    img = rng.normal(100, 10, (600, 600)).astype(np.float32)
+    sm = {"BSE": S.spectrum_fit([img], [np.ones(img.shape, bool)], ["a"])}
+    S.save_models(tmp_path, "hybrid_spectrum", sm)
+    back = S.load_models(tmp_path, "hybrid_spectrum")
+    assert isinstance(back["BSE"], S.SpectrumModel)
+    np.testing.assert_allclose(back["BSE"].reference, sm["BSE"].reference, rtol=1e-6)
