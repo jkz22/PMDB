@@ -88,3 +88,13 @@ header.top nav { flex-wrap: nowrap; }
 header.top nav button { white-space: nowrap; }
 .view > .row:not(.grow), .view > .card, .view > .head, .view > .lede { flex-shrink: 0; }
 #view-explorer .grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 6px; }
+.emb-wrap { overflow-x: auto; }
+.emb-grid { display: grid; gap: 2px; align-items: center; min-width: 900px; }
+.emb-corner, .emb-pc { font-size: 10px; color: var(--muted); font-family: var(--mono); text-align: center; }
+.emb-corner { text-align: left; }
+.emb-row { font-size: 13px; white-space: nowrap; }
+.emb-cell { height: 26px; border-radius: 3px; border: 1px solid var(--hair); cursor: crosshair; }
+.emb-tip { position: fixed; z-index: 10; max-width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.12); pointer-events: none; display: flex; flex-direction: column; gap: 4px; }
+.emb-tip[hidden] { display: none; }
+.emb-stories { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }

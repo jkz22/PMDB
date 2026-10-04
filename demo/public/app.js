@@ -24,6 +24,7 @@ const VIEWS = [
   { id: 'calls', title: 'Held-out calls' },
   { id: 'reject', title: 'Reject a shipment' },
   { id: 'explorer', title: 'Site explorer' },
+  { id: 'embeddings', title: 'Test calls' },
 ];
 
 // ---------------------------------------------------------------- html helper
@@ -461,6 +462,68 @@ async function autoplay() {
   go('explorer'); await w(5000);
   document.body.dataset.autoplayDone = '1';
 }
+
+// ---------------------------------------------------------------- test calls: probe embeddings
+const SITE_STORY = {
+  '0eryguqq': 'Reads as Batch 3 across the whole image: a denser Si particle population with more Si area and porosity than a Batch 2 crop, consistent through the coating depth.',
+  fhwrjtet: 'Same picture as 0eryguqq: Batch-3-like Si area fraction, particle density and porosity, holding through the depth.',
+  fspqbkxl: 'Leans Batch 2, but mostly on fine texture our microstructure measurements do not capture; the measurable differences (Si fraction, Si–graphite contact) are small.',
+  '4hq27w4c': 'Near tie between Batch 2 and Batch 1. Slightly more porosity and Si area, and fewer Si particles, than a Batch 1 crop.',
+  y59rxmxl: 'Leans Batch 1: lower Si area fraction and fewer Si particles than a Batch 2 crop, with less Si–graphite contact.',
+  soo2ax3r: 'Leans Batch 1: fewer but larger Si particles (lower density, higher Si area) than a Batch 2 crop, most visible deeper in the coating.',
+};
+const KPI_NAME = { si_frac: 'Si area fraction', si_density_per_1000um2: 'Si particle density', si_mean_area_um2: 'Si particle size',
+  si_graphite_contact_frac: 'Si–graphite contact', porosity: 'porosity', depth_frac: 'depth position' };
+function pcStory(label, r2, explained) {
+  if (!explained) return `Fine texture not captured by our microstructure measurements (KPIs explain ${Math.round(r2 * 100)}% of it).`;
+  const parts = label.split(',').map((s) => s.trim()).map((s) => (s[0] === '+' ? 'more ' : 'less ') + s.slice(1).toLowerCase());
+  return `Patches high on this dimension show ${parts.join(' and ')} (KPIs explain ${Math.round(r2 * 100)}% of it).`;
+}
+
+R.embeddings = (root) => {
+  const P = M.D.probeTest || [], C = M.D.probeContrib || [];
+  const test = P.filter((r) => SITE_STORY[r.site]);
+  root.append(head('Final model · supervised probe on MicroNet patch embeddings', 'Why each test image got its call'));
+  const byPc = {};
+  for (const r of C) (byPc[r.pc] ||= []).push(Math.abs(+r.contribution));
+  const order = Object.keys(byPc).sort((a, b) => {
+    const ea = C.find((r) => r.pc === a).explained === 'True', eb = C.find((r) => r.pc === b).explained === 'True';
+    if (ea !== eb) return ea ? -1 : 1;
+    return byPc[b].reduce((x, y) => x + y) - byPc[a].reduce((x, y) => x + y);
+  });
+  const max = Math.max(...C.map((r) => Math.abs(+r.contribution)));
+  const tip = h('div', { class: 'emb-tip', hidden: true });
+  const grid = h('div', { class: 'emb-grid', style: `grid-template-columns: 220px repeat(${order.length}, minmax(10px, 1fr))` });
+  grid.append(h('div', { class: 'emb-corner' }, 'image · call · confidence'));
+  order.forEach((pc) => grid.append(h('div', { class: 'emb-pc' }, pc.slice(2))));
+  for (const s of test) {
+    const p = +s[`p_${s.call}`];
+    grid.append(h('div', { class: 'emb-row' }, h('b', { class: 'mono' }, s.site), ' ',
+      h('span', { style: `color:${BATCH_COLOR[s.call]};font-weight:650` }, short(s.call)), ` · ${p.toFixed(2)}`));
+    for (const pc of order) {
+      const r = C.find((x) => x.site === s.site && x.pc === pc);
+      const c = +r.contribution, a = Math.min(1, Math.abs(c) / max) ** 0.5;
+      const cell = h('div', { class: 'emb-cell', style: `background:${c >= 0 ? `rgba(201,52,52,${a})` : `rgba(42,120,214,${a})`}` });
+      cell.addEventListener('mouseenter', (e) => {
+        tip.hidden = false;
+        tip.replaceChildren(h('b', {}, `${pc} · ${s.site}`), h('div', {}, pcStory(r.label, +r.r2, r.explained === 'True')),
+          h('div', { class: 'mono' }, `${c >= 0 ? 'pushes toward' : 'pushes away from'} ${short(s.call)} (vs ${short(s.runner_up)}): ${c.toFixed(2)} logit`));
+        tip.style.left = `${e.clientX + 14}px`; tip.style.top = `${e.clientY + 14}px`;
+      });
+      cell.addEventListener('mouseleave', () => { tip.hidden = true; });
+      grid.append(cell);
+    }
+  }
+  root.append(card('64 embedding dimensions × 6 test images — red pushes toward the call, blue against; KPI-explained dimensions on the left',
+    h('div', { class: 'emb-wrap' }, grid)), tip);
+  root.append(h('div', { class: 'emb-stories' }, ...test.map((s) => {
+    const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
+    return card(`${s.site} → ${short(s.call)} · confidence ${(+s[`p_${s.call}`]).toFixed(2)}`,
+      h('p', {}, SITE_STORY[s.site]),
+      h('p', { class: 'src' }, `${Math.round(+s.explained_share * 100)}% of the judgement maps onto measured microstructure · strongest: ` +
+        nets.map(([k, v]) => `${v >= 0 ? '+' : '−'}${KPI_NAME[k]}`).join(', ')));
+  })));
+};
 
 buildShell();
 window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (VIEWS.some((x) => x.id === v) && v !== state.view) { state.view = v; render(); } });

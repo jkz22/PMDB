@@ -41,6 +41,8 @@ const SOURCES = {
   heldoutSiteKpis: 'outputs/heldout/kpis/site_kpis.csv',
   femValidation: 'outputs/fem/validation.csv',
   femRunLog: 'outputs/fem/run_log.json',
+  probeTest: 'outputs/probe_explain/test_final_predictions.csv',
+  probeContrib: 'outputs/probe_explain/test_contributions.csv',
 };
 
 const MIME = {
