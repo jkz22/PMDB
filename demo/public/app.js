@@ -531,7 +531,6 @@ R.embeddings = (root) => {
         h('a', { href: `/evidence/${s.site}.png`, target: '_blank', title: 'Open full size' },
           h('img', { src: `/evidence/${s.site}.png`, alt: `Evidence map for ${s.site}`, class: 'evidence' }))),
       ...(evidenceIsStale(EVIDENCE_CALL, s.site, s.call) ? [h('p', { class: 'src' }, `Evidence map was rendered for the call ${EVIDENCE_CALL[s.site] ? short(EVIDENCE_CALL[s.site]) : 'unknown'}; the loaded call is ${short(s.call)}, so the map may not match.`)] : []),
-      h('div', { class: 'src' }, 'Si particles and pores: red where they support the call, blue where they argue against · graphite stays grey'),
       h('p', {}, SITE_STORY[s.site].text),
       ...(storyIsStale(SITE_STORY[s.site], s.call) ? [h('p', { class: 'src' }, `Explanation written when this site was called ${short(SITE_STORY[s.site].call)}; the loaded call is ${short(s.call)}, so the text may be out of date. Chips and bars are from the loaded data.`)] : []),
       h('div', { class: 'ev' },
