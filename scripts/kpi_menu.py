@@ -2,7 +2,8 @@
 
     python scripts/kpi_menu.py
 
-Writes outputs/menu/kpi_menu_predictions.csv and outputs/menu/kpi_menu_summary.csv.
+Writes outputs/menu/kpi_menu_predictions.csv, outputs/menu/kpi_menu_summary.csv and the standalone model's
+LOPO predictions outputs/kpis/kpi_pca/lopo_predictions.csv.
 """
 from __future__ import annotations
 
@@ -83,6 +84,14 @@ def main() -> None:
         out[f"call_{o}"], out[f"correct_{o}"], out[f"flag_{o}"] = call[o], correct[o], flag[o]
     out.to_csv(ROOT / "outputs" / "menu" / "kpi_menu_predictions.csv", index=False)
     summ.to_csv(ROOT / "outputs" / "menu" / "kpi_menu_summary.csv", index=False)
+
+    # Standalone KPI-PCA model in the shared per-model schema (site, assigned, confidence, p_*),
+    # LOPO predictions for all 34 labelled sites; `high` is its global flag rule.
+    model = df[["site", "true"]].assign(assigned=call["kpi_pca"], confidence=p_kpi.max(1), high=flag["kpi_pca"])
+    for i, b in enumerate(B):
+        model[f"p_{b}"] = p_kpi[:, i]
+    (ROOT / "outputs" / "kpis" / "kpi_pca").mkdir(exist_ok=True)
+    model.to_csv(ROOT / "outputs" / "kpis" / "kpi_pca" / "lopo_predictions.csv", index=False)
     print(summ.round(3).to_string(index=False))
     print()
     print(pd.DataFrame(held).round(3).to_string(index=False))
