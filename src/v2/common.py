@@ -48,13 +48,21 @@ def harm_method(h) -> str:
     return str(h)
 
 
+EXT_TRIM = 2  # pmdb.harmonise_ext keeps the 4-px full-res border columns (flags them); cache/half crops them -> 2 px at half-res
+
+
+def trim_ext(img: np.ndarray) -> np.ndarray:
+    """Align an imported-harmonisation array to the cache/half crop grid (verified: 2-px shift, corr 0.9997)."""
+    return img[:, EXT_TRIM:-EXT_TRIM]
+
+
 def load_half_raw(batch: str, site: str, harm: str = "none") -> np.ndarray:
     """uint8 (H,W,3) at 50 nm/px. ``harm`` in HARM_METHODS reads cache/harmonised/<harm>/half/
     (byte-identical to pmdb.io.load_site(..., normalise='none', harmonise=harm))."""
     if harm in HARM_METHODS:
         return np.load(CACHE.parent / "harmonised" / harm / "half" / f"{batch}__{site}.npz")["image"]
     if harm in EXT_METHODS:  # stored uint8: nyul = standard scale, basic = raw - b_i + 64 (pmdb.harmonise_ext.store_scale)
-        return np.load(CACHE.parent / "harmonised_ext" / harm / "half" / f"{batch}__{site}.npz")["image"]
+        return trim_ext(np.load(CACHE.parent / "harmonised_ext" / harm / "half" / f"{batch}__{site}.npz")["image"])
     if harm in CLEAN_METHODS:
         return load_half_clean(batch, site, harm)[0]
     return np.load(CACHE / f"{batch}__{site}.npz")["image"]

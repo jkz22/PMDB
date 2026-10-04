@@ -29,7 +29,7 @@ from sklearn.model_selection import LeaveOneGroupOut, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.v2.common import CROP, EXT_METHODS, OUT, REPO, grid, harm_method
+from src.v2.common import CROP, EXT_METHODS, OUT, REPO, grid, harm_method, trim_ext
 from src.v2.data import NAIVE_BLUR, VIEWS, normalise_percentile, naive_transform, phase_labels
 from src.v2.kpi_adapter import GATED_COLS, kpi_cols
 from src.v2.latent_audit import load, targets
@@ -130,7 +130,7 @@ def _route_array(site: str, harm: str) -> tuple[np.ndarray, np.ndarray | None]:
         im[~v] = 0
         return im, v.all(-1)
     if harm in EXT_METHODS:
-        return np.load(root / "harmonised_ext" / harm / "half" / f"Batch_heldout__{site}.npz")["image"], None
+        return trim_ext(np.load(root / "harmonised_ext" / harm / "half" / f"Batch_heldout__{site}.npz")["image"]), None
     return np.load(root / "harmonised" / harm / "half" / f"Batch_heldout__{site}.npz")["image"], None
 
 

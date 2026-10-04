@@ -52,7 +52,8 @@ def route_of(c: dict) -> str:
 
 # ----------------------------------------------------------------------------------------------- references
 def kpi_reference() -> tuple[pd.DataFrame, pd.Series, pd.Series]:
-    f = pd.read_csv(OUT / "kpis" / "baseline_field_kpis.csv").set_index("group_id")[KPIS]
+    crops = pd.concat([pd.read_csv(OUT / "kpis" / f"crop_kpis_{k}.csv") for k in ("train", "eval")], ignore_index=True)
+    f = crops.drop_duplicates(["group_id", "y", "x"]).groupby("group_id")[KPIS].mean()  # field KPI = mean over its crops
     b3 = f[f.index.str.startswith("Batch_3")]
     return f, b3.mean(), b3.std(ddof=1)
 
@@ -73,7 +74,8 @@ def heldout_imaging(site: str) -> dict:
 
 def heldout_kpis() -> pd.DataFrame:
     p = pd.read_csv(OUT / "predict_heldout_kpi.csv")
-    p = p[p.field.str.startswith("Batch_heldout")]
+    p = p[p.field.str.contains("Batch_heldout")].copy()
+    p["field"] = "Batch_heldout/" + p.field.str.extract(r"Batch_heldout__([a-z0-9]+)")[0]
     return p.pivot(index="field", columns="kpi", values="value")[KPIS]
 
 
