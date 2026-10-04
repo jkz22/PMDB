@@ -75,6 +75,21 @@ def heldout_table(arm, tr, te, codes, batches, names_cols):
     return df, imp
 
 
+def check_null_matches_table(raw: dict, fem: Path, default_rel: str) -> None:
+    """Refuse nulls generated from a different FEM table than the one being evaluated."""
+    import hashlib
+
+    want = raw.get("fem_sha256")
+    if want is None:  # legacy null file: only trustworthy for the default table
+        if Path(fem).resolve() != (ROOT / default_rel).resolve():
+            raise SystemExit(f"null file has no table hash and {fem} is not the default {default_rel}; "
+                             "regenerate it with modal_eval.py")
+        return
+    if hashlib.sha256(Path(fem).read_bytes()).hexdigest() != want:
+        raise SystemExit(f"permutation null was built from {raw.get('fem_table')} (sha256 mismatch with {fem}); "
+                         "p-values would be invalid: rerun modal_eval.py for this table")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tag", default="main", choices=sorted(TAG_ARMS))
@@ -96,6 +111,7 @@ def main() -> int:
     if not null_file.exists():
         raise SystemExit(f"{null_file} missing: run `modal run modal_eval.py --tag {args.tag}` first")
     raw = json.loads(null_file.read_text())
+    check_null_matches_table(raw, fem, DEFAULT_FEM[args.tag])
     seed = raw["seed"]
     if raw["n_perm"] < 1000:
         raise SystemExit("D22 requires >= 1000 permutations")

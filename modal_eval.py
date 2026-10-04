@@ -11,6 +11,7 @@ scripts/xgb_kpi_eval.py then reloads that file.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -43,6 +44,26 @@ def perm_chunk(arm, tr, codes, n_classes, seed, ks):
     return {"arm": arm, "ks": [int(k) for k in ks], "acc": vals, "wall_s": _t.time() - t0}
 
 
+def ledger_rows(calls, outs, tag, utc):
+    """Ledger rows for every launched chunk (failed ones at the worst-case TIMEOUT_S), ok results, failures."""
+    import modal_fem
+
+    rows, res, bad = [], [], []
+    for (arm, _tr, _codes, _n, _seed, ks), o in zip(calls, outs):
+        failed = isinstance(o, BaseException)
+        wall = float(TIMEOUT_S) if failed else float(o["wall_s"])
+        if failed:
+            bad.append(f"{arm} k{ks[0]}-{ks[-1]}: {type(o).__name__}: {o}")
+        else:
+            res.append(o)
+        rows.append({"utc": utc, "mode": "xgb_perm", "tag": tag, "batch": "-", "site": arm,
+                     "orientation": f"k{ks[0]}-{ks[-1]}", "attempt": 1, "cpu": CPU, "memory_mb": MEMORY_MB,
+                     "timeout_s": TIMEOUT_S, "wall_s": round(wall, 1),
+                     "cost_usd": round(modal_fem.cost_usd(wall, CPU, MEMORY_MB), 4),
+                     "status": "lost" if failed else "ok"})
+    return rows, res, bad
+
+
 @app.local_entrypoint()
 def main(tag: str = "main", n_perm: int = 1000, n_chunks: int = 50, seed: int = 0):
     import numpy as np
@@ -67,15 +88,13 @@ def main(tag: str = "main", n_perm: int = 1000, n_chunks: int = 50, seed: int = 
         raise SystemExit("BUDGET REFUSAL")
 
     t0 = time.time()
-    res = list(perm_chunk.starmap(calls))
+    outs = list(perm_chunk.starmap(calls, return_exceptions=True))
     wall = time.time() - t0
     utc = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    modal_fem.append_ledger([
-        {"utc": utc, "mode": "xgb_perm", "tag": tag, "batch": "-", "site": r["arm"],
-         "orientation": f"k{r['ks'][0]}-{r['ks'][-1]}", "attempt": 1, "cpu": CPU, "memory_mb": MEMORY_MB,
-         "timeout_s": TIMEOUT_S, "wall_s": round(r["wall_s"], 1),
-         "cost_usd": round(modal_fem.cost_usd(r["wall_s"], CPU, MEMORY_MB), 4), "status": "ok"}
-        for r in res])
+    rows, res, bad = ledger_rows(calls, outs, tag, utc)
+    modal_fem.append_ledger(rows)  # every launched chunk is billed, so ledger before any raise
+    if bad:
+        raise SystemExit(f"{len(bad)} of {len(calls)} chunks failed (all ledgered); first: {bad[0]}")
 
     null = {a: [None] * n_perm for a in arms}
     for r in res:
@@ -83,7 +102,9 @@ def main(tag: str = "main", n_perm: int = 1000, n_chunks: int = 50, seed: int = 
             null[r["arm"]][k] = v
     out = ROOT / "outputs/xgb_kpi" / tag
     out.mkdir(parents=True, exist_ok=True)
-    (out / "permutation_null.json").write_text(json.dumps({"seed": seed, "n_perm": n_perm, "null": null}))
+    (out / "permutation_null.json").write_text(json.dumps(
+        {"seed": seed, "n_perm": n_perm, "fem_table": FEM_TABLE[tag],
+         "fem_sha256": hashlib.sha256((ROOT / FEM_TABLE[tag]).read_bytes()).hexdigest(), "null": null}))
     cost = sum(modal_fem.cost_usd(r["wall_s"], CPU, MEMORY_MB) for r in res)
     print(f"done: wall {wall:.0f}s, summed container time {sum(r['wall_s'] for r in res):.0f}s, "
           f"ledgered cost ${cost:.2f}, ledger total ${modal_fem.ledger_total():.2f}")
