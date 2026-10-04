@@ -13,6 +13,7 @@ Run:
     modal run modal_patch_mil.py --mode menu     # 34-site (31 + 3 held-out truths) LOPO model menu + frozen selection
     modal run modal_test_prep.py::main           # prerequisite of --mode test: preprocess data_test/ on Modal
     modal run modal_patch_mil.py --mode probe    # supervised linear probe, LOPO, 34 sites
+    modal run modal_patch_mil.py --mode explain    # KPI-language explanation of the 34-site probe
     modal run modal_patch_mil.py --mode test     # embed + score new organiser test sites with the frozen selection
 
 See docs/patch_mil.md.
@@ -328,6 +329,66 @@ def probe_lopo(tag: str, labels: list[dict], parents: list[dict], menu: list[dic
     return out
 
 
+@app.function(volumes={"/data": data_vol, "/out": out_vol}, cpu=2.0, memory=8192, timeout=3600)
+def patch_kpis_site(tag: str, batch: str, site: str) -> list[dict]:
+    import numpy as np
+
+    from pmdb.io import load_site
+    from pmdb.probe_explain import patch_kpis
+    from pmdb.segment import segment
+
+    z = np.load(f"/out/{tag}/emb/{batch}__{site}.npz", allow_pickle=False)
+    cache_root = {"Batch_heldout": "/data/heldout", "Batch_test": "/data/test"}.get(batch, "/data")
+    raw = load_site(batch, site, resolution="half", normalise="none", cache_root=cache_root)
+    assert raw.image.shape[:2] == tuple(z["shape"])
+    rows = patch_kpis(segment(raw), z["coords"], raw.nm_per_px, f"{batch}/{site}/p224")
+    return [{"batch": batch, "site": site, **r} for r in rows]
+
+
+@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=1800)
+def probe_explain_fit(tag: str, labels: list[dict], kpi_records: list[dict]) -> dict:
+    import glob
+
+    import numpy as np
+    import pandas as pd
+
+    from pmdb import patch_probe as pp
+    from pmdb import probe_explain as pe
+
+    t0 = time.time()
+    out_vol.reload()
+    X, sb = {}, {}
+    for r in labels:
+        X[r["site"]] = _load_emb(tag, r["batch"], r["site"])[0]
+        sb[r["site"]] = r["label"]
+    assert len(X) == 34
+    sc, pca, clf = pp.fit_full_probe(X, sb)
+    Zs = {s: pca.transform(sc.transform(X[s])) for s in X}
+    K = pd.DataFrame(kpi_records)
+    parts = []
+    for r in labels:
+        k = K[K["site"] == r["site"]].sort_values("i")
+        assert len(k) == len(Zs[r["site"]]) and (k["i"].to_numpy() == np.arange(len(k))).all()
+        parts.append(k)
+    K = pd.concat(parts, ignore_index=True)
+    Z = np.concatenate([Zs[r["site"]] for r in labels])
+    pc, kr = pe.pc_kpi_regression(Z, K, pe.KPI_COLS)
+    pc["var_ratio"] = pca.explained_variance_ratio_
+    bd = pe.batch_directions(clf, pc)
+    rows = []
+    for r in labels:
+        rows.append({"batch": r["batch"], "site": r["site"], "label": r["label"]})
+        rows[-1].update({k: v for k, v in pe.explain_site(Zs[r["site"]], clf, pc).items() if k != "contrib"})
+    for f in sorted(glob.glob(f"/out/{tag}/emb/Batch_test__*.npz")):
+        site = Path(f).stem.split("__", 1)[1]
+        feat = np.load(f, allow_pickle=False)["feat"].astype(np.float32)
+        e = pe.explain_site(pca.transform(sc.transform(feat)), clf, pc)
+        rows.append({"batch": "Batch_test", "site": site, "label": "", **{k: v for k, v in e.items() if k != "contrib"}})
+    return {"pc_meanings": pc.to_dict("records"), "kpi_r2": kr.to_dict("records"),
+            "batch_directions": bd.to_dict("records"), "site_explanations": rows,
+            "elapsed_s": round(time.time() - t0, 2)}
+
+
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -342,11 +403,14 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
     from pmdb.parents import write_parent_groups
     from pmdb.patch_mil import fingerprint_comparison
 
-    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe"):
-        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe")
+    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain"):
+        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain")
     root = Path(__file__).resolve().parent
     if mode == "probe":
         _probe(root, n_perm, centre)
+        return
+    if mode == "explain":
+        _explain(root)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -440,6 +504,37 @@ def _probe(root: Path, n_perm: int = 200, centre: str = "none") -> None:
         print(f"{k:16s} acc {m['accuracy']:.3f} bal {m['balanced_accuracy']:.3f} f1 {m['macro_f1']:.3f} "
               f"all-high {m['rubric_all_high']:.3f} flag {m['rubric_flag_pmax_ge_0.5']:.3f}")
     print(f"perm {res['permutation']}; wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
+
+
+def _explain(root: Path) -> None:
+    import pandas as pd
+
+    from pmdb import probe_explain as pe
+    from pmdb.batch_menu import labelled_sites
+
+    t0 = time.time()
+    lab = labelled_sites()
+    out = root / "outputs" / "probe_explain"
+    if (out / "patch_kpis.csv").exists():
+        K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
+    else:
+        args = [("full", b, s) for b, s in zip(lab["batch"], lab["site"])]
+        K = pd.DataFrame([r for rows in patch_kpis_site.starmap(args) for r in rows])
+        _atomic_write(out / "patch_kpis.csv", K.to_csv(index=False).encode())
+    print("NaN fraction per KPI:\n" + K[pe.KPI_COLS].isna().mean().to_string())
+    res = probe_explain_fit.remote("full", lab.to_dict("records"), K.to_dict("records"))
+    for name in ("pc_meanings", "kpi_r2", "batch_directions", "site_explanations"):
+        _atomic_write(out / f"{name}.csv", pd.DataFrame(res[name]).to_csv(index=False).encode())
+    pc = pd.DataFrame(res["pc_meanings"])
+    pe.plot_pc_kpi_heatmap(pc, out / "pc_kpi_heatmap.png")
+    bd = pd.DataFrame(res["batch_directions"])
+    print(f"explained PCs: {int(pc['explained'].sum())} / {len(pc)}")
+    for b, g in bd.groupby("batch"):
+        print(f"{b} explainable_share {g['explainable_share'].iloc[0]:.3f}; {g['summary'].iloc[0]}")
+    se = pd.DataFrame(res["site_explanations"])
+    for s in ("3e122cbj", "fn0mhxef", "xrv9xvzb"):
+        print(s, se.loc[se["site"] == s, "sentence"].iloc[0])
+    print(f"wall {time.time() - t0:.0f}s, remote fit {res['elapsed_s']}s")
 
 
 def _menu_or_test(mode: str, root: Path) -> None:

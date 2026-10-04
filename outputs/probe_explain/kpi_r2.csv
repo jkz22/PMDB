@@ -1,0 +1,7 @@
+kpi,kpi_name,nan_frac,kept,r2,n_patches
+si_frac,Si area fraction,0.0,True,0.9065194059341539,1921
+si_density_per_1000um2,Si particle number density,0.0,True,0.7041469377901682,1921
+si_mean_area_um2,Si particle size,0.07198067632850241,True,0.5780348282125203,1921
+si_graphite_contact_frac,Si-graphite contact,0.07198067632850241,True,0.2524792923002621,1921
+porosity,porosity,0.0,True,0.839322872218439,1921
+depth_frac,depth position in the image,0.0,True,0.4102328047405269,1921

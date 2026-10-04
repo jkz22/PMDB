@@ -228,6 +228,29 @@ Permutation test (probe, previous run: 200 site-label permutations, parents fixe
 
 Verdict: probe+ensemble beats the ensemble on LOPO rubric all-high (1.412 vs 1.235) and balanced accuracy (0.630 vs 0.597), so by the pre-set criterion it is adopted as the better candidate. Caveats: 34 sites from 13 parents, one configuration, and the improvement is a few sites; Batch 1 recall remains weak for the probe alone (0.38). Prior evidence: the v2 fine-tune reached only 0.64 accuracy with Batch 2 recall 0.20 under field-grouped CV, so a frozen-feature linear probe is the better-behaved supervised route.
 
+### Explaining the probe in KPI terms
+
+Method (`pmdb/probe_explain.py`): the probe is refitted once on all 34 labelled sites (`fit_full_probe`, same config as a LOPO fold, no parent centring). 7 cheap KPIs are computed with direct numpy/scipy.ndimage on the exact 224 px embedding patches (segmentation on unharmonised raw; no null simulations or point-pattern functions, for speed): Si area fraction, Si particle number density, Si particle size (mean area), Si-graphite contact (fraction of Si boundary pixels touching graphite), porosity, and depth position (control); graphite fraction is cached in `patch_kpis.csv` but not regressed, because Si + graphite + pore fractions sum to about 1 (collinear). KPIs with more than 20 % NaN patches would be dropped (none were); the rest are used complete-case. Each PC score is regressed (OLS) on the z-scored KPIs; a PC counts as explained when R² >= 0.2 and is labelled by its top-2 standardised coefficients. Batch directions push the centred logistic weights through the regression (`logit_per_sd`), and `explainable_share = sum_explained |w|*sd / sum |w|*sd`. A site explanation is the exact decomposition of the log-prob margin between the called batch and the runner-up, `margin = (coef_c - coef_r) . zbar + (b_c - b_r)`; the explained share is the |contribution| fraction carried by explained PCs.
+
+Run: `modal run modal_patch_mil.py --mode explain` (reuses `outputs/probe_explain/patch_kpis.csv` if present; also explains any `Batch_test__*` embeddings on the volume). Outputs in `outputs/probe_explain/`.
+
+Results: all 6 regressed KPIs kept (max NaN 7.2 %), 1921 complete-case patches. Only 4 of 64 PCs reach R² >= 0.2 (PC1 -Si/-porosity, PC2 +Si/+porosity, PC3 +porosity/-Si, PC4 +Si density/-Si fraction).
+
+| KPI | R² from the 64 PCs | kept |
+|---|---|---|
+| Si area fraction | 0.91 | yes |
+| Si particle number density | 0.70 | yes |
+| Si particle size | 0.58 | yes |
+| Si-graphite contact | 0.25 | yes |
+| porosity | 0.84 | yes |
+| depth position | 0.41 | yes |
+
+Batch directions (explainable share): Batch_1 0.40 (more Si particle number density, less Si area fraction, more Si particle size); Batch_2 0.12 (more Si particle number density, more Si area fraction, more porosity); Batch_3 0.30 (less Si particle number density, more Si area fraction, more Si-graphite contact).
+
+Held-out (truths 3e122cbj B2, fn0mhxef B1, xrv9xvzb B3; in-sample probe calls Batch 1, Batch 2, Batch 3, so the first two are in-sample misses): 3e122cbj 40 % explainable (higher Si density, lower Si fraction, higher porosity, plus fine texture); fn0mhxef 35 % (mainly fine texture); xrv9xvzb 51 % (lower Si density, higher Si fraction, fine texture). Full sentences in `site_explanations.csv`.
+
+Caveats: in-sample explanations of the final 34-site model (its probabilities are not accuracy; LOPO numbers remain the accuracy reference); OLS on correlated KPIs; segmentation on unharmonised raw; KPIs on an 11 um patch are noisy.
+
 ### Parent-centred probe
 
 Same probe, but each parent's mean patch embedding (all patches of all its sites, test site included, labels never read) is subtracted before the per-fold scaler/PCA/LR (`--centre parent`, outputs in `outputs/patch_probe_centred/`, no ensemble).
