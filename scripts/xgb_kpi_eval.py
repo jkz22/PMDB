@@ -75,15 +75,25 @@ def heldout_table(arm, tr, te, codes, batches, names_cols):
     return df, imp
 
 
-def check_null_matches_table(raw: dict, fem: Path, default_rel: str) -> None:
-    """Refuse nulls generated from a different FEM table than the one being evaluated."""
+def check_null_matches_table(raw: dict, fem: Path, default_rel: str, accept_legacy: bool = False) -> None:
+    """Refuse nulls generated from a different FEM table than the one being evaluated.
+
+    A legacy null (no ``fem_sha256``) cannot prove which table contents it was built from, so it is refused
+    unless ``accept_legacy`` is set, and even then only for the tag's default table.
+    """
     import hashlib
 
     want = raw.get("fem_sha256")
-    if want is None:  # legacy null file: only trustworthy for the default table
+    if want is None:  # legacy null file: contents unverifiable
         if Path(fem).resolve() != (ROOT / default_rel).resolve():
             raise SystemExit(f"null file has no table hash and {fem} is not the default {default_rel}; "
                              "regenerate it with modal_eval.py")
+        if not accept_legacy:
+            raise SystemExit("permutation null has no FEM table hash, so it cannot be checked against the "
+                             f"current {default_rel}; rerun modal_eval.py, or pass --accept-legacy-null if you "
+                             "know the table is unchanged since the null was built")
+        print(f"WARNING: legacy permutation null accepted without a table hash; p-values assume {default_rel} "
+              "is unchanged since the null was built")
         return
     if hashlib.sha256(Path(fem).read_bytes()).hexdigest() != want:
         raise SystemExit(f"permutation null was built from {raw.get('fem_table')} (sha256 mismatch with {fem}); "
@@ -94,6 +104,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tag", default="main", choices=sorted(TAG_ARMS))
     ap.add_argument("--fem-site-curves", default=None)
+    ap.add_argument("--accept-legacy-null", action="store_true",
+                    help="accept a permutation null without a FEM table hash (only for the default table)")
     ap.add_argument("--check-local", type=int, default=0,
                     help="recompute the first K permutations of every arm locally and report agreement")
     args = ap.parse_args()
@@ -111,7 +123,7 @@ def main() -> int:
     if not null_file.exists():
         raise SystemExit(f"{null_file} missing: run `modal run modal_eval.py --tag {args.tag}` first")
     raw = json.loads(null_file.read_text())
-    check_null_matches_table(raw, fem, DEFAULT_FEM[args.tag])
+    check_null_matches_table(raw, fem, DEFAULT_FEM[args.tag], accept_legacy=args.accept_legacy_null)
     seed = raw["seed"]
     if raw["n_perm"] < 1000:
         raise SystemExit("D22 requires >= 1000 permutations")

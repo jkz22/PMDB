@@ -370,7 +370,7 @@ function buildShell() {
 }
 
 function render() {
-  if (!M) return;
+  if (!M) return false;
   const v = state.view;
   document.querySelectorAll('nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
   Object.entries(viewEls).forEach(([id, n]) => n.classList.toggle('active', id === v));
@@ -378,9 +378,11 @@ function render() {
   const focused = document.activeElement && document.activeElement.id;
   const scroll = root.scrollTop;
   root.replaceChildren();
-  try { R[v](root); } catch (e) { root.append(card('Could not render this view', h('pre', { class: 'mono' }, String(e.stack || e)))); console.error(e); }
+  let ok = true;
+  try { R[v](root); } catch (e) { ok = false; root.append(card('Could not render this view', h('pre', { class: 'mono' }, String(e.stack || e)))); console.error(e); }
   root.scrollTop = scroll;
   if (focused) document.getElementById(focused)?.focus();
+  return ok;
 }
 
 function go(id) { state.view = id; history.replaceState(null, '', `#${id}`); render(); }
@@ -413,7 +415,8 @@ async function load() {
   state.bundle = bundle;
   derive(bundle);
   describeLive();
-  render(); state.rendered = true;
+  state.rendered = render();
+  if (!state.rendered) throw new Error(`view ${state.view} failed to render`);
   boot();
 }
 

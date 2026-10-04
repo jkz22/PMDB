@@ -29,3 +29,11 @@ def test_ledger_rows_cover_failed_chunks():
     rows, res, bad = me.ledger_rows(calls, outs, "main", "t")
     assert len(rows) == 2 and len(res) == 1 and len(bad) == 1
     assert rows[1]["status"] == "lost" and rows[1]["wall_s"] == me.TIMEOUT_S and rows[1]["cost_usd"] > rows[0]["cost_usd"]
+
+
+def test_legacy_null_needs_explicit_opt_in():
+    ev = importlib.import_module("xgb_kpi_eval")
+    default = "outputs/fem/site_curves.csv"
+    with pytest.raises(SystemExit, match="no FEM table hash"):
+        ev.check_null_matches_table({}, ROOT / default, default)
+    ev.check_null_matches_table({}, ROOT / default, default, accept_legacy=True)
