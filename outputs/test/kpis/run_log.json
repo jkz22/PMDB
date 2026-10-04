@@ -1,0 +1,195 @@
+{
+  "schema": 2,
+  "latest_run": "2026-10-04T12:39:52Z_unknown",
+  "runs": {
+    "2026-10-04T12:39:52Z_unknown": {
+      "git_commit": "unknown",
+      "command": "build_clean.py --out-dir /data/test/kpis --no-overlays --jobs 6",
+      "started_utc": "2026-10-04T12:39:52Z",
+      "total_seconds": 17.5,
+      "jobs": 6,
+      "mode": "full",
+      "n_sites": 6,
+      "n_ok": 6,
+      "failed": [],
+      "segmenter_version": "v0r1",
+      "parameters": {
+        "segmenter": {
+          "gauss_sigma_px": 1.0,
+          "pore_anchor_frac": 0.25,
+          "si_anchor_frac": 0.5,
+          "si_closing_radius_px": 2,
+          "si_min_area_um2": 0.05,
+          "graphite_opening_radius_px": 5,
+          "graphite_min_area_um2": 4.0,
+          "artefact_min_area_um2": 25.0
+        },
+        "N_TILES": 4,
+        "common.N_NULL_SIMS": 99,
+        "common.MIN_OBJECTS": 10,
+        "objects.D_UM": 0.5,
+        "objects.D_STAR_UM": 5.0,
+        "objects.SWEEP_D_UM": [
+          0.25,
+          0.5,
+          1.0
+        ],
+        "objects.SWEEP_D_STAR_UM": [
+          3.0,
+          5.0,
+          8.0
+        ],
+        "pointpattern.K06_CLUSTER_CUT": 0.5,
+        "pointpattern.K06_VOID_CUT": 2.0,
+        "pointpattern.PCF_R_UM": [
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75,
+          8.0,
+          8.25,
+          8.5,
+          8.75,
+          9.0,
+          9.25,
+          9.5,
+          9.75,
+          10.0
+        ],
+        "pointpattern.PCF_SECTOR_DEG": 30.0,
+        "pointpattern.PCF_STOYAN": 0.15,
+        "pointpattern.ENV_LO_PCT": 2.5,
+        "pointpattern.ENV_HI_PCT": 97.5,
+        "fields.K10_WINDOWS_UM": [
+          1.0,
+          2.0,
+          5.0,
+          10.0,
+          20.0
+        ],
+        "fields.K10_MIN_ADM_FRAC": 0.5,
+        "fields.K11_WINDOW_UM": 10.0,
+        "fields.N_DEPTH_BANDS": 5,
+        "fields.K13_BIN_UM": 10.0,
+        "diagnostic.A02_MEDIAN_PX": 201
+      },
+      "packages": {
+        "numpy": "1.26.4",
+        "scipy": "1.14.1",
+        "scikit-image": "0.25.2",
+        "pandas": "2.1.4",
+        "Pillow": "12.3.0",
+        "matplotlib": "3.10.7",
+        "torch": "not installed",
+        "python": "3.10.17"
+      }
+    }
+  },
+  "sites": {
+    "Batch_test/0eryguqq": {
+      "run": "2026-10-04T12:39:52Z_unknown",
+      "status": "ok",
+      "seconds": 12.9,
+      "n_si_objects": 204,
+      "segmentation": {
+        "T_pore": 20.153513855655667,
+        "T_si": 89.7220854278563,
+        "p1": 7.882194693236167,
+        "p50": 56.96747134291416,
+        "p99": 122.47669951279843
+      }
+    },
+    "Batch_test/4hq27w4c": {
+      "run": "2026-10-04T12:39:52Z_unknown",
+      "status": "ok",
+      "seconds": 16.3,
+      "n_si_objects": 179,
+      "segmentation": {
+        "T_pore": 13.693657888773044,
+        "T_si": 84.39556471441163,
+        "p1": 1.333852939833868,
+        "p50": 50.773072735590574,
+        "p99": 118.0180566932327
+      }
+    },
+    "Batch_test/fhwrjtet": {
+      "run": "2026-10-04T12:39:52Z_unknown",
+      "status": "ok",
+      "seconds": 13.0,
+      "n_si_objects": 188,
+      "segmentation": {
+        "T_pore": 21.32193201328155,
+        "T_si": 90.71013447422295,
+        "p1": 9.444644338935284,
+        "p50": 56.95379503632035,
+        "p99": 124.46647391212555
+      }
+    },
+    "Batch_test/fspqbkxl": {
+      "run": "2026-10-04T12:39:52Z_unknown",
+      "status": "ok",
+      "seconds": 16.6,
+      "n_si_objects": 211,
+      "segmentation": {
+        "T_pore": 12.728311861790955,
+        "T_si": 83.83462428082072,
+        "p1": 0.2661650843502245,
+        "p50": 50.11475219411315,
+        "p99": 117.55449636752827
+      }
+    },
+    "Batch_test/soo2ax3r": {
+      "run": "2026-10-04T12:39:52Z_unknown",
+      "status": "ok",
+      "seconds": 17.2,
+      "n_si_objects": 289,
+      "segmentation": {
+        "T_pore": 16.98885069570475,
+        "T_si": 90.35239199793187,
+        "p1": 2.108528069593194,
+        "p50": 61.629818574039405,
+        "p99": 119.07496542182434
+      }
+    },
+    "Batch_test/y59rxmxl": {
+      "run": "2026-10-04T12:39:52Z_unknown",
+      "status": "ok",
+      "seconds": 14.0,
+      "n_si_objects": 146,
+      "segmentation": {
+        "T_pore": 15.290925999739196,
+        "T_si": 88.6922483019184,
+        "p1": 0.5708215953104101,
+        "p50": 59.45123921302556,
+        "p99": 117.93325739081125
+      }
+    }
+  }
+}

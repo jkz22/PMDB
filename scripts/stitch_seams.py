@@ -1,7 +1,7 @@
 """Seam test: do crops cut from one parent electrode image abut?
 
 Runs on Modal (full-res TIFFs in the `pmdb-fullres` volume, uploaded from data/ and
-data_heldout/Batch_heldout/):
+data_heldout/Batch_heldout/ and test-day data_test/Batch_test/):
 
     modal run scripts/stitch_seams.py            # all 34 sites
     modal run scripts/stitch_seams.py --smoke    # one same-parent pair
@@ -42,19 +42,19 @@ volume = modal.Volume.from_name("pmdb-fullres")
 app = modal.App("pmdb-stitch", image=image)
 
 GROUPS = {
-    "G1612": ["ptg8lmto", "xgj4xftb"],
+    "G1612": ["ptg8lmto", "xgj4xftb", "0eryguqq", "fhwrjtet"],
     "G1904": ["0grcilhi", "hawkfj64", "mgxahqnk"],
     "G2048": ["avn74qx1", "3806gxp0", "fn0mhxef"],
     "G2060": ["71vgq3fw", "tuy3zymq", "x7u69zsw", "kbdh4tri"],
     "G2068SE": ["rxax5ozo", "x77cy643", "utfgcjfa", "vc2whyaq"],
     "G2080": ["ffwubibz", "r17byphk", "cfe5vt7s"],
     "G2088": ["ufdvpb81", "hzumfsms", "9luzk4jm", "xrv9xvzb"],
-    "G2148": ["f1vzngrs", "epqdaau9"],
-    "G2156": ["fzrt2k6r", "b3esycq1"],
+    "G2148": ["f1vzngrs", "epqdaau9", "4hq27w4c", "fspqbkxl"],
+    "G2156": ["fzrt2k6r", "b3esycq1", "soo2ax3r"],
     "G2272": ["pl8uabbv", "i9jiqjwl"],
     "G2316": ["4ih2ggld", "5n1q8atc", "3e122cbj"],
     "G1780": ["iv6g2oq0"],
-    "G1880": ["uhdslk0o"],
+    "G1880": ["uhdslk0o", "y59rxmxl"],
 }
 PARENT = {s: g for g, ss in GROUPS.items() for s in ss}
 VERTICAL_EDGES = ("L", "R")  # profile runs along y
@@ -196,7 +196,8 @@ def score_site(site_a: str, others: list[str]) -> list[dict]:
 def main(smoke: bool = False):
     import pandas as pd
     sites = []
-    for m in [ROOT / "cache/half/manifest.csv", ROOT / "cache_heldout/half/manifest.csv"]:
+    for m in [ROOT / "cache/half/manifest.csv", ROOT / "cache_heldout/half/manifest.csv",
+              ROOT / "cache_test/half/manifest.csv"]:
         df = pd.read_csv(m)
         sites += list(zip(df["batch"], df["site"]))
     if smoke:

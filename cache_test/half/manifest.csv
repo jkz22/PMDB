@@ -1,0 +1,7 @@
+batch,site,se_detector,height,width,nm_per_px,path
+Batch_test,0eryguqq,ETD,806,3496,50.0,/data/test/half/Batch_test__0eryguqq.npz
+Batch_test,4hq27w4c,ETD,1074,3496,50.0,/data/test/half/Batch_test__4hq27w4c.npz
+Batch_test,fhwrjtet,ETD,806,3496,50.0,/data/test/half/Batch_test__fhwrjtet.npz
+Batch_test,fspqbkxl,ETD,1074,3496,50.0,/data/test/half/Batch_test__fspqbkxl.npz
+Batch_test,soo2ax3r,ETD,1078,3496,50.0,/data/test/half/Batch_test__soo2ax3r.npz
+Batch_test,y59rxmxl,ETD,940,3496,50.0,/data/test/half/Batch_test__y59rxmxl.npz

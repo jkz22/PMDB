@@ -1,35 +1,48 @@
 parent,a,b,batch_a,batch_b,placement,mp,mp_shift,mp0,lp0,z,p_emp,second_z,best_flip_z,verdict,left,right
-G1612,ptg8lmto,xgj4xftb,Batch_3,Batch_3,B|A,0.176,-10,0.068,0.139,1.044,0.143,-0.083,3.151,no seam,xgj4xftb,ptg8lmto
-G1904,hawkfj64,mgxahqnk,Batch_3,Batch_3,B|A,0.634,2,0.613,0.944,10.853,0.001,1.366,3.133,ABUT,mgxahqnk,hawkfj64
-G1904,0grcilhi,hawkfj64,Batch_3,Batch_3,B|A,0.389,-4,0.344,0.79,5.604,0.001,-0.561,1.442,ABUT,hawkfj64,0grcilhi
-G1904,0grcilhi,mgxahqnk,Batch_3,Batch_3,A|B,0.135,-56,-0.045,0.052,0.169,0.385,-0.429,1.458,no seam,0grcilhi,mgxahqnk
-G2048,3806gxp0,fn0mhxef,Batch_2,Batch_heldout,B|A,0.401,-5,0.372,0.787,5.858,0.001,-0.113,3.701,ABUT,fn0mhxef,3806gxp0
-G2048,avn74qx1,fn0mhxef,Batch_2,Batch_heldout,B/A,0.233,3858,0.088,-0.047,1.191,0.114,-1.005,3.103,no seam,fn0mhxef,avn74qx1
-G2048,3806gxp0,avn74qx1,Batch_2,Batch_2,A|B,0.168,-41,-0.124,0.261,0.873,0.172,0.545,1.64,no seam,3806gxp0,avn74qx1
-G2060,tuy3zymq,x7u69zsw,Batch_3,Batch_3,B|A,0.596,1,0.592,0.837,10.026,0.001,0.599,0.703,ABUT,x7u69zsw,tuy3zymq
-G2060,71vgq3fw,kbdh4tri,Batch_3,Batch_3,B|A,0.521,0,0.521,0.895,8.436,0.001,1.846,2.133,ABUT,kbdh4tri,71vgq3fw
-G2060,kbdh4tri,tuy3zymq,Batch_3,Batch_3,B|A,0.43,-3,0.403,0.807,6.473,0.001,0.611,2.052,ABUT,tuy3zymq,kbdh4tri
-G2060,71vgq3fw,x7u69zsw,Batch_3,Batch_3,B/A,0.214,-4872,0.046,0.083,0.593,0.246,-0.085,0.505,no seam,x7u69zsw,71vgq3fw
-G2060,71vgq3fw,tuy3zymq,Batch_3,Batch_3,B|A,0.147,-43,-0.011,0.2,0.421,0.308,0.236,1.574,no seam,tuy3zymq,71vgq3fw
-G2060,kbdh4tri,x7u69zsw,Batch_3,Batch_3,B/A,0.206,-4864,0.054,-0.118,0.347,0.314,-0.492,1.567,no seam,x7u69zsw,kbdh4tri
-G2068SE,vc2whyaq,x77cy643,Batch_3,Batch_3,A|B,0.691,-1,0.684,0.798,12.075,0.001,1.241,1.497,ABUT,vc2whyaq,x77cy643
-G2068SE,rxax5ozo,utfgcjfa,Batch_2,Batch_3,B|A,0.645,1,0.635,0.89,11.079,0.001,0.778,3.878,ABUT,utfgcjfa,rxax5ozo
-G2068SE,utfgcjfa,x77cy643,Batch_3,Batch_3,B|A,0.501,1,0.498,0.789,8.008,0.001,0.518,1.252,ABUT,x77cy643,utfgcjfa
-G2068SE,rxax5ozo,vc2whyaq,Batch_2,Batch_3,A|B,0.168,20,0.038,-0.038,0.878,0.17,-0.241,1.542,no seam,rxax5ozo,vc2whyaq
-G2068SE,rxax5ozo,x77cy643,Batch_2,Batch_3,B|A,0.159,3,0.15,-0.099,0.689,0.225,0.578,0.812,no seam,x77cy643,rxax5ozo
-G2068SE,utfgcjfa,vc2whyaq,Batch_3,Batch_3,B|A,0.159,9,0.097,0.102,0.67,0.227,-0.353,1.187,no seam,vc2whyaq,utfgcjfa
-G2080,ffwubibz,r17byphk,Batch_1,Batch_2,B|A,0.573,0,0.573,0.922,9.533,0.001,0.185,2.657,ABUT,r17byphk,ffwubibz
-G2080,r17byphk,cfe5vt7s,Batch_2,Batch_3,B|A,0.479,-5,0.395,0.962,7.529,0.001,0.513,2.11,ABUT,cfe5vt7s,r17byphk
-G2080,ffwubibz,cfe5vt7s,Batch_1,Batch_3,B/A,0.226,-4896,-0.014,0.064,0.988,0.15,-0.65,2.385,no seam,cfe5vt7s,ffwubibz
-G2088,9luzk4jm,hzumfsms,Batch_3,Batch_3,A|B,0.636,-2,0.621,0.975,10.882,0.001,-0.289,2.13,ABUT,9luzk4jm,hzumfsms
-G2088,ufdvpb81,xrv9xvzb,Batch_3,Batch_heldout,A|B,0.554,1,0.549,0.892,9.145,0.001,0.489,1.161,ABUT,ufdvpb81,xrv9xvzb
-G2088,9luzk4jm,xrv9xvzb,Batch_3,Batch_heldout,B|A,0.536,-1,0.534,0.952,8.742,0.001,0.48,1.986,ABUT,xrv9xvzb,9luzk4jm
-G2088,9luzk4jm,ufdvpb81,Batch_3,Batch_3,A/B,0.247,4894,-0.016,0.033,1.642,0.064,0.647,2.101,no seam,ufdvpb81,9luzk4jm
-G2088,hzumfsms,ufdvpb81,Batch_3,Batch_3,B|A,0.153,4,0.126,0.586,0.545,0.262,-0.513,1.193,no seam,ufdvpb81,hzumfsms
-G2088,hzumfsms,xrv9xvzb,Batch_3,Batch_heldout,B/A,0.209,-4480,0.003,0.177,0.447,0.28,-0.35,1.768,no seam,xrv9xvzb,hzumfsms
-G2148,f1vzngrs,epqdaau9,Batch_1,Batch_2,A|B,0.404,0,0.404,0.912,5.926,0.001,-0.581,1.567,ABUT,f1vzngrs,epqdaau9
-G2156,fzrt2k6r,b3esycq1,Batch_1,Batch_2,B/A,0.245,4113,-0.078,0.074,1.576,0.07,1.332,2.5,no seam,b3esycq1,fzrt2k6r
-G2272,i9jiqjwl,pl8uabbv,Batch_2,Batch_3,A/B,0.218,-4823,-0.062,0.012,0.719,0.215,0.096,1.724,no seam,pl8uabbv,i9jiqjwl
-G2316,4ih2ggld,3e122cbj,Batch_1,Batch_heldout,B|A,0.543,-2,0.516,0.937,8.897,0.001,0.525,1.034,ABUT,3e122cbj,4ih2ggld
-G2316,5n1q8atc,3e122cbj,Batch_1,Batch_heldout,A|B,0.487,4,0.44,0.794,7.701,0.001,0.587,3.093,ABUT,5n1q8atc,3e122cbj
-G2316,4ih2ggld,5n1q8atc,Batch_1,Batch_1,A|B,0.191,46,-0.021,-0.043,1.36,0.091,0.147,3.465,no seam,4ih2ggld,5n1q8atc
+G1612,xgj4xftb,0eryguqq,Batch_3,Batch_test,A|B,0.704,0,0.704,0.879,12.515,0.001,0.54,2.868,ABUT,xgj4xftb,0eryguqq
+G1612,0eryguqq,fhwrjtet,Batch_test,Batch_test,A|B,0.552,-1,0.544,0.912,9.227,0.001,1.939,1.321,ABUT,0eryguqq,fhwrjtet
+G1612,ptg8lmto,fhwrjtet,Batch_3,Batch_test,B|A,0.55,1,0.549,0.556,9.172,0.001,-0.837,1.616,ABUT,fhwrjtet,ptg8lmto
+G1612,ptg8lmto,xgj4xftb,Batch_3,Batch_3,B|A,0.176,-10,0.068,0.139,1.086,0.137,-0.081,3.217,no seam,xgj4xftb,ptg8lmto
+G1612,xgj4xftb,fhwrjtet,Batch_3,Batch_test,B|A,0.165,-64,-0.064,0.177,0.842,0.182,-0.628,2.355,no seam,fhwrjtet,xgj4xftb
+G1612,ptg8lmto,0eryguqq,Batch_3,Batch_test,A|B,0.114,-57,-0.031,-0.118,-0.265,0.554,-1.069,1.986,no seam,ptg8lmto,0eryguqq
+G1880,uhdslk0o,y59rxmxl,Batch_1,Batch_test,B|A,0.252,57,0.085,-0.464,2.722,0.014,2.224,0.966,no seam,y59rxmxl,uhdslk0o
+G1904,hawkfj64,mgxahqnk,Batch_3,Batch_3,B|A,0.634,2,0.613,0.944,11.006,0.001,1.395,3.195,ABUT,mgxahqnk,hawkfj64
+G1904,0grcilhi,hawkfj64,Batch_3,Batch_3,B|A,0.389,-4,0.344,0.79,5.698,0.001,-0.537,1.473,ABUT,hawkfj64,0grcilhi
+G1904,0grcilhi,mgxahqnk,Batch_3,Batch_3,A|B,0.135,-56,-0.045,0.052,0.201,0.38,-0.433,1.489,no seam,0grcilhi,mgxahqnk
+G2048,3806gxp0,fn0mhxef,Batch_2,Batch_heldout,B|A,0.401,-5,0.372,0.787,5.955,0.001,-0.084,3.773,ABUT,fn0mhxef,3806gxp0
+G2048,avn74qx1,fn0mhxef,Batch_2,Batch_heldout,B/A,0.233,3858,0.088,-0.047,1.217,0.115,-1.02,3.164,no seam,fn0mhxef,avn74qx1
+G2048,3806gxp0,avn74qx1,Batch_2,Batch_2,A|B,0.168,-41,-0.124,0.261,0.913,0.168,0.582,1.674,no seam,3806gxp0,avn74qx1
+G2060,tuy3zymq,x7u69zsw,Batch_3,Batch_3,B|A,0.596,1,0.592,0.837,10.17,0.001,0.614,0.741,ABUT,x7u69zsw,tuy3zymq
+G2060,71vgq3fw,kbdh4tri,Batch_3,Batch_3,B|A,0.521,0,0.521,0.895,8.562,0.001,1.884,2.187,ABUT,kbdh4tri,71vgq3fw
+G2060,kbdh4tri,tuy3zymq,Batch_3,Batch_3,B|A,0.43,-3,0.403,0.807,6.576,0.001,0.626,2.105,ABUT,tuy3zymq,kbdh4tri
+G2060,71vgq3fw,x7u69zsw,Batch_3,Batch_3,B/A,0.214,-4872,0.046,0.083,0.608,0.241,-0.056,0.518,no seam,x7u69zsw,71vgq3fw
+G2060,71vgq3fw,tuy3zymq,Batch_3,Batch_3,B|A,0.147,-43,-0.011,0.2,0.456,0.301,0.244,1.622,no seam,tuy3zymq,71vgq3fw
+G2060,kbdh4tri,x7u69zsw,Batch_3,Batch_3,B/A,0.206,-4864,0.054,-0.118,0.357,0.304,-0.467,1.6,no seam,x7u69zsw,kbdh4tri
+G2068SE,vc2whyaq,x77cy643,Batch_3,Batch_3,A|B,0.691,-1,0.684,0.798,12.241,0.001,1.268,1.528,ABUT,vc2whyaq,x77cy643
+G2068SE,rxax5ozo,utfgcjfa,Batch_2,Batch_3,B|A,0.645,1,0.635,0.89,11.234,0.001,0.796,3.954,ABUT,utfgcjfa,rxax5ozo
+G2068SE,utfgcjfa,x77cy643,Batch_3,Batch_3,B|A,0.501,1,0.498,0.789,8.128,0.001,0.554,1.297,ABUT,x77cy643,utfgcjfa
+G2068SE,rxax5ozo,vc2whyaq,Batch_2,Batch_3,A|B,0.168,20,0.038,-0.038,0.918,0.167,-0.242,1.574,no seam,rxax5ozo,vc2whyaq
+G2068SE,rxax5ozo,x77cy643,Batch_2,Batch_3,B|A,0.159,3,0.15,-0.099,0.727,0.215,0.615,0.831,no seam,x77cy643,rxax5ozo
+G2068SE,utfgcjfa,vc2whyaq,Batch_3,Batch_3,B|A,0.159,9,0.097,0.102,0.708,0.218,-0.356,1.23,no seam,vc2whyaq,utfgcjfa
+G2080,ffwubibz,r17byphk,Batch_1,Batch_2,B|A,0.573,0,0.573,0.922,9.67,0.001,0.192,2.71,ABUT,r17byphk,ffwubibz
+G2080,r17byphk,cfe5vt7s,Batch_2,Batch_3,B|A,0.479,-5,0.395,0.962,7.645,0.001,0.527,2.152,ABUT,cfe5vt7s,r17byphk
+G2080,ffwubibz,cfe5vt7s,Batch_1,Batch_3,B/A,0.226,-4896,-0.014,0.064,1.01,0.149,-0.659,2.442,no seam,cfe5vt7s,ffwubibz
+G2088,9luzk4jm,hzumfsms,Batch_3,Batch_3,A|B,0.636,-2,0.621,0.975,11.035,0.001,-0.291,2.173,ABUT,9luzk4jm,hzumfsms
+G2088,ufdvpb81,xrv9xvzb,Batch_3,Batch_heldout,A|B,0.554,1,0.549,0.892,9.279,0.001,0.501,1.186,ABUT,ufdvpb81,xrv9xvzb
+G2088,9luzk4jm,xrv9xvzb,Batch_3,Batch_heldout,B|A,0.536,-1,0.534,0.952,8.871,0.001,0.492,2.026,ABUT,xrv9xvzb,9luzk4jm
+G2088,9luzk4jm,ufdvpb81,Batch_3,Batch_3,A/B,0.247,4894,-0.016,0.033,1.676,0.065,0.663,2.143,no seam,ufdvpb81,9luzk4jm
+G2088,hzumfsms,ufdvpb81,Batch_3,Batch_3,B|A,0.153,4,0.126,0.586,0.581,0.257,-0.519,1.219,no seam,ufdvpb81,hzumfsms
+G2088,hzumfsms,xrv9xvzb,Batch_3,Batch_heldout,B/A,0.209,-4480,0.003,0.177,0.459,0.275,-0.324,1.804,no seam,xrv9xvzb,hzumfsms
+G2148,4hq27w4c,fspqbkxl,Batch_test,Batch_test,B|A,0.517,0,0.517,0.924,8.466,0.001,0.695,1.632,ABUT,fspqbkxl,4hq27w4c
+G2148,epqdaau9,fspqbkxl,Batch_2,Batch_test,A|B,0.44,-1,0.437,0.899,6.805,0.001,0.834,1.492,ABUT,epqdaau9,fspqbkxl
+G2148,f1vzngrs,epqdaau9,Batch_1,Batch_2,A|B,0.404,0,0.404,0.912,6.023,0.001,-0.588,1.599,ABUT,f1vzngrs,epqdaau9
+G2148,f1vzngrs,4hq27w4c,Batch_1,Batch_test,A/B,0.283,4845,-0.009,-0.066,2.85,0.014,0.686,1.8,no seam,4hq27w4c,f1vzngrs
+G2148,epqdaau9,4hq27w4c,Batch_2,Batch_test,A|B,0.207,-60,0.027,-0.054,1.75,0.055,-0.326,1.149,no seam,epqdaau9,4hq27w4c
+G2148,f1vzngrs,fspqbkxl,Batch_1,Batch_test,A|B,0.124,-35,-0.051,0.466,-0.046,0.475,-0.16,0.632,no seam,f1vzngrs,fspqbkxl
+G2156,b3esycq1,soo2ax3r,Batch_2,Batch_test,A|B,0.61,-1,0.602,0.858,10.474,0.001,2.562,2.816,ABUT,b3esycq1,soo2ax3r
+G2156,fzrt2k6r,soo2ax3r,Batch_1,Batch_test,B/A,0.246,-4715,-0.01,-0.062,1.632,0.068,0.722,0.583,no seam,soo2ax3r,fzrt2k6r
+G2156,fzrt2k6r,b3esycq1,Batch_1,Batch_2,B/A,0.245,4113,-0.078,0.074,1.609,0.07,1.36,2.55,no seam,b3esycq1,fzrt2k6r
+G2272,i9jiqjwl,pl8uabbv,Batch_2,Batch_3,A/B,0.218,-4823,-0.062,0.012,0.736,0.213,0.102,1.774,no seam,pl8uabbv,i9jiqjwl
+G2316,4ih2ggld,3e122cbj,Batch_1,Batch_heldout,B|A,0.543,-2,0.516,0.937,9.028,0.001,0.538,1.057,ABUT,3e122cbj,4ih2ggld
+G2316,5n1q8atc,3e122cbj,Batch_1,Batch_heldout,A|B,0.487,4,0.44,0.794,7.818,0.001,0.601,3.158,ABUT,5n1q8atc,3e122cbj
+G2316,4ih2ggld,5n1q8atc,Batch_1,Batch_1,A|B,0.191,46,-0.021,-0.043,1.406,0.087,0.179,3.535,no seam,4ih2ggld,5n1q8atc

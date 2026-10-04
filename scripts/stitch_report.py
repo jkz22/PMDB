@@ -107,6 +107,8 @@ def _load_half(batch: str, site: str) -> np.ndarray:
     kw = {}
     if batch == "Batch_heldout":
         kw = dict(data_root=ROOT / "data_heldout", cache_root=ROOT / "cache_heldout")
+    elif batch == "Batch_test":
+        kw = dict(data_root=ROOT / "data_test", cache_root=ROOT / "cache_test")
     s = load_site(batch, site, resolution="half", normalise="none", **kw)
     return s.image[..., 0].astype(np.float32)  # BSE
 
