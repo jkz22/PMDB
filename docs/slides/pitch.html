@@ -193,39 +193,72 @@
 <!-- 8 · THE ARCHITECTURE -->
 <section class="slide">
   <div class="kicker">8 · Under the hood</div>
-  <h1>Five stages. One is NASA&rsquo;s. Four are ours.</h1>
-  <div style="display:flex;align-items:stretch;justify-content:center;gap:0.8vw;margin-top:5vh">
-    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
-      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">01 &middot; SEE</div>
-      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">Patches</div>
-      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">224 px &middot; 11 &micro;m fields<br>BSE + InLens, harmonised grey</div>
+  <h1>Five stages. One is NASA’s. Four are ours.</h1>
+  <div style="display:flex;align-items:stretch;justify-content:center;gap:0.7vw;margin-top:4vh">
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
+      <div style="height:16vh;overflow:hidden"><img src="../../outputs/slides/arch_patch.png" alt="A 224-pixel SEM patch" style="width:100%;height:100%;object-fit:cover"></div>
+      <div style="padding:1.4vh 0.9vw">
+        <div style="font-size:min(2vh,1vw);color:#8b949e;font-weight:700">01 · SEE</div>
+        <div style="font-size:min(2.9vh,1.45vw);font-weight:800">224 px patches</div>
+        <div style="font-size:min(2.2vh,1.1vw);color:#57606a">11 µm fields, harmonised</div>
+      </div>
     </div>
-    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
-    <div style="flex:1;border:2px solid #0969da;border-radius:14px;padding:2vh 1vw;background:#f0f6ff">
-      <div style="font-size:min(2.2vh,1.1vw);color:#0969da;font-weight:700">02 &middot; EMBED</div>
-      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0;color:#0969da">MicroNet</div>
-      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">NASA ResNet-50 v1.1, frozen<br>layers 2+3 &rarr; 1536-d</div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">→</div>
+    <div style="flex:1;border:2px solid #0969da;border-radius:14px;overflow:hidden;background:#f0f6ff;display:flex;flex-direction:column">
+      <div style="height:16vh;display:flex;align-items:center;justify-content:center"><img src="../../outputs/slides/nasa_logo.svg" alt="NASA insignia" style="height:13vh"></div>
+      <div style="padding:1.4vh 0.9vw">
+        <div style="font-size:min(2vh,1vw);color:#0969da;font-weight:700">02 · EMBED</div>
+        <div style="font-size:min(2.9vh,1.45vw);font-weight:800;color:#0969da">MicroNet</div>
+        <div style="font-size:min(2.2vh,1.1vw);color:#57606a">ResNet-50, frozen → 1536-d</div>
+      </div>
     </div>
-    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
-    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
-      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">03 &middot; CENTRE</div>
-      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">Parent-mean</div>
-      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">subtract each parent&rsquo;s mean<br>&mdash; imaging offsets cancel</div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">→</div>
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
+      <div style="height:16vh;overflow:hidden"><img src="../../outputs/slides/arch_parent.png" alt="A reconstructed parent electrode of four outlined crops" style="width:100%;height:100%;object-fit:cover"></div>
+      <div style="padding:1.4vh 0.9vw">
+        <div style="font-size:min(2vh,1vw);color:#8b949e;font-weight:700">03 · CENTRE</div>
+        <div style="font-size:min(2.9vh,1.45vw);font-weight:800">Parent-mean</div>
+        <div style="font-size:min(2.2vh,1.1vw);color:#57606a">imaging offsets cancel</div>
+      </div>
     </div>
-    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
-    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
-      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">04 &middot; DECIDE</div>
-      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">PCA + linear</div>
-      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">64 components &rarr; logistic head<br>batch-balanced weights</div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">→</div>
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
+      <div style="height:16vh;display:flex;align-items:center;justify-content:center;background:#fafbfc">
+        <svg viewBox="0 0 120 70" style="height:14vh">
+          <line x1="12" y1="62" x2="112" y2="8" stroke="#8b949e" stroke-width="1.6" stroke-dasharray="4 3"/>
+          <g fill="#3d8bfd"><circle cx="24" cy="18" r="4"/><circle cx="34" cy="26" r="4"/><circle cx="20" cy="32" r="4"/><circle cx="40" cy="14" r="4"/></g>
+          <g fill="#ff7a45"><circle cx="52" cy="46" r="4"/><circle cx="62" cy="38" r="4"/><circle cx="48" cy="56" r="4"/></g>
+          <g fill="#22c38e"><circle cx="88" cy="50" r="4"/><circle cx="98" cy="58" r="4"/><circle cx="92" cy="40" r="4"/><circle cx="104" cy="48" r="4"/></g>
+        </svg>
+      </div>
+      <div style="padding:1.4vh 0.9vw">
+        <div style="font-size:min(2vh,1vw);color:#8b949e;font-weight:700">04 · DECIDE</div>
+        <div style="font-size:min(2.9vh,1.45vw);font-weight:800">PCA-64 + linear</div>
+        <div style="font-size:min(2.2vh,1.1vw);color:#57606a">batch-balanced logistic head</div>
+      </div>
     </div>
-    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
-    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
-      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">05 &middot; AGREE</div>
-      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">Consensus</div>
-      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">patch votes pooled<br>&rarr; one call per image</div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">→</div>
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column">
+      <div style="height:16vh;display:flex;align-items:center;justify-content:center;background:#fafbfc">
+        <svg viewBox="0 0 130 70" style="height:14vh">
+          <g>
+            <circle cx="14" cy="16" r="5" fill="#22c38e"/><circle cx="30" cy="16" r="5" fill="#22c38e"/><circle cx="46" cy="16" r="5" fill="#ff7a45"/>
+            <circle cx="14" cy="34" r="5" fill="#22c38e"/><circle cx="30" cy="34" r="5" fill="#3d8bfd"/><circle cx="46" cy="34" r="5" fill="#22c38e"/>
+            <circle cx="14" cy="52" r="5" fill="#22c38e"/><circle cx="30" cy="52" r="5" fill="#22c38e"/><circle cx="46" cy="52" r="5" fill="#22c38e"/>
+          </g>
+          <path d="M60 34 h14 m-5 -5 l5 5 l-5 5" stroke="#8b949e" stroke-width="2.4" fill="none"/>
+          <circle cx="104" cy="34" r="17" fill="#22c38e"/>
+          <text x="104" y="39" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">B3</text>
+        </svg>
+      </div>
+      <div style="padding:1.4vh 0.9vw">
+        <div style="font-size:min(2vh,1vw);color:#8b949e;font-weight:700">05 · AGREE</div>
+        <div style="font-size:min(2.9vh,1.45vw);font-weight:800">Consensus</div>
+        <div style="font-size:min(2.2vh,1.1vw);color:#57606a">patch votes → one call</div>
+      </div>
     </div>
   </div>
-  <div class="foot"><span>Stage 03 is the twist slide turned into code: subtracting each parent&rsquo;s mean embedding erases per-session imaging fingerprints before the classifier ever votes. Trained and scored leave-one-parent-out.</span><span>pmdb/patch_probe.py &middot; modal_patch_mil.py</span></div>
+  <div class="foot"><span>Stage 03 is the twist slide turned into code: subtracting each parent’s mean embedding erases per-session imaging fingerprints before the classifier ever votes. Trained and scored leave-one-parent-out.</span><span>pmdb/patch_probe.py · modal_patch_mil.py</span></div>
 </section>
 
 <!-- 8 · OUTRO -->
