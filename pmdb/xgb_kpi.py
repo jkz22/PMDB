@@ -30,6 +30,24 @@ def base_arm(arm: str) -> str:
     return arm[:2]
 
 
+def training_fingerprint(tr: dict, y) -> str:
+    """sha256 over every training input the permutation null depends on (KPIs, FEM features, labels).
+
+    Any change to the screened KPI table, the FEM table or the label set changes this hash.
+    """
+    import hashlib
+
+    h = hashlib.sha256()
+    for key in ("index", "kpi", "swell", "spread", "k01", "cand"):
+        if key in tr:
+            a = np.asarray(tr[key])
+            h.update(key.encode())
+            h.update(a.astype(str).tobytes() if a.dtype == object else np.ascontiguousarray(a, dtype=float).tobytes())
+    h.update("|".join(tr.get("cand_names", [])).encode())
+    h.update("|".join(map(str, y)).encode())
+    return h.hexdigest()
+
+
 def load_inputs(fem_path=None):
     """Return (tr, te, y, kpi_cols). tr/te are dicts with 'index' (batch, site), 'kpi'
     (the 24 KPI columns), and, when fem_path is given, 'swell', 'spread', 'k01', 'cand',
