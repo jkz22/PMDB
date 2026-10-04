@@ -226,7 +226,7 @@ def evaluate_lopo(tag: str, n_perm: int, parents: list[dict], fp_features: list[
             "elapsed_s": round(time.time() - t0, 2)}
 
 
-@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=8192, timeout=3600)
+@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=3600)
 def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[dict], fp_lab: list[dict],
                   fp_test: list[dict], test_batch: str, selection: dict | None) -> dict:
     import numpy as np
@@ -271,10 +271,20 @@ def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[di
     if selection is None:
         selection = bm.select_option(summary)
     test_pred = []
+    p_probe = None
+    if test_sites and selection["option"] == "probe+ensemble":
+        from pmdb import patch_probe as pp
+        feats = {k[1]: _load_emb(tag, k[0], k[1])[0] for k in keys}
+        sb = {k[1]: l for k, l in zip(keys, lab["label"])}
+        p_probe = []
+        for h, tk in enumerate(test_keys):
+            tr = [i for i in range(len(keys)) if test_codes[h] < 0 or groups[i] != test_codes[h]]
+            Xtr = {keys[i][1]: feats[keys[i][1]] for i in tr}
+            p_probe.append(pp.fit_predict_probe(Xtr, sb, _load_emb(tag, tk[0], tk[1])[0]))
     if test_sites:
         test_pred = bm.predict_test(z["D"], z["patch_site"], site_labels, groups, X, Xc, y, singleton, menu_df, sc,
                                     z["Dh"], z["patch_site_h"], test_keys, test_codes, H, Hc, singleton_h,
-                                    z["coords_h"], selection, test_parent_ids=t_par_ids).to_dict("records")
+                                    z["coords_h"], selection, test_parent_ids=t_par_ids, p_probe=p_probe).to_dict("records")
     menu_df.insert(0, "parent_id", lab_par.to_numpy())
     return {"summary": summary, "selection": selection, "menu_predictions": menu_df.to_dict("records"),
             "test_predictions": test_pred, "elapsed_s": round(time.time() - t0, 2)}
@@ -478,6 +488,9 @@ def _menu_or_test(mode: str, root: Path) -> None:
     if not sel_path.exists():
         raise SystemExit("outputs/menu/selection.json missing: run --mode menu first")
     selection = json.loads(sel_path.read_text())
+    sel2 = root / "outputs" / "menu" / "selection_v2.json"
+    if sel2.exists():
+        selection = json.loads(sel2.read_text())
     ft = root / "outputs" / "test" / "features.csv"
     if not ft.exists():
         raise SystemExit("outputs/test/features.csv missing: run `modal run modal_test_prep.py::main` first")

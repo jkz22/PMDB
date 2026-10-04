@@ -276,7 +276,7 @@ def _fp_rows(Xtr, ytr, rows: pd.DataFrame):
 
 def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_df, sc_lopo,
                  Dh, patch_site_h, test_keys, test_codes, H, Hc, singleton_h, coords_h, selection,
-                 test_parent_ids=None) -> pd.DataFrame:
+                 test_parent_ids=None, p_probe=None) -> pd.DataFrame:
     site_labels, groups = np.asarray(site_labels), np.asarray(groups)
     singleton, test_codes = np.asarray(singleton, bool), np.asarray(test_codes)
     singleton_h = np.asarray(singleton_h, bool)
@@ -307,8 +307,14 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
         p_ens, p_ensc = plo.ensemble(p_patch, pf), plo.ensemble(p_patch, pfc)
         fp_ood = bool(fph["fp_ood"].iloc[0])
         opt = selection["option"]
-        call, corr, _ = OPTION_COLS[opt]
-        if opt == "fingerprint":
+        if opt != "probe+ensemble":
+            call, corr, _ = OPTION_COLS[opt]
+        if opt == "probe+ensemble":
+            assert p_probe is not None, "probe+ensemble needs p_probe"
+            prob = (p_ens + np.asarray(p_probe[h])) / 2
+            k = int(np.argmax(prob))
+            high = float(prob.max()) >= 0.5
+        elif opt == "fingerprint":
             prob, k = pf, fc
             high = plo_global(menu_df[corr]) and not fp_ood
         elif opt == "fingerprint_centred":
@@ -323,7 +329,7 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
         else:
             prob, k = p_ensc, int(np.argmax(p_ensc))
             high = plo.heldout_flag(menu_df[corr], menu_df["agree_fpc"], pc == fcc) and not fpc_ood
-        if selection["confidence_mode"] == "all_low":
+        if selection.get("confidence_mode") == "all_low":
             high = False
         sel = patch_site_h == h
         c = coords_h[sel]
@@ -333,6 +339,9 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
         rows.append({
             "site": site, "assigned": BATCHES[k], "confidence": "high" if high else "low", "option": opt,
             **{f"p_{b}": float(prob[j]) for j, b in enumerate(BATCHES)},
+            **({f"p_probe_{b}": float(p_probe[h][j]) for j, b in enumerate(BATCHES)}
+               | {f"p_comb_{b}": float(prob[j]) for j, b in enumerate(BATCHES)}
+               | {"probe_call": BATCHES[int(np.argmax(p_probe[h]))]} if p_probe is not None else {}),
             "patch_call": BATCHES[pc], "fingerprint_call": BATCHES[fc], "fingerprint_centred_call": BATCHES[fcc],
             "n_evidence_for_call": int(n_for),
             "parent_id": test_parent_ids[h] if test_parent_ids is not None else "",

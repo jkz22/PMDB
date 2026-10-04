@@ -53,6 +53,27 @@ def _fit_predict(folds, site_batch, strict=True):
     return pd.DataFrame(rows)
 
 
+def fit_predict_probe(train_X_by_site, train_batch, test_X, seed=0) -> np.ndarray:
+    """Fit the probe on the training sites and return the site probability (len(BATCHES),) for test patches."""
+    sites = list(train_X_by_site)
+    Xtr = np.concatenate([train_X_by_site[s] for s in sites]).astype(np.float32)
+    sc = StandardScaler().fit(Xtr)
+    pca = PCA(n_components=N_PCA, svd_solver="randomized", random_state=seed).fit(sc.transform(Xtr))
+    Z = {s: pca.transform(sc.transform(train_X_by_site[s].astype(np.float32))) for s in sites}
+    Zte = pca.transform(sc.transform(np.asarray(test_X, dtype=np.float32)))
+    ytr = np.concatenate([[train_batch[s]] * len(Z[s]) for s in sites])
+    w = np.concatenate([np.full(len(Z[s]), 1.0 / len(Z[s])) for s in sites])
+    w = w * len(w) / w.sum()
+    assert set(ytr) == set(BATCHES), f"training lacks {set(BATCHES) - set(ytr)}"
+    clf = LogisticRegression(C=C, class_weight="balanced", max_iter=3000)
+    clf.fit(np.concatenate([Z[s] for s in sites]), ytr, sample_weight=w)
+    lp = np.full(len(BATCHES), -50.0)
+    for c, v in zip(clf.classes_, clf.predict_log_proba(Zte).mean(axis=0)):
+        lp[BATCHES.index(c)] = v
+    p = np.exp(lp - lp.max())
+    return p / p.sum()
+
+
 def lopo_probe(X_by_site, site_batch, site_parent, seed=0, _folds=None, strict=True) -> pd.DataFrame:
     folds = _folds or _prepare_folds(X_by_site, site_parent, seed)
     return _fit_predict(folds, site_batch, strict)

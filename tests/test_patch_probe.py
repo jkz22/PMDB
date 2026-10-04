@@ -37,3 +37,10 @@ def test_permutation_runs():
     X, sb, sp = _data()
     r = pp.permutation_test(X, sb, sp, n_perm=3)
     assert 0 < r["p_value"] <= 1 and r["observed_accuracy"] == 1.0
+
+
+def test_fit_predict_probe_separable():
+    X, sb, sp = _data()
+    tr = {s: v for s, v in X.items() if s != "Batch_2_0"}
+    p = pp.fit_predict_probe(tr, sb, X["Batch_2_0"])
+    assert p.shape == (3,) and abs(p.sum() - 1) < 1e-9 and pp.BATCHES[int(p.argmax())] == "Batch_2"
