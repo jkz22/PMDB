@@ -1,0 +1,95 @@
+{
+  "baseline_naive_bayes": {
+    "accuracy": 0.6774193548387096,
+    "balanced_accuracy": 0.6358543417366946,
+    "recall": {
+      "Batch_1": 0.7142857142857143,
+      "Batch_2": 0.42857142857142855,
+      "Batch_3": 0.7647058823529411
+    },
+    "confusion": {
+      "Batch_1": {
+        "Batch_1": 5,
+        "Batch_2": 0,
+        "Batch_3": 2
+      },
+      "Batch_2": {
+        "Batch_1": 3,
+        "Batch_2": 3,
+        "Batch_3": 1
+      },
+      "Batch_3": {
+        "Batch_1": 2,
+        "Batch_2": 2,
+        "Batch_3": 13
+      }
+    }
+  },
+  "mixture": {
+    "accuracy": 0.6774193548387096,
+    "balanced_accuracy": 0.5798319327731093,
+    "recall": {
+      "Batch_1": 0.7142857142857143,
+      "Batch_2": 0.14285714285714285,
+      "Batch_3": 0.8823529411764706
+    },
+    "confusion": {
+      "Batch_1": {
+        "Batch_1": 5,
+        "Batch_2": 0,
+        "Batch_3": 2
+      },
+      "Batch_2": {
+        "Batch_1": 4,
+        "Batch_2": 1,
+        "Batch_3": 2
+      },
+      "Batch_3": {
+        "Batch_1": 2,
+        "Batch_2": 0,
+        "Batch_3": 15
+      }
+    },
+    "log_loss": 1.050640094576756,
+    "brier": 0.6360611676486342,
+    "permutation": {
+      "n_perm": 200,
+      "null_mean_bacc": 0.35239495798319326,
+      "p_value": 0.01990049751243781
+    }
+  },
+  "defect_sites_full_fit": {
+    "Batch_1": [],
+    "Batch_2": [
+      "3806gxp0",
+      "avn74qx1",
+      "r17byphk"
+    ]
+  },
+  "pi_full_fit": {
+    "Batch_1": 0.0625,
+    "Batch_2": 0.4375
+  },
+  "settings": {
+    "defect_percentile": 90.0,
+    "min_sites_for_scale": 3,
+    "features": [
+      "si_depth_rel_band0",
+      "si_depth_rel_band1",
+      "si_depth_rel_band2",
+      "si_depth_rel_band3",
+      "si_depth_rel_band4",
+      "si_depth_slope",
+      "si_depth_mid_dip",
+      "gx_0.5_2.0",
+      "gx_2.0_4.0",
+      "gx_4.0_7.0",
+      "gx_7.0_10.0",
+      "gz_0.5_2.0",
+      "gz_2.0_4.0",
+      "gz_4.0_7.0",
+      "gz_7.0_10.0",
+      "k15_contact_tilestd"
+    ]
+  }
+}
