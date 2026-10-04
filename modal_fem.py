@@ -303,6 +303,10 @@ def refeature_case(case: dict, tag: str, z_edge_um: float) -> dict:
         from pmdb.fem.result import load_npz
 
         out_vol.reload()
+        stale = Path(_case_path("/out/results", tag, orientation, batch, site))
+        if stale.exists():  # a failed rerun must not leave an older successful result behind
+            stale.unlink()
+            out_vol.commit()
         r = load_npz(Path(f"/out/fields/full/{orientation}/{batch}__{site}.npz"))
         site_rows, tile_rows = run_curves(r, orientation, load_params(), window=False, z_edge_um=z_edge_um)
         key = {"batch": batch, "site": site, "heldout": batch == "Batch_heldout", "orientation": orientation}
@@ -316,7 +320,15 @@ def refeature_case(case: dict, tag: str, z_edge_um: float) -> dict:
         out_vol.commit()
         return meta
     except Exception as e:  # noqa: BLE001
-        return {**case, "wall_s": time.time() - t0, "error": f"{type(e).__name__}: {e}"}
+        err = f"{type(e).__name__}: {e}"
+        try:
+            p = Path(_case_path("/out/results", tag, orientation, batch, site))
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(json.dumps({"meta": {**case, "error": err}, "site_rows": [], "tile_rows": []}))
+            out_vol.commit()
+        except Exception:  # noqa: BLE001
+            pass
+        return {**case, "wall_s": time.time() - t0, "error": err}
 
 
 @app.function(cpu=0.25, memory=1024, timeout=86400, retries=0, volumes={"/out": out_vol})

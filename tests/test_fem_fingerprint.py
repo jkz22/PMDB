@@ -51,3 +51,26 @@ def test_selection_uses_training_fold_only():
     xa, _, na, ia = ffe.fold_matrices("A2", tr, te_a, codes[1:])
     xb, _, nb, ib = ffe.fold_matrices("A2", tr, te_b, codes[1:])
     assert na == nb and "d" not in na and ia["chosen"] == ib["chosen"]
+
+
+def test_decide_never_promotes_sensitivity_arm():
+    res = {"A0": {"n_correct": 21, "perm_p": 0.5}, "A1": {"n_correct": 30, "perm_p": 0.001},
+           "A2": {"n_correct": 30, "perm_p": 0.001}}
+    assert ffe.decide(res)[0] in ("A1", "A2")
+    assert ffe.decide(res, sensitivity=True)[0] == "A0"
+
+
+def test_availability_screen_uses_training_rows_only():
+    cand, codes = _toy()
+    tr = {"cand": cand[1:].copy(), "cand_names": list("abcd"), "leo": np.zeros((23, 1))}
+    te = {"cand": cand[:1].copy(), "leo": np.zeros((1, 1))}
+    cand_nan = cand.copy()
+    cand_nan[0, 1] = np.nan  # NaN only at the held-out site must not change the training selection
+    tr2 = {**tr, "cand": cand_nan[1:].copy()}
+    _, _, n1, _ = ffe.fold_matrices("A2", tr, te, codes[1:])
+    _, _, n2, _ = ffe.fold_matrices("A2", tr2, te, codes[1:])
+    assert n1 == n2
+    tr3 = {**tr, "cand": tr["cand"].copy()}
+    tr3["cand"][0, 0] = np.nan  # NaN at a training site drops that column in-fold
+    _, _, n3, _ = ffe.fold_matrices("A2", tr3, te, codes[1:])
+    assert "a" not in n3
