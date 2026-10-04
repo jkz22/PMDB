@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT))
 
 from pmdb import fingerprint as fp  # noqa: E402
 from pmdb.io import load_site  # noqa: E402
+from pmdb.kpis.fields import band_profile  # noqa: E402
 from pmdb.segment import segment_bse  # noqa: E402
 
 OUT = ROOT / "outputs" / "clips"
@@ -196,17 +197,20 @@ def clip_depth() -> None:
     depth = np.linspace(0, 1, 400)
     centres = (np.arange(5) + 0.5) / 5
     rows = []
-    aspect = 3.3
     for r, b in enumerate(BATCHES):
         y0 = 0.615 - r * 0.275
         s = reps[b]
         raw = load_site(b, s, resolution="half", normalise="none").image[..., 0]
         m = segment_bse(raw.astype(np.float64), 50.0)
         h = raw.shape[0]
-        w = min(raw.shape[1], int(h * aspect))
+        w = raw.shape[1]
         c0 = (raw.shape[1] - w) // 2
         g = raw[:, c0:c0 + w].astype(np.float32) / 255.0
         si = m.si[:, c0:c0 + w]
+        prof_site = band_profile(si, m.fraction_space[:, c0:c0 + w], len(BANDS))
+        prof_site = prof_site / np.nanmean(prof_site)
+        print(f"  {s}: strip vs KPI profile max |diff| =",
+              f"{np.nanmax(np.abs(prof_site - X.loc[(b, s), BANDS].to_numpy(dtype=float))):.3f}")
         rgb = np.repeat(g[..., None], 3, axis=2) * 0.9
         colour = np.array(matplotlib.colors.to_rgb(COL[b]), dtype=np.float32)
         lit = rgb.copy()
@@ -229,14 +233,16 @@ def clip_depth() -> None:
         P.set_xticks([0.5, 1.0, 1.5])
         if r == 2:
             P.set_xlabel("Si fraction / site mean")
+        if r == 0:
+            P.text(1.8, -0.1, "thick: this site   thin: batch median", fontsize=12, color=DIM, ha="right",
+                   va="bottom", transform=P.transData)
         for sp in ("top", "right"):
             P.spines[sp].set_visible(False)
-        prof_site = X.loc[(b, s), BANDS].to_numpy(dtype=float)
         prof_med = X.xs(b, level="batch")[BANDS].median().to_numpy(dtype=float)
         fs = np.interp(depth, centres, prof_site)
         fm = np.interp(depth, centres, prof_med)
-        ls, = P.plot([], [], color=COL[b], lw=1.5, alpha=0.55)
-        lm, = P.plot([], [], color=COL[b], lw=4.5)
+        lm, = P.plot([], [], color=COL[b], lw=1.5, alpha=0.55)
+        ls, = P.plot([], [], color=COL[b], lw=4.5)
         dot, = P.plot([], [], "o", color="white", ms=9)
         rows.append(dict(img=img, lit=lit, dimmed=dimmed, line=line, h=h, ls=ls, lm=lm, dot=dot, fs=fs, fm=fm,
                          lab=lab))
@@ -253,7 +259,7 @@ def clip_depth() -> None:
             k = max(1, int(round(d * (len(depth) - 1))) + 1)
             R["ls"].set_data(R["fs"][:k], depth[:k])
             R["lm"].set_data(R["fm"][:k], depth[:k])
-            R["dot"].set_data([R["fm"][k - 1]], [depth[k - 1]])
+            R["dot"].set_data([R["fs"][k - 1]], [depth[k - 1]])
             R["dot"].set_alpha(1 if d < 1 else 0)
             R["lab"].set_alpha(ramp(t, 5.3, 5.9))
 
