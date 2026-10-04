@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+import math
 import argparse
 import json
 import re
@@ -217,7 +218,7 @@ def report_drift(old, new):
     for key in sorted(set(old) | set(new)):
         if key == "sources":
             continue
-        if old.get(key) != new.get(key):
+        if not _same_fact(old.get(key), new.get(key)):
             changed = True
             print(f"changed fact: {key}: {old.get(key)!r} -> {new.get(key)!r}")
     old_sources, new_sources = old.get("sources", {}), new.get("sources", {})
@@ -229,6 +230,17 @@ def report_drift(old, new):
     for directory in fresh:
         print(f"new unreviewed output dir: outputs/{directory}")
     return changed
+
+
+def _same_fact(a, b) -> bool:
+    """Equality that ignores last-digit float noise (recomputed metrics differ by ~1e-16 across platforms)."""
+    if isinstance(a, float) and isinstance(b, float):
+        return math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-12)
+    if isinstance(a, dict) and isinstance(b, dict):
+        return a.keys() == b.keys() and all(_same_fact(a[k], b[k]) for k in a)
+    if isinstance(a, list) and isinstance(b, list):
+        return len(a) == len(b) and all(_same_fact(x, y) for x, y in zip(a, b))
+    return a == b
 
 
 def main(argv=None):
