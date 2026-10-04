@@ -476,12 +476,12 @@ async function autoplay() {
 // ---------------------------------------------------------------- test calls: probe embeddings
 // Each story was written for the recorded call; if refreshed results change the call, a note is shown.
 const SITE_STORY = {
-  '0eryguqq': { call: 'Batch_3', text: 'Reads as Batch 3 across the whole image: a denser Si particle population with more Si area and porosity than a Batch 2 crop, consistent through the coating depth.' },
-  fhwrjtet: { call: 'Batch_3', text: 'Same picture as 0eryguqq: Batch-3-like Si area fraction, particle density and porosity, holding through the depth.' },
-  fspqbkxl: { call: 'Batch_2', text: 'Leans Batch 2, but mostly on fine texture our microstructure measurements do not capture; the measurable differences (Si fraction, Si–graphite contact) are small.' },
-  '4hq27w4c': { call: 'Batch_2', text: 'Near tie between Batch 2 and Batch 1. Slightly more porosity and Si area, and fewer Si particles, than a Batch 1 crop.' },
-  y59rxmxl: { call: 'Batch_1', text: 'Leans Batch 1: lower Si area fraction and fewer Si particles than a Batch 2 crop, with less Si–graphite contact.' },
-  soo2ax3r: { call: 'Batch_1', text: 'Leans Batch 1: fewer but larger Si particles (lower density, higher Si area) than a Batch 2 crop, most visible deeper in the coating.' },
+  '0eryguqq': "Every measured trait except Si–graphite contact points to Batch 3 over Batch 2, led by Si particle density and Si area fraction; the support is spread across the whole image.",
+  'fhwrjtet': "Same picture as 0eryguqq: Si area fraction, Si particle density and the depth pattern all point to Batch 3; only Si–graphite contact dissents.",
+  'fspqbkxl': "Porosity, Si–graphite contact and Si area fraction point to Batch 2; the depth pattern, Si particle size and density point back toward Batch 1. Over half of the call rests on texture we do not measure.",
+  'y59rxmxl': "Mixed evidence: the depth pattern and Si particle size point to Batch 1, but Si area fraction, particle density, contact and porosity look more like Batch 2.",
+  'soo2ax3r': "The depth pattern, Si area fraction, particle size and porosity point to Batch 1; Si particle density and Si–graphite contact look more like Batch 2, mostly in the left third of the image.",
+  '4hq27w4c': "Near tie: porosity, Si–graphite contact and Si area fraction point to Batch 2; Si particle density, size and the depth pattern point to Batch 1.",
 };
 // Call each evidence PNG in /evidence was rendered for; a different loaded call means the map is stale.
 const EVIDENCE_CALL = { '0eryguqq': 'Batch_3', fhwrjtet: 'Batch_3', fspqbkxl: 'Batch_2', '4hq27w4c': 'Batch_2', y59rxmxl: 'Batch_1', soo2ax3r: 'Batch_1' };
@@ -528,8 +528,8 @@ R.embeddings = (root) => {
           h('span', { class: `conf ${confidence(p).cls}` }, confidence(p).label))),
       bars,
       h('div', {},
-        h('a', { href: `/evidence/${s.site}.png`, target: '_blank', title: 'Open full size' },
-          h('img', { src: `/evidence/${s.site}.png`, alt: `Evidence map for ${s.site}`, class: 'evidence' }))),
+        h('a', { href: `/evidence/${s.site}.jpg`, target: '_blank', title: 'Open full size' },
+          h('img', { src: `/evidence/${s.site}.jpg`, alt: `Evidence map for ${s.site}`, class: 'evidence' }))),
       ...(evidenceIsStale(EVIDENCE_CALL, s.site, s.call) ? [h('p', { class: 'src' }, `Evidence map was rendered for the call ${EVIDENCE_CALL[s.site] ? short(EVIDENCE_CALL[s.site]) : 'unknown'}; the loaded call is ${short(s.call)}, so the map may not match.`)] : []),
       h('p', {}, SITE_STORY[s.site].text),
       ...(storyIsStale(SITE_STORY[s.site], s.call) ? [h('p', { class: 'src' }, `Explanation written when this site was called ${short(SITE_STORY[s.site].call)}; the loaded call is ${short(s.call)}, so the text may be out of date. The evidence bars are from the loaded data.`)] : []),
@@ -543,33 +543,6 @@ R.embeddings = (root) => {
       h('div', { class: 'split' }, h('span', { style: `width:${ex * 100}%`, class: 'meas' }), h('span', { style: `width:${(1 - ex) * 100}%`, class: 'tex' })),
       h('div', { class: 'src' }, `${Math.round(ex * 100)}% measured microstructure · ${Math.round((1 - ex) * 100)}% fine texture`));
   })));
-  // 2. compact heatmap: top 12 dims + rest
-  const top = topPcs(C, test.map((x) => x.site), 12);
-  const cell = (s, parent, pc) => findCell(C, s, parent, pc);
-  const max = Math.max(...C.filter((r) => top.includes(r.pc)).map((r) => Math.abs(+r.contribution)));
-  const tip = h('div', { class: 'emb-tip', hidden: true });
-  const grid = h('div', { class: 'emb-grid', style: `grid-template-columns: 110px repeat(${top.length + 1}, minmax(54px, 1fr))` });
-  grid.append(h('div', {}));
-  top.forEach((pc) => { const r = headerRow(C, pc); grid.append(h('div', { class: 'emb-pc', title: pcStory(r.label, +r.r2, r.explained === 'True') },
-    pc, h('br'), r.explained === 'True' ? r.label.split(',')[0].replace('+', '↑ ').replace('-', '↓ ') : 'texture')); });
-  grid.append(h('div', { class: 'emb-pc' }, 'other 52', h('br'), 'dims'));
-  for (const s of test) {
-    grid.append(h('div', { class: 'emb-row' }, h('b', { class: 'mono' }, s.site), h('br'), h('span', { style: `color:${BATCH_COLOR[s.call]}` }, short(s.call))));
-    const addCell = (c, story, label) => {
-      const a = Math.min(1, Math.abs(c) / max) ** 0.6;
-      const n = h('div', { class: 'emb-cell', style: `background:${c >= 0 ? `rgba(201,52,52,${a})` : `rgba(42,120,214,${a})`}` }, c.toFixed(1));
-      n.addEventListener('mouseenter', (e) => { tip.hidden = false; tip.replaceChildren(h('b', {}, `${label} · ${s.site}`), h('div', {}, story),
-        h('div', { class: 'mono' }, `${c >= 0 ? 'pushes toward' : 'pushes away from'} ${short(s.call)} vs ${short(s.runner_up)}: ${c.toFixed(2)}`));
-        const pos = clampTip(e.clientX, e.clientY, tip.offsetWidth || 340, tip.offsetHeight || 0, window.innerWidth, window.innerHeight);
-        tip.style.left = `${pos.left}px`; tip.style.top = `${pos.top}px`; });
-      n.addEventListener('mouseleave', () => { tip.hidden = true; });
-      grid.append(n);
-    };
-    top.forEach((pc) => { const r = cell(s.site, s.parent, pc); addCell(+r.contribution, pcStory(r.label, +r.r2, r.explained === 'True'), pc); });
-    const rest = C.filter((x) => x.site === s.site && !top.includes(x.pc)).reduce((t, x) => t + +x.contribution, 0);
-    addCell(rest, 'Sum of the remaining 52 embedding dimensions, mostly fine texture.', 'other dims');
-  }
-  root.append(card('Which embedding dimensions drove each call (red = toward the call, blue = against; hover for meaning)', h('div', { class: 'emb-wrap' }, grid)), tip);
 };
 
 buildShell();
