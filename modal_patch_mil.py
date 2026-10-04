@@ -451,10 +451,9 @@ def evidence_render(tag: str, labels: list[dict], targets: list[dict]) -> dict:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
-    from matplotlib.patches import Rectangle
-
     from pmdb import patch_probe as pp
     from pmdb.io import load_site
+    from pmdb.segment import segment
 
     out_vol.reload()
     Xall = {r["site"]: _load_emb(tag, r["batch"], r["site"])[0] for r in labels}
@@ -476,15 +475,21 @@ def evidence_render(tag: str, labels: list[dict], targets: list[dict]) -> dict:
             hdr = 0.6
             fig = plt.figure(figsize=(16, 16 * h / w + hdr), dpi=100)
             ax = fig.add_axes([0, 0, 1, 1 - hdr / (16 * h / w + hdr)])
-            ax.imshow(bse, cmap="gray", vmin=0, vmax=1)
+            raw = load_site(t["batch"], t["site"], resolution="half", normalise="none", cache_root="/data/test")
+            m = segment(raw)
+            rgb = np.repeat(np.clip(bse, 0, 1)[..., None], 3, axis=2).astype(np.float64)
+            hexc = lambda c: np.array([int(c[i:i + 2], 16) for i in (1, 3, 5)]) / 255.0
+            cols = {True: (hexc("#e8603c"), hexc("#a01818")), False: (hexc("#5aa0e6"), hexc("#1a3f9e"))}
             for v, (_, _, y0, x0) in zip(vote, coords):
-                a = min(abs(v) / scale, 1.0) * 0.6
-                ax.add_patch(Rectangle((x0, y0), 224, 224, fc=(1, 0, 0) if v > 0 else (0, 0.3, 1), ec="none", alpha=a))
-            for i in np.argsort(-vote)[:3]:
-                ax.add_patch(Rectangle((coords[i][3], coords[i][2]), 224, 224, fc="none", ec="yellow", lw=3))
+                a = float(np.clip(abs(v) / scale, 0.15, 1.0)) * 0.75
+                sl = (slice(y0, min(y0 + 224, h)), slice(x0, min(x0 + 224, w)))
+                for mask, c in zip((m.si[sl], m.pore[sl]), cols[bool(v > 0)]):
+                    reg = rgb[sl]
+                    reg[mask] = (1 - a) * reg[mask] + a * c
+            ax.imshow(rgb)
             ax.axis("off")
             fig.text(0.01, 0.99, f"{t['site']} \u2192 {t['call']} (p={t['p']:.3f})", va="top", fontsize=20)
-            fig.text(0.99, 0.99, "red = supports call   blue = against   yellow = top-3 supporting", va="top", ha="right", fontsize=13)
+            fig.text(0.99, 0.99, "Si / pores in zones agreeing with the call (red) or against it (blue)", va="top", ha="right", fontsize=13)
             buf = io.BytesIO()
             fig.savefig(buf, format="png")
             plt.close(fig)
@@ -711,7 +716,7 @@ def _evidence(root: Path) -> None:
     lab["parent"] = lab["site"].map(pg)
     pr = pd.read_csv(root / "outputs" / "probe_explain" / "test_final_predictions.csv", dtype={"site": str}).set_index("site")
     targets = [{"batch": "Batch_test", "site": s, "parent": p, "call": pr.loc[s, "call"], "runner_up": pr.loc[s, "runner_up"],
-                "p": float(pr.loc[s, "p_" + pr.loc[s, "call"]])} for s, p in TEST_PARENTS.items()]
+                "p": float(pr.loc[s, "p_" + pr.loc[s, "call"]])} for s, p in EXPECTED_TEST_PARENTS.items()]
     res = evidence_render.remote("full", lab.to_dict("records"), targets)
     out = root / "demo" / "public" / "evidence"
     for s, b in res["pngs"].items():
