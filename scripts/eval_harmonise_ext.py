@@ -350,7 +350,7 @@ def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
                                  + (f" – {why}" if why else " – nothing beyond the border"), fontsize=7)
     _legend(fig)
     fig.suptitle("What the mask cuts out of the poorly imaged fields and why\n"
-                 f"(fields with > {100 * CROP_GALLERY_STATS_FRAC:.0f} % of a detector's interior excluded, any charging / bad band, or a "
+                 f"(fields with > {100 * CROP_GALLERY_STATS_FRAC:.0f} % of a detector's interior excluded, > 0.1 % KPI-invalid interior pixels (charging / bad band), or a "
                  "crack; no Cu collector / free surface in any field – border + colour-marker columns are the only fixed crop)", fontsize=10)
     fig.tight_layout(rect=(0, 0.02, 1, 0.98))
     fig.savefig(out, dpi=80)
