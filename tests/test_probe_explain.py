@@ -82,3 +82,11 @@ def test_unexplained_pcs_carry_no_kpi_direction():
     assert b1.loc["si_frac", "logit_per_sd"] != 0
     assert 0 < b1["unexplained_share"].iloc[0] < 1
     assert np.isclose(b1["unexplained_share"].iloc[0] + b1["explainable_share"].iloc[0], 1)
+
+
+def test_kpi_effect_zero_at_training_mean():
+    w = np.array([1.0, -2.0])
+    B = np.array([[0.5, 0.5], [0.3, -0.3]])
+    eff = pe.kpi_effects(w, B, [True, True], [1.0, 3.0], [1.0, 2.0], [1.0, 1.0])
+    assert abs(eff[0]) < 1e-12 and eff[1] != 0
+    assert np.allclose(eff[1], 1.0 * (1.0 * 0.5 + -2.0 * -0.3))

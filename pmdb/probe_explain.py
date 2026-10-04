@@ -84,6 +84,14 @@ def _kept(pc):
     return [c[2:] for c in pc.columns if c.startswith("B_")]
 
 
+def kpi_effects(w, B, explained, target_kpi_mean, train_kpi_mean, train_kpi_sd):
+    """Per-KPI logit effect of a target site: z_k * sum_j explained_j * w_j * B_jk, with z_k the target's mean KPI
+    standardised by the training patches. A KPI at its training mean gets zero credit.
+    w: (n_pc,) classifier weight (called minus runner-up); B: (n_pc, n_kpi) raw PC-on-z-KPI coefficients."""
+    z = (np.asarray(target_kpi_mean, float) - np.asarray(train_kpi_mean, float)) / np.asarray(train_kpi_sd, float)
+    return z * ((np.asarray(w) * np.asarray(explained, float)) @ np.asarray(B))
+
+
 def batch_directions(clf, pc_meanings):
     kept = _kept(pc_meanings)
     W = clf.coef_ - clf.coef_.mean(0)
