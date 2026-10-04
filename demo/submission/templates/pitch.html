@@ -117,9 +117,18 @@
   <div class="foot"><span>Drying migration vs. sedimentation — physics you can act on, not a pixel artifact.</span><span>{{fp_features}} curve-shape features</span></div>
 </section>
 
-<!-- 3 · THE PHYSICS -->
+<!-- 3 · THE KPIs -->
 <section class="slide">
-  <div class="kicker">3 · The physics</div>
+  <div class="kicker">3 · The KPIs</div>
+  <h1>Two independent segmentations, same batch picture.</h1>
+  <p class="sub">Analytical benchmark vs materials classifier, 31 sites, each KPI indexed to its own all-site mean. Batch 1 skews Si-rich (a few sites); porosity is similar across batches.</p>
+  <figure><img src="../../outputs/slides/kpi_distributions_by_batch.png" alt="Per-batch porosity and Si fraction distributions, analytical benchmark vs materials classifier"></figure>
+  <div class="foot"><span>Raw porosity differs by segmentation (about 6% vs 9%); indexing removes the offset.</span><span>outputs/slides/ · scripts/make_kpi_dist_slide.py</span></div>
+</section>
+
+<!-- 4 · THE PHYSICS -->
+<section class="slide">
+  <div class="kicker">4 · The physics</div>
   <h1>Same silicon, same swelling. The signal is the arrangement.</h1>
   <p class="sub">We simulated lithiation inside every real microstructure: {{fem_sites}} sites × 2 collector orientations = {{fem_runs}} FEM runs on Modal, {{fem_missing}} failures, {{fem_cost}} total.</p>
   <div style="display:flex;gap:1.6vw;flex:1;min-height:0">
@@ -135,7 +144,7 @@
 
 <!-- 4 · THE PROOF -->
 <section class="slide">
-  <div class="kicker">4 · The proof</div>
+  <div class="kicker">5 · The proof</div>
   <h1>Small model, adversarially validated.</h1>
   <p class="sub">Robust per-batch naive Bayes + conformal p-values — {{fp_n}} sites forbid fitted weights, so every claim is stress-tested instead.</p>
   <div class="tiles">
@@ -165,7 +174,7 @@
 
 <!-- 5 · THE CALLS -->
 <section class="slide">
-  <div class="kicker">5 · The calls</div>
+  <div class="kicker">6 · The calls</div>
   <h1>{{heldout_n_word}} held-out sites, assigned with honest confidence.</h1>
   <div class="cards">
     <div class="call">
