@@ -56,9 +56,20 @@ def site_distance_matrix(query: np.ndarray, query_site: np.ndarray,
     return out
 
 
-def reference_distribution(D: np.ndarray, patch_site: np.ndarray, bank_sites: np.ndarray) -> np.ndarray:
-    """Sorted 1-D reference distances of the bank's own patches against the other bank sites."""
+def reference_distribution(D: np.ndarray, patch_site: np.ndarray, bank_sites: np.ndarray,
+                           site_groups: np.ndarray | None = None) -> np.ndarray:
+    """Sorted 1-D reference distances of the bank's own patches against the other bank sites
+    (other bank GROUPS when ``site_groups`` is given)."""
     bank_sites = np.asarray(bank_sites)
+    if site_groups is not None:
+        site_groups = np.asarray(site_groups)
+        if len(np.unique(site_groups[bank_sites])) < 2:
+            raise ValueError("calibration needs at least 2 training groups per batch bank")
+        rows = np.isin(patch_site, bank_sites)
+        sub = D[np.ix_(rows, bank_sites)].copy()
+        same = site_groups[patch_site[rows]][:, None] == site_groups[bank_sites][None, :]
+        sub[same] = np.inf
+        return np.sort(sub.min(axis=1))
     if len(bank_sites) < 2:
         raise ValueError("calibration needs at least 2 training sites per batch bank")
     rows = np.isin(patch_site, bank_sites)
@@ -83,6 +94,17 @@ def loo_bank_scores(D_rows: np.ndarray, bank_sites: np.ndarray, ref_sorted: np.n
     return calibrate(dj, ref_sorted)
 
 
+def logo_bank_scores(D_rows: np.ndarray, bank_sites: np.ndarray, bank_groups: np.ndarray,
+                     ref_sorted: np.ndarray) -> np.ndarray:
+    """(n_groups, n) calibrated u for every dropped bank GROUP (grouped analogue of loo_bank_scores)."""
+    sub = D_rows[:, bank_sites]
+    out = []
+    for g in np.unique(bank_groups):
+        keep = bank_groups != g
+        out.append(calibrate(sub[:, keep].min(axis=1), ref_sorted))
+    return np.stack(out)
+
+
 def top_mean(u: np.ndarray, frac: float = TOP_FRAC) -> np.ndarray:
     """Mean of the k = max(1, ceil(frac * n)) largest values along the last axis."""
     n = u.shape[-1]
@@ -96,15 +118,21 @@ class SiteScore:
     pooled: dict[str, np.ndarray]  # {"top10": (n_batches,), "mean": (n_batches,)}
 
 
-def score_site(D_rows, D, patch_site, site_labels, train_mask, n_batches) -> SiteScore:
+def score_site(D_rows, D, patch_site, site_labels, train_mask, n_batches, site_groups=None) -> SiteScore:
+    if site_groups is not None:
+        site_groups = np.asarray(site_groups)
     n = D_rows.shape[0]
     u = np.empty((n, n_batches))
     top = np.empty(n_batches)
     mean = np.empty(n_batches)
     for b in range(n_batches):
         bank = np.flatnonzero(train_mask & (site_labels == b))
-        ref = reference_distribution(D, patch_site, bank)
-        uj = loo_bank_scores(D_rows, bank, ref)
+        if site_groups is None:
+            ref = reference_distribution(D, patch_site, bank)
+            uj = loo_bank_scores(D_rows, bank, ref)
+        else:
+            ref = reference_distribution(D, patch_site, bank, site_groups)
+            uj = logo_bank_scores(D_rows, bank, site_groups[bank], ref)
         u[:, b] = uj.mean(0)
         top[b] = top_mean(uj).mean()
         mean[b] = uj.mean()
@@ -117,9 +145,23 @@ def loo_scores(D, patch_site, site_labels, n_batches) -> list[SiteScore]:
                        np.arange(n_sites) != i, n_batches) for i in range(n_sites)]
 
 
-def heldout_scores(Dh, patch_site_h, n_heldout, D, patch_site, site_labels, n_batches) -> list[SiteScore]:
-    train = np.ones(len(site_labels), dtype=bool)
-    return [score_site(Dh[patch_site_h == h], D, patch_site, site_labels, train, n_batches)
+def lopo_scores(D, patch_site, site_labels, site_groups, n_batches) -> list[SiteScore]:
+    site_groups = np.asarray(site_groups)
+    return [score_site(D[patch_site == i], D, patch_site, site_labels,
+                       site_groups != site_groups[i], n_batches, site_groups)
+            for i in range(len(site_labels))]
+
+
+def heldout_scores(Dh, patch_site_h, n_heldout, D, patch_site, site_labels, n_batches,
+                   site_groups=None, heldout_groups=None) -> list[SiteScore]:
+    if site_groups is None and heldout_groups is None:
+        train = np.ones(len(site_labels), dtype=bool)
+        return [score_site(Dh[patch_site_h == h], D, patch_site, site_labels, train, n_batches)
+                for h in range(n_heldout)]
+    site_groups = np.asarray(site_groups)
+    heldout_groups = np.asarray(heldout_groups)
+    return [score_site(Dh[patch_site_h == h], D, patch_site, site_labels,
+                       site_groups != heldout_groups[h], n_batches, site_groups)
             for h in range(n_heldout)]
 
 

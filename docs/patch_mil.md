@@ -70,6 +70,76 @@ Held-out predictions:
 - fn0mhxef: assigned Batch_2 (confidence 0.39; top-10% scores B1 0.96, B2 0.91, B3 0.92, lower = more typical). Versus Batch 3 (supplier baseline): anomaly score 0.92, inside the LOO range of Batch 3 sites (0.77-1.16, median 0.94; Batch 1/2 sites median 0.95); 2% of 60 patches exceed the Batch 3 95th-percentile self-distance (LOO Batch 3 sites median 4%). Most Batch-3-atypical patches lie in image rows [0, 2, 3] of 0-3; see figures/heldout_fn0mhxef.png.
 - xrv9xvzb: assigned Batch_3 (confidence 0.41; top-10% scores B1 0.95, B2 0.92, B3 0.90, lower = more typical). Versus Batch 3 (supplier baseline): anomaly score 0.90, inside the LOO range of Batch 3 sites (0.77-1.16, median 0.94; Batch 1/2 sites median 0.95); 2% of 60 patches exceed the Batch 3 95th-percentile self-distance (LOO Batch 3 sites median 4%). Most Batch-3-atypical patches lie in image rows [0, 3] of 0-3; see figures/heldout_xrv9xvzb.png.
 
+## Parent images (identified confound)
+
+The 31 labelled sites are crops of 13 parent electrode images regrouped into artificial batches. A parent is identified by the shared full-resolution image height, SE detector and BSE grey-level step (`pmdb/parents.py`, table in `outputs/parent_groups.csv`). Leave-one-site-out (LOSO) is optimistic because sibling crops of the held-out site sit in the training bank / training set. Parent membership is used only to exclude siblings from training banks and CV folds; it never contributes evidence to a batch call or confidence.
+
+| Parent | Labelled sites (batch) | Held-out members |
+|---|---|---|
+| h1612_ETD_s1 | ptg8lmto (3), xgj4xftb (3) | - |
+| h1780_ETD_s1 | iv6g2oq0 (1) | - |
+| h1880_ETD_s1 | uhdslk0o (1) | - |
+| h1904_ETD_s1 | 0grcilhi (3), hawkfj64 (3), mgxahqnk (3) | - |
+| h2048_ETD_s2 | 3806gxp0 (2), avn74qx1 (2) | fn0mhxef |
+| h2060_ETD_s1 | 71vgq3fw (3), kbdh4tri (3), tuy3zymq (3), x7u69zsw (3) | - |
+| h2068_SE_s1 | rxax5ozo (2), utfgcjfa (3), vc2whyaq (3), x77cy643 (3) | - |
+| h2080_ETD_s1 | ffwubibz (1), r17byphk (2), cfe5vt7s (3) | - |
+| h2088_ETD_s3 | 9luzk4jm (3), hzumfsms (3), ufdvpb81 (3) | xrv9xvzb |
+| h2148_ETD_s1 | f1vzngrs (1), epqdaau9 (2) | - |
+| h2156_ETD_s2 | fzrt2k6r (1), b3esycq1 (2) | - |
+| h2272_ETD_s2 | i9jiqjwl (2), pl8uabbv (3) | - |
+| h2316_ETD_s2 | 4ih2ggld (1), 5n1q8atc (1) | 3e122cbj |
+
+## LOSO vs LOPO
+
+| Model | LOSO acc | LOPO acc | LOPO balanced acc | LOPO macro-F1 | LOPO permutation p |
+|---|---|---|---|---|---|
+| patch | 0.710 | 0.645 | 0.588 | 0.573 | 0.0040 |
+| fingerprint | 0.677 | 0.677 | 0.636 | 0.625 | 0.0020 |
+| ensemble | 0.677 | 0.677 | 0.664 | 0.649 | 0.0020 |
+
+LOPO ensemble confusion (true -> assigned): Batch_1 {1 4, 2 1, 3 2}; Batch_2 {1 1, 2 5, 3 1}; Batch_3 {1 2, 2 3, 3 12}.
+
+Permutation scheme: site labels permuted, parent groups fixed, infeasible draws (a batch with <2 training parents in some fold) redrawn; 1000 permutations, seed 0, 0 rejected. Ensemble = average of the patch softmax and the fingerprint conformal p-values normalised to sum 1 (a heuristic, not a posterior).
+
+## Confidence flag and rubric
+
+Rule: high iff ensemble LOPO accuracy over the same agreement stratum (patch call == fingerprint call) of labelled sites of other parents > 0.5; forced low if the fingerprint marks the site OOD.
+
+Strata (LOPO ensemble): agree n=20 acc=0.750; disagree n=11 acc=0.545.
+
+| Strategy | Expected rubric score |
+|---|---|
+| ensemble_flag | 1.194 |
+| ensemble_all_high | 1.355 |
+| all_low | 1.000 |
+| patch_flag | 1.387 |
+| patch_all_high | 1.290 |
+| fingerprint_flag | 1.355 |
+| fingerprint_all_high | 1.355 |
+| fp_conf_flag | 1.258 |
+
+All-low scores 1.0 by construction. Fingerprint-confidence diagnostic (not used in the flag): see `confidence.fp_confidence_diagnostic` in `outputs/patch_mil/lopo_evaluation.json`.
+
+## Final held-out calls
+
+| Site | Assigned | Confidence | p(B1) | p(B2) | p(B3) |
+|---|---|---|---|---|---|
+| 3e122cbj | Batch_3 | high | 0.13 | 0.17 | 0.70 |
+| fn0mhxef | Batch_2 | high | 0.22 | 0.45 | 0.34 |
+| xrv9xvzb | Batch_2 | high | 0.36 | 0.42 | 0.22 |
+
+- 3e122cbj: Batch 3 (high confidence). Compared with Batch 3 (supplier baseline): (1) graphite clustering along the layer at 2.0-4.0 um spacing is lower than in Batch 3, typical of Batch 1; (2) graphite clustering along the layer at 7.0-10.0 um spacing is lower than in Batch 3, typical of Batch 1; (3) variability of Si-graphite contact across the image is lower than in Batch 3, typical of Batch 3; (4) local microstructure appearance: 27% of the image's 11.2 um areas look unlike any Batch 3 image (Batch 3 images: typically 4%), spread across the whole image; overall it looks most like Batch 3. Confidence is high because the depth-profile, graphite-arrangement and local-appearance evidence consistently point to Batch 3.
+- fn0mhxef: Batch 2 (high confidence). Compared with Batch 3 (supplier baseline): (1) Si fraction in depth band 4 of 5 (1 = top) is lower than in Batch 3, typical of Batch 1; (2) graphite clustering along the layer at 0.5-2.0 um spacing is lower than in Batch 3, typical of Batch 3; (3) graphite clustering along the layer at 2.0-4.0 um spacing is higher than in Batch 3, typical of Batch 2; (4) local microstructure appearance: 2% of the image's 11.2 um areas look unlike any Batch 3 image (Batch 3 images: typically 4%), mostly in the middle third of the image (see outputs/patch_mil/figures/heldout_fn0mhxef.png); overall it looks most like Batch 2. Confidence is high because the depth-profile, graphite-arrangement and local-appearance evidence consistently point to Batch 2.
+- xrv9xvzb: Batch 2 (high confidence). Compared with Batch 3 (supplier baseline): (1) graphite clustering along the layer at 2.0-4.0 um spacing is lower than in Batch 3, typical of Batch 1; (2) Si fraction in depth band 4 of 5 (1 = top) is lower than in Batch 3, typical of Batch 1; (3) graphite clustering along the layer at 4.0-7.0 um spacing is higher than in Batch 3, typical of Batch 2; (4) local microstructure appearance: 3% of the image's 11.2 um areas look unlike any Batch 3 image (Batch 3 images: typically 4%), spread across the whole image; overall it looks most like Batch 2. Confidence is high because the depth-profile, graphite-arrangement and local-appearance evidence consistently point to Batch 2.
+
+## Scoring new test images
+
+1. Add the raw TIFFs and rebuild the held-out cache and clean summary (`python scripts/build_clean.py --data-root data_heldout --out outputs/clean_heldout --targets outputs/clean/targets.json --workers 3`, see docs/clean.md).
+2. Compute held-out KPIs and fingerprint features: `python scripts/run_fingerprint.py --heldout-dir outputs/heldout/kpis` (see docs/fingerprint.md; writes `outputs/fingerprint/heldout_features.csv`).
+3. Upload new held-out cache files: `modal volume put pmdb-data cache_heldout/... /heldout/...` (see the commands in `modal_patch_mil.py`).
+4. `modal run modal_patch_mil.py --mode heldout` (embeds only missing held-out sites, then distances, eval, LOPO).
+
 ## Limitations
 
 - Only 31 labelled sites (7/7/17); per-class recall is noisy.

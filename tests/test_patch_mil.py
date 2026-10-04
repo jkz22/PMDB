@@ -191,3 +191,53 @@ def test_patch_features_random_backbone():
     img = rng.uniform(size=(300, 500)).astype(np.float32)
     f = patch_features(model, img, pm.grid_coords(300, 500), "cpu")
     assert f.shape == (2, 1536) and np.isfinite(f).all()
+
+
+LAB12 = [0] * 4 + [1] * 4 + [2] * 4
+
+
+def test_groups_equal_sites_reproduces_loso():
+    D, ps = make_D(LAB12, 7, seed=3, separable=False)
+    lab = np.array(LAB12)
+    a = pm.lopo_scores(D, ps, lab, np.arange(12), 3)
+    b = pm.loo_scores(D, ps, lab, 3)
+    for x, y in zip(a, b):
+        assert np.allclose(x.u, y.u, atol=1e-6)
+        assert np.allclose(x.pooled["top10"], y.pooled["top10"], atol=1e-6)
+        assert np.allclose(x.pooled["mean"], y.pooled["mean"], atol=1e-6)
+
+
+def test_grouped_fold_ignores_own_group():
+    D, ps = make_D(LAB12, 7, seed=3, separable=False)
+    lab = np.array(LAB12)
+    groups = np.array([0, 0, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8])
+    base = pm.lopo_scores(D, ps, lab, groups, 3)[0]
+    D2 = D.copy()
+    D2[:, [0, 1]] = -5.0
+    D2[ps == 0, 0] = np.inf
+    r = pm.lopo_scores(D2, ps, lab, groups, 3)[0]
+    assert np.allclose(base.u, r.u) and np.allclose(base.pooled["top10"], r.pooled["top10"])
+    D3 = D.copy()
+    D3[ps == 1, :] = -5.0
+    r3 = pm.lopo_scores(D3, ps, lab, groups, 3)[0]
+    assert np.allclose(base.u, r3.u) and np.allclose(base.pooled["top10"], r3.pooled["top10"])
+
+
+def test_grouped_reference_requires_two_groups():
+    D, ps = make_D(LAB12, 7, seed=3, separable=False)
+    with pytest.raises(ValueError):
+        pm.reference_distribution(D, ps, np.array([0, 1, 2]), np.zeros(12, dtype=int))
+
+
+def test_heldout_excludes_sibling_group():
+    D, ps = make_D(LAB12, 7, seed=3, separable=False)
+    lab = np.array(LAB12)
+    groups = np.array([0, 0, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8])
+    rng = np.random.default_rng(1)
+    Dh = rng.uniform(size=(5, 12))
+    psh = np.zeros(5, dtype=int)
+    base = pm.heldout_scores(Dh, psh, 1, D, ps, lab, 3, groups, np.array([0]))[0]
+    Dh2 = Dh.copy()
+    Dh2[:, [0, 1]] = -5.0
+    r = pm.heldout_scores(Dh2, psh, 1, D, ps, lab, 3, groups, np.array([0]))[0]
+    assert np.allclose(base.u, r.u) and np.allclose(base.pooled["top10"], r.pooled["top10"])

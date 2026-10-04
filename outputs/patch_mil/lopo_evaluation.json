@@ -1,0 +1,345 @@
+{
+  "n_sites": 31,
+  "n_parents": 13,
+  "parents": {
+    "h2316_ETD_s2": [
+      "4ih2ggld",
+      "5n1q8atc"
+    ],
+    "h2148_ETD_s1": [
+      "f1vzngrs",
+      "epqdaau9"
+    ],
+    "h2080_ETD_s1": [
+      "ffwubibz",
+      "r17byphk",
+      "cfe5vt7s"
+    ],
+    "h2156_ETD_s2": [
+      "fzrt2k6r",
+      "b3esycq1"
+    ],
+    "h1780_ETD_s1": [
+      "iv6g2oq0"
+    ],
+    "h1880_ETD_s1": [
+      "uhdslk0o"
+    ],
+    "h2048_ETD_s2": [
+      "3806gxp0",
+      "avn74qx1"
+    ],
+    "h2272_ETD_s2": [
+      "i9jiqjwl",
+      "pl8uabbv"
+    ],
+    "h2068_SE_s1": [
+      "rxax5ozo",
+      "utfgcjfa",
+      "vc2whyaq",
+      "x77cy643"
+    ],
+    "h1904_ETD_s1": [
+      "0grcilhi",
+      "hawkfj64",
+      "mgxahqnk"
+    ],
+    "h2060_ETD_s1": [
+      "71vgq3fw",
+      "kbdh4tri",
+      "tuy3zymq",
+      "x7u69zsw"
+    ],
+    "h2088_ETD_s3": [
+      "9luzk4jm",
+      "hzumfsms",
+      "ufdvpb81"
+    ],
+    "h1612_ETD_s1": [
+      "ptg8lmto",
+      "xgj4xftb"
+    ]
+  },
+  "loso": {
+    "patch": {
+      "n": 31,
+      "accuracy": 0.7096774193548387,
+      "balanced_accuracy": 0.6554621848739496,
+      "macro_f1": 0.6435185185185185,
+      "recall": {
+        "Batch_1": 0.42857142857142855,
+        "Batch_2": 0.7142857142857143,
+        "Batch_3": 0.8235294117647058
+      },
+      "f1": {
+        "Batch_1": 0.5,
+        "Batch_2": 0.5555555555555556,
+        "Batch_3": 0.8749999999999999
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 3,
+          "Batch_2": 4,
+          "Batch_3": 0
+        },
+        "Batch_2": {
+          "Batch_1": 1,
+          "Batch_2": 5,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 1,
+          "Batch_2": 2,
+          "Batch_3": 14
+        }
+      }
+    },
+    "fingerprint": {
+      "n": 31,
+      "accuracy": 0.6774193548387096,
+      "balanced_accuracy": 0.6358543417366946,
+      "macro_f1": 0.6253713606654783,
+      "recall": {
+        "Batch_1": 0.7142857142857143,
+        "Batch_2": 0.42857142857142855,
+        "Batch_3": 0.7647058823529411
+      },
+      "f1": {
+        "Batch_1": 0.588235294117647,
+        "Batch_2": 0.5,
+        "Batch_3": 0.787878787878788
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 5,
+          "Batch_2": 0,
+          "Batch_3": 2
+        },
+        "Batch_2": {
+          "Batch_1": 3,
+          "Batch_2": 3,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 2,
+          "Batch_2": 2,
+          "Batch_3": 13
+        }
+      }
+    },
+    "ensemble": {
+      "n": 31,
+      "accuracy": 0.6774193548387096,
+      "balanced_accuracy": 0.6358543417366946,
+      "macro_f1": 0.6280547409579668,
+      "recall": {
+        "Batch_1": 0.42857142857142855,
+        "Batch_2": 0.7142857142857143,
+        "Batch_3": 0.7647058823529411
+      },
+      "f1": {
+        "Batch_1": 0.5454545454545454,
+        "Batch_2": 0.5,
+        "Batch_3": 0.8387096774193549
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 3,
+          "Batch_2": 4,
+          "Batch_3": 0
+        },
+        "Batch_2": {
+          "Batch_1": 1,
+          "Batch_2": 5,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 0,
+          "Batch_2": 4,
+          "Batch_3": 13
+        }
+      }
+    }
+  },
+  "lopo": {
+    "patch": {
+      "n": 31,
+      "accuracy": 0.6451612903225806,
+      "balanced_accuracy": 0.5882352941176471,
+      "macro_f1": 0.5734204793028322,
+      "recall": {
+        "Batch_1": 0.7142857142857143,
+        "Batch_2": 0.2857142857142857,
+        "Batch_3": 0.7647058823529411
+      },
+      "f1": {
+        "Batch_1": 0.5555555555555556,
+        "Batch_2": 0.4,
+        "Batch_3": 0.7647058823529412
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 5,
+          "Batch_2": 0,
+          "Batch_3": 2
+        },
+        "Batch_2": {
+          "Batch_1": 3,
+          "Batch_2": 2,
+          "Batch_3": 2
+        },
+        "Batch_3": {
+          "Batch_1": 3,
+          "Batch_2": 1,
+          "Batch_3": 13
+        }
+      }
+    },
+    "fingerprint": {
+      "n": 31,
+      "accuracy": 0.6774193548387096,
+      "balanced_accuracy": 0.6358543417366946,
+      "macro_f1": 0.6253713606654783,
+      "recall": {
+        "Batch_1": 0.7142857142857143,
+        "Batch_2": 0.42857142857142855,
+        "Batch_3": 0.7647058823529411
+      },
+      "f1": {
+        "Batch_1": 0.588235294117647,
+        "Batch_2": 0.5,
+        "Batch_3": 0.787878787878788
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 5,
+          "Batch_2": 0,
+          "Batch_3": 2
+        },
+        "Batch_2": {
+          "Batch_1": 3,
+          "Batch_2": 3,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 2,
+          "Batch_2": 2,
+          "Batch_3": 13
+        }
+      }
+    },
+    "ensemble": {
+      "n": 31,
+      "accuracy": 0.6774193548387096,
+      "balanced_accuracy": 0.6638655462184874,
+      "macro_f1": 0.6488095238095238,
+      "recall": {
+        "Batch_1": 0.5714285714285714,
+        "Batch_2": 0.7142857142857143,
+        "Batch_3": 0.7058823529411765
+      },
+      "f1": {
+        "Batch_1": 0.5714285714285714,
+        "Batch_2": 0.6250000000000001,
+        "Batch_3": 0.7500000000000001
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 4,
+          "Batch_2": 1,
+          "Batch_3": 2
+        },
+        "Batch_2": {
+          "Batch_1": 1,
+          "Batch_2": 5,
+          "Batch_3": 1
+        },
+        "Batch_3": {
+          "Batch_1": 2,
+          "Batch_2": 3,
+          "Batch_3": 12
+        }
+      }
+    }
+  },
+  "permutation": {
+    "patch": {
+      "observed_accuracy": 0.6451612903225806,
+      "null_mean": 0.3095806451612903,
+      "null_p95": 0.5161290322580645,
+      "p_value": 0.003996003996003996
+    },
+    "fingerprint": {
+      "observed_accuracy": 0.6774193548387096,
+      "null_mean": 0.3630967741935483,
+      "null_p95": 0.5483870967741935,
+      "p_value": 0.001998001998001998
+    },
+    "ensemble": {
+      "observed_accuracy": 0.6774193548387096,
+      "null_mean": 0.3053870967741935,
+      "null_p95": 0.4838709677419355,
+      "p_value": 0.001998001998001998
+    },
+    "n_perm": 1000,
+    "seed": 0,
+    "n_rejected": 0,
+    "scheme": "site labels permuted, parent groups fixed, infeasible draws (a batch with <2 training parents in some fold) redrawn"
+  },
+  "confidence": {
+    "rule": "high iff ensemble LOPO accuracy over the same agreement stratum (patch call == fingerprint call) of labelled sites of other parents > 0.5; forced low if the fingerprint marks the site OOD",
+    "strata": {
+      "agree": {
+        "n": 20,
+        "accuracy": 0.75
+      },
+      "disagree": {
+        "n": 11,
+        "accuracy": 0.5454545454545454
+      }
+    },
+    "fp_confidence_diagnostic": {
+      "fingerprint_by_fp_confidence": {
+        "ge_0.5": {
+          "n": 11,
+          "accuracy": 0.9090909090909091
+        },
+        "lt_0.5": {
+          "n": 20,
+          "accuracy": 0.55
+        }
+      },
+      "ensemble_agree_x_fp_confidence": {
+        "agree_fpconf_ge_0.5": {
+          "n": 7,
+          "accuracy": 0.8571428571428571
+        },
+        "agree_fpconf_lt_0.5": {
+          "n": 13,
+          "accuracy": 0.6923076923076923
+        },
+        "disagree_fpconf_ge_0.5": {
+          "n": 4,
+          "accuracy": 0.5
+        },
+        "disagree_fpconf_lt_0.5": {
+          "n": 7,
+          "accuracy": 0.5714285714285714
+        }
+      },
+      "note": "diagnostic only; not used in the confidence flag"
+    }
+  },
+  "rubric_expected_score": {
+    "ensemble_flag": 1.1935483870967742,
+    "ensemble_all_high": 1.3548387096774193,
+    "all_low": 1.0,
+    "patch_flag": 1.3870967741935485,
+    "patch_all_high": 1.2903225806451613,
+    "fingerprint_flag": 1.3548387096774193,
+    "fingerprint_all_high": 1.3548387096774193,
+    "fp_conf_flag": 1.2580645161290323
+  },
+  "fingerprint_probability": "conformal p-values normalised to sum 1 (heuristic, not a posterior)",
+  "parents_used_as_evidence": false
+}
