@@ -11,7 +11,7 @@ effect is regressed out. Models are learnt on the labelled sites and applied to 
 
 Inputs:  outputs/fingerprint/features.csv (+ heldout_features.csv), outputs/kpis/site_kpis.csv
 Outputs: outputs/harmonisation_shift/combat/{fingerprint,kpis}_combat.csv (+ heldout), summary.json,
-         fingerprint LOO batch accuracy and session-shortcut accuracy before/after.
+         session-shortcut / batch accuracies before, after (in-sample) and nested leave-one-parent-out.
 """
 
 from __future__ import annotations
@@ -29,7 +29,6 @@ if str(REPO_ROOT) not in sys.path:
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import LeaveOneOut, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -77,27 +76,72 @@ def combat_fit_apply(train: pd.DataFrame, held: pd.DataFrame | None, cols: list[
     return out, hout, cols
 
 
-def _loo_acc(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
-    if len(np.unique(y)) < 2:
-        return float("nan")
-    clf = make_pipeline(StandardScaler(), LogisticRegression(max_iter=5000))
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        pred = cross_val_predict(clf, np.nan_to_num(df[cols].to_numpy(float)), y, cv=LeaveOneOut())
+def _parents(df: pd.DataFrame) -> np.ndarray:
+    pg = pd.read_csv(REPO_ROOT / "outputs/parent_groups.csv").set_index("site")["parent_id"]
+    return np.array([pg.get(s, s) for s in df.site])
+
+
+def _clf():
+    return make_pipeline(StandardScaler(), LogisticRegression(max_iter=5000))
+
+
+def _nested_lopo(train: pd.DataFrame, cols: list[str]) -> dict:
+    """Leave-one-parent-out: ComBat is refitted on the training parents only and the held-out parent
+    is transformed with its batch *unknown* (reference level), exactly as a real held-out site is;
+    classifiers are then fitted on the fold's transformed training rows. No test label enters the
+    transform."""
+    parents = _parents(train)
+    y_sess = np.array([session(s) for s in train.site])
+    y_batch = train.batch.to_numpy()
+    pred = {k: np.empty(len(train), dtype=object) for k in ("session", "strong", "batch")}
+    for p in np.unique(parents):
+        te, tr = parents == p, parents != p
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            a_tr, a_te, c = combat_fit_apply(train[tr].reset_index(drop=True), train[te].reset_index(drop=True), cols)
+        Xtr, Xte = np.nan_to_num(a_tr[c].to_numpy(float)), np.nan_to_num(a_te[c].to_numpy(float))
+        for key, y in (("session", y_sess), ("strong", y_sess == "strong"), ("batch", y_batch)):
+            if len(np.unique(y[tr])) < 2:
+                pred[key][te] = y[tr][0]
+                continue
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                pred[key][te] = _clf().fit(Xtr, y[tr]).predict(Xte)
+    return {"session_lopo_acc_nested": float((pred["session"] == y_sess).mean()),
+            "strong_vs_rest_lopo_acc_nested": float((pred["strong"].astype(bool) == (y_sess == "strong")).mean()),
+            "batch_lopo_acc_logreg_nested": float((pred["batch"] == y_batch).mean())}
+
+
+def _lopo_acc(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
+    parents = _parents(df)
+    X = np.nan_to_num(df[cols].to_numpy(float))
+    pred = np.empty(len(df), dtype=object)
+    for p in np.unique(parents):
+        te, tr = parents == p, parents != p
+        if len(np.unique(y[tr])) < 2:
+            pred[te] = y[tr][0]
+            continue
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            pred[te] = _clf().fit(X[tr], y[tr]).predict(X[te])
     return float((pred == y).mean())
 
 
 def _evaluate(name: str, before: pd.DataFrame, after: pd.DataFrame, cols: list[str]) -> dict:
+    """'before' = raw features; 'insample' = full-table ComBat (labels of every row used in the
+    transform, so these scores are descriptive only); 'nested' = leave-one-parent-out refit, the
+    honest generalisation estimate."""
     res = {"table": name, "n_features": len(cols)}
-    for tag, df in (("before", before), ("after", after)):
+    for tag, df in (("before", before), ("insample", after)):
         y_sess = np.array([session(s) for s in df.site])
-        res[f"session_loo_acc_{tag}"] = _loo_acc(df, cols, y_sess)
-        res[f"strong_vs_rest_loo_acc_{tag}"] = _loo_acc(df, cols, y_sess == "strong")
-        res[f"batch_loo_acc_logreg_{tag}"] = _loo_acc(df, cols, df.batch.to_numpy())
+        res[f"session_lopo_acc_{tag}"] = _lopo_acc(df, cols, y_sess)
+        res[f"strong_vs_rest_lopo_acc_{tag}"] = _lopo_acc(df, cols, y_sess == "strong")
+        res[f"batch_lopo_acc_logreg_{tag}"] = _lopo_acc(df, cols, df.batch.to_numpy())
         if name == "fingerprint":
             Xi = df.set_index(["batch", "site"])
             _, m = fp.loo_evaluate(Xi, Xi.index.get_level_values("batch").to_series(index=Xi.index), features=cols)
             res[f"fingerprint_loo_acc_{tag}"] = m["accuracy"]
+    res.update(_nested_lopo(before, cols))
     return res
 
 

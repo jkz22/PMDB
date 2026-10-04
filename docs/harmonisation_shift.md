@@ -50,7 +50,9 @@ valid = clean.valid_for_stats(mask[..., 0])
 For site *s* and detector *d* the radially averaged amplitude spectrum `A_s(f)` (64 bins to Nyquist)
 is measured; the reference is the per-bin median over the 31 labelled sites (log domain). The site is
 filtered in the Fourier domain with `H_s(f) = A_ref(f) / A_s(f)` (3-bin moving average, clamped to
-[0.33, 3], `H(0) = 1`). This is the image-domain analogue of Ohkubo's MTF-ratio filter and of the
+[0.33, 3], `H(0) = 1`). Radial bins cover 0 – 0.5 c/px only; the FFT corners (0.5 < r ≤ 0.707 c/px,
+not measured radially) are kept out of the fit and receive the Nyquist-bin gain on application. This
+is the image-domain analogue of Ohkubo's MTF-ratio filter and of the
 NPS-matching filters used to homogenise CT reconstruction kernels. Because DC is untouched, the mean
 grey level, the black level and the per-phase medians are preserved to within the filter's ringing;
 only the blur / noise texture is moved. The filter is *not* restricted to downward (blur) changes —
@@ -69,7 +71,9 @@ pure texture correction run it after `hybrid` (not built here).
 
 Yang & Soatto's `FDA_source_to_target_np` as published: the centred low-frequency window of half-width
 `floor(β · min(H, W))` px of the source amplitude spectrum is replaced by the reference amplitude
-(mean fftshifted amplitude of the labelled sites, resampled to the source shape), phase kept,
+(mean fftshifted amplitude of the labelled sites, each divided by its pixel count so that DC equals
+the mean grey and the model is independent of field size; remapped to the source grid by frequency and
+rescaled to the source pixel count), phase kept,
 β = 0.01 (the paper's default). With β = 0.01 the window is ~10 px, i.e. only shading and the black
 level are swapped; the texture bins are untouched. It is kept as the published "style" baseline and
 as a control for `spectrum`.
@@ -86,11 +90,34 @@ occur only in Batch 3, so session and batch are partially collinear; empirical-B
 the estimates finite but the Batch-3-only part of the session effect is identifiable only through the
 protected covariate. Outputs: `outputs/harmonisation_shift/combat/*_combat*.csv`, `summary.json`.
 
+`summary.json` reports three sets of leave-one-parent-out (LOPO, `outputs/parent_groups.csv`)
+logistic-regression accuracies: `before` (raw features), `insample` (full-table ComBat — every row's
+batch label entered the transform, so these are descriptive only) and `nested` (ComBat refitted
+inside each fold on the training parents, held-out parent transformed with batch unknown, exactly as
+a real held-out site is). The nested numbers are the honest ones:
+
+| table | metric | before | ComBat in-sample | ComBat nested |
+|---|---|---|---|---|
+| fingerprint (16) | session shortcut | 0.52 | 0.45 | **0.52** |
+| fingerprint (16) | strong-vs-rest | 0.81 | 0.77 | **0.81** |
+| fingerprint (16) | batch | 0.52 | 0.61 | **0.45** |
+| KPIs (42) | session shortcut | 0.52 | 0.39 | **0.42** |
+| KPIs (42) | strong-vs-rest | 0.81 | 0.61 | **0.74** |
+| KPIs (42) | batch | 0.39 | 0.65 | **0.45** |
+
+Verdict: on the fingerprint table nested ComBat changes nothing (the session effect is estimated from
+4 + 5 sites and shrunk to the prior); on the KPI table it removes part of the session signal
+(0.52 → 0.42, strong-vs-rest 0.81 → 0.74) with batch accuracy within noise (0.39 → 0.45). The
+apparent "batch kept and sharpened" result of the in-sample run (0.61 / 0.65) was leakage of the
+protected covariate and is not reproduced. ComBat is therefore a modest, feature-level complement
+for KPI models, not a replacement for the image routes.
+
 ## 5. `cut` — unpaired translation (experimental)
 
 Domain A = 624 BSE 256-px tiles of the four strong-session sites (hybrid-corrected, so intensity is
 already fixed and the network only has texture to learn), domain B = 4 498 tiles of the other 27
-labelled sites; FastCUT (`--CUT_mode FastCUT`, 1-channel, 256 crops, 60 + 20 epochs) on a Modal T4;
+labelled sites; FastCUT (`--CUT_mode FastCUT`, grey replicated to 3 channels because CUT's loader is RGB-only, output
+averaged back to one channel; 256 crops, 60 + 20 epochs) on a Modal T4;
 the trained generator is applied to the full strong-site BSE images in 512-px overlapping tiles. The
 output is evaluated with the same material-preservation metrics as the other routes plus an explicit
 structure check (pore/Si masks before vs after). Results land in a follow-up PR; the script is

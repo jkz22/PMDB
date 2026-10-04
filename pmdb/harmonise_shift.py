@@ -70,10 +70,16 @@ def fill_invalid(img: np.ndarray, valid: np.ndarray, size: int = 15) -> np.ndarr
 
 
 def _radial_bins(shape: tuple[int, int]) -> np.ndarray:
+    """Bin index per FFT coefficient: 0..N_BINS-1 for radial frequency r <= 0.5 c/px (bin width
+    0.5/N_BINS); the square's corners (0.5 < r <= 0.707 c/px) go to the extra index N_BINS so they
+    never contaminate the Nyquist measurement."""
     fy = np.fft.fftfreq(shape[0])[:, None]
     fx = np.fft.fftfreq(shape[1])[None, :]
     r = np.hypot(fy, fx)
-    return np.minimum((r / 0.5 * N_BINS).astype(int), N_BINS - 1)
+    b = (r / 0.5 * N_BINS).astype(int)
+    b[(r <= 0.5) & (b >= N_BINS)] = N_BINS - 1
+    b[r > 0.5] = N_BINS
+    return b
 
 
 def _tiles(img: np.ndarray, valid: np.ndarray, tile: int = TILE, min_valid: float = 0.9):
@@ -96,15 +102,15 @@ def radial_amplitude(img: np.ndarray, valid: np.ndarray, tile: int = TILE) -> np
     n = 0
     for t in _tiles(filled, valid, tile):
         a = np.abs(np.fft.fft2((t - t.mean()) * win))
-        acc += np.bincount(bins.ravel(), a.ravel(), minlength=N_BINS)
+        acc += np.bincount(bins.ravel(), a.ravel(), minlength=N_BINS + 1)[:N_BINS]
         n += 1
     if n == 0:  # short field: fall back to the whole image
         t = filled - filled.mean()
         a = np.abs(np.fft.fft2(t * np.outer(np.hanning(t.shape[0]), np.hanning(t.shape[1]))))
         bins = _radial_bins(t.shape)
-        acc = np.bincount(bins.ravel(), a.ravel(), minlength=N_BINS)
+        acc = np.bincount(bins.ravel(), a.ravel(), minlength=N_BINS + 1)[:N_BINS]
         n = 1
-    counts = np.bincount(bins.ravel(), minlength=N_BINS)
+    counts = np.bincount(bins.ravel(), minlength=N_BINS + 1)[:N_BINS]
     return acc / np.maximum(counts, 1) / n
 
 
@@ -156,7 +162,8 @@ def spectrum_apply(img: np.ndarray, valid: np.ndarray, model: SpectrumModel) -> 
     filled = fill_invalid(img, valid)
     mu = float(filled.mean())
     F = np.fft.fft2(filled - mu)
-    H2 = h[_radial_bins(filled.shape)]
+    # corner frequencies (r > 0.5 c/px, not measured radially) get the Nyquist-bin gain
+    H2 = np.append(h, h[-1])[_radial_bins(filled.shape)]
     out = np.real(np.fft.ifft2(F * H2)).astype(np.float32) + mu
     out[~valid] = np.asarray(img, dtype=np.float32)[~valid]
     return out, h
@@ -167,7 +174,7 @@ def spectrum_apply(img: np.ndarray, valid: np.ndarray, model: SpectrumModel) -> 
 # ----------------------------------------------------------------------------------------------
 @dataclass
 class FdaModel:
-    amplitude: np.ndarray      # (h, w) mean reference amplitude spectrum (fftshifted, full size)
+    amplitude: np.ndarray      # (h, w) mean reference amplitude spectrum per pixel (fftshifted; DC = mean grey)
     beta: float = FDA_BETA
     reference_sites: list[str] = field(default_factory=list)
 
@@ -176,23 +183,22 @@ class FdaModel:
 
 
 def _resize_spectrum(a: np.ndarray, shape: tuple[int, int]) -> np.ndarray:
-    """Resample an fftshifted amplitude spectrum to another image shape (zoom about the centre)."""
-    if a.shape == tuple(shape):
-        return a
-    from scipy.ndimage import zoom
-    z = zoom(a, (shape[0] / a.shape[0], shape[1] / a.shape[1]), order=1)
-    out = np.zeros(shape, dtype=a.dtype)
-    h, w = min(z.shape[0], shape[0]), min(z.shape[1], shape[1])
-    out[:h, :w] = z[:h, :w]
-    return out
+    """Remap an fftshifted spectrum onto another grid by *frequency* (nearest coefficient), so the
+    centre (DC) maps to the centre and f = k/n is preserved whatever the field size."""
+    def idx(n_out: int, n_in: int) -> np.ndarray:
+        f_out = np.fft.fftshift(np.fft.fftfreq(n_out))
+        return np.clip(np.round(f_out * n_in).astype(int) + n_in // 2, 0, n_in - 1)
+    return a[np.ix_(idx(shape[0], a.shape[0]), idx(shape[1], a.shape[1]))]
 
 
 def fda_fit(images: list[np.ndarray], valids: list[np.ndarray], reference_sites: list[str], beta: float = FDA_BETA) -> FdaModel:
-    """Mean fftshifted amplitude spectrum of the reference images (each resampled to the first one's shape)."""
+    """Mean fftshifted amplitude spectrum of the reference images, each divided by its pixel count
+    (so DC = mean grey and the spectrum is independent of the field size) and resampled to the first
+    one's shape."""
     shape = images[0].shape
     acc = np.zeros(shape)
     for img, v in zip(images, valids):
-        a = np.fft.fftshift(np.abs(np.fft.fft2(fill_invalid(img, v))))
+        a = np.fft.fftshift(np.abs(np.fft.fft2(fill_invalid(img, v)))) / img.size
         acc += _resize_spectrum(a, shape)
     return FdaModel(acc / len(images), beta, list(reference_sites))
 
@@ -203,7 +209,7 @@ def fda_apply(img: np.ndarray, valid: np.ndarray, model: FdaModel) -> tuple[np.n
     src = fill_invalid(img, valid).astype(np.float64)
     F = np.fft.fftshift(np.fft.fft2(src))
     amp, pha = np.abs(F), np.angle(F)
-    trg = _resize_spectrum(model.amplitude, src.shape)
+    trg = _resize_spectrum(model.amplitude, src.shape) * src.size  # back to this field's FFT scale
     h, w = src.shape
     b = int(np.floor(np.amin(src.shape) * model.beta))
     cy, cx = h // 2, w // 2

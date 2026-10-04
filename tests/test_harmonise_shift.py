@@ -103,3 +103,26 @@ def test_models_round_trip(tmp_path):
     S.save_models(tmp_path, "fda", fm)
     back = S.load_models(tmp_path, "fda")
     assert np.allclose(back["Inlens"].amplitude, fm["Inlens"].amplitude, rtol=1e-5) and back["Inlens"].beta == S.FDA_BETA
+
+
+def test_fda_reference_mean_is_independent_of_field_size():
+    big = np.full((1000, 1000), 100.0, np.float32)
+    small = np.full((500, 500), 40.0, np.float32)
+    model = S.fda_fit([big], [np.ones(big.shape, bool)], ["ref"])
+    out, _ = S.fda_apply(small, np.ones(small.shape, bool), model)
+    assert abs(out.mean() - 100.0) < 1e-3
+
+
+def test_corner_frequencies_do_not_enter_the_nyquist_bin():
+    bins = S._radial_bins((512, 512))
+    fy = np.fft.fftfreq(512)[:, None]
+    fx = np.fft.fftfreq(512)[None, :]
+    r = np.hypot(fy, fx)
+    assert (bins[r > 0.5] == S.N_BINS).all() and (bins[r <= 0.5] < S.N_BINS).all()
+    rng = np.random.default_rng(0)
+    F = np.abs(np.fft.fft2(rng.normal(0, 1, (512, 512))))
+    F2 = F.copy()
+    F2[r > 0.5] *= 10  # change only the corners
+    prof = lambda a: np.bincount(bins.ravel(), a.ravel(), minlength=S.N_BINS + 1)[:S.N_BINS]  # noqa: E731
+    assert np.array_equal(prof(F), prof(F2))
+    assert bins.max() == S.N_BINS and (bins == S.N_BINS).sum() > 0
