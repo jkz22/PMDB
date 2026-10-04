@@ -30,8 +30,8 @@ OUT = ROOT / "outputs/stitching/parents_annotated.png"
 UM_PER_PX = 0.05 * 4          # half-res (50 nm/px) further downsampled 4x for display
 CHAIN_GAP_UM = 25.0
 # Categorical slots 1-4 of the dataviz reference palette (validated: CVD dE 9.1, normal 22.9)
-COLORS = {"Batch_1": "#2a78d6", "Batch_2": "#eb6834", "Batch_3": "#1baf7a"}
-LABELS = {"Batch_1": "Batch 1", "Batch_2": "Batch 2", "Batch_3": "Batch 3"}
+COLORS = {"Batch_1": "#2a78d6", "Batch_2": "#eb6834", "Batch_3": "#1baf7a", "Batch_test": "#7a3fb8"}
+LABELS = {"Batch_1": "Batch 1", "Batch_2": "Batch 2", "Batch_3": "Batch 3", "Batch_test": "test site"}
 # Organiser-released ground truth for the held-out sites (2026-10-04); drawn dashed in the true colour.
 HELDOUT_TRUTH = {"3e122cbj": "Batch_2", "fn0mhxef": "Batch_1", "xrv9xvzb": "Batch_3"}
 # Held-out parents first, then parents split across batches, then single-batch parents.
@@ -40,7 +40,8 @@ ORDER = ["G2316", "G2088", "G2048", "G2080", "G2068SE", "G2148", "G2156", "G2272
 
 
 def _bse(batch: str, site: str) -> np.ndarray:
-    kw = dict(data_root=ROOT / "data_heldout", cache_root=ROOT / "cache_heldout") if batch == "Batch_heldout" else {}
+    kw = {"Batch_heldout": dict(data_root=ROOT / "data_heldout", cache_root=ROOT / "cache_heldout"),
+          "Batch_test": dict(data_root=ROOT / "data_test", cache_root=ROOT / "cache_test")}.get(batch, {})
     img = load_site(batch, site, resolution="half", **kw).image[..., 0]
     h, w = (img.shape[0] // 4) * 4, (img.shape[1] // 4) * 4
     return img[:h, :w].reshape(h // 4, 4, w // 4, 4).mean(axis=(1, 3))
@@ -88,14 +89,23 @@ def main() -> None:
         for s, b, x0, w, hh, img in items:
             ax.imshow(img, cmap="gray", vmin=0, vmax=1, extent=(x0, x0 + w, hh, 0),
                       interpolation="bilinear")
-            held = b == "Batch_heldout"
-            true_b = HELDOUT_TRUTH[s] if held else b
-            label = f"{s} · held-out, true {LABELS[true_b]}" if held else f"{s} · {LABELS[b]}"
+            # three site kinds: known (solid, batch colour), held-out with revealed truth (dotted, true
+            # batch colour), test-day unknown (dashed purple + purple tint)
+            kind = {"Batch_heldout": "held", "Batch_test": "test"}.get(b, "known")
+            true_b = HELDOUT_TRUTH[s] if kind == "held" else b
+            label = {"known": f"{s} · {LABELS.get(b)}",
+                     "held": f"{s} · held-out → revealed {LABELS[true_b]}",
+                     "test": f"{s} · UNKNOWN (test day)"}[kind]
+            ls = {"known": "-", "held": ":", "test": "--"}[kind]
+            if kind == "test":
+                ax.add_patch(Rectangle((x0, 0), w, hh, fc=COLORS["Batch_test"], alpha=0.10, ec="none"))
             ax.add_patch(Rectangle((x0 + 0.6, 0.6), w - 1.2, hh - 1.2, fill=False,
-                                   ec=COLORS[true_b], lw=3.0, ls="--" if held else "-"))
-            ax.text(x0 + 3, 3, label, va="top", ha="left", fontsize=10, color="#1a1a19",
-                    fontweight="bold" if held else "normal",
-                    bbox=dict(fc="white", ec=COLORS[true_b], lw=2.0, pad=2.5, ls="--" if held else "-"))
+                                   ec=COLORS[true_b], lw=3.5 if kind != "known" else 3.0, ls=ls))
+            ax.text(x0 + 3, 3, label, va="top", ha="left", fontsize=10,
+                    color="white" if kind == "test" else "#1a1a19",
+                    fontweight="normal" if kind == "known" else "bold",
+                    bbox=dict(fc=COLORS["Batch_test"] if kind == "test" else "white", ec=COLORS[true_b],
+                              lw=2.0, pad=2.5, ls=ls))
         for g0, g1 in gaps:
             ax.text((g0 + g1) / 2, h / 2, "gap\nunknown", ha="center", va="center",
                     fontsize=8, color="#555555")
@@ -104,11 +114,16 @@ def main() -> None:
         fig.text(0.002, (y_top + ax_h + 0.08) / fig_h, f"{p}  ({n} crop{'s' if n != 1 else ''}, {seam_txt})",
                  fontsize=11, fontweight="bold", color="#1a1a19", va="bottom")
 
-    handles = [Patch(fc="white", ec=COLORS[b], lw=3, label=LABELS[b]) for b in COLORS]
-    handles.append(Patch(fc="white", ec="#555555", lw=3, ls="--", label="held-out (dashed, true batch colour)"))
-    fig.legend(handles=handles, loc="upper right", ncol=4, frameon=False, fontsize=12)
+    handles = [Patch(fc="white", ec=COLORS[b], lw=3, label=f"{LABELS[b]} (known, solid)")
+               for b in COLORS if b != "Batch_test"]
+    handles.append(Patch(fc="white", ec="#555555", lw=3, ls=":",
+                         label="held-out, truth revealed (dotted, true batch colour)"))
+    handles.append(Patch(fc="#d9c9ec", ec=COLORS["Batch_test"], lw=3, ls="--",
+                         label="test-day unknown (dashed purple, tinted)"))
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1 - 0.6 / fig_h), ncol=5,
+               frameon=False, fontsize=12)
     fig.text(0.002, 1 - 0.35 / fig_h,
-             "Parent images (BSE, left to right), all 13 groups incl. single crops and non-adjacent pieces; each outlined crop is one site",
+             "Parent images (BSE, left to right), all 13 groups incl. test-day sites, single crops and non-adjacent pieces; each outlined crop is one site",
              fontsize=14, fontweight="bold", color="#1a1a19", va="top")
     fig.savefig(OUT, dpi=110, facecolor="white")
     print(f"wrote {OUT}")
