@@ -48,4 +48,4 @@
 Predictions use the probe trained with each test image's source image excluded, the validated setting. Sources: `outputs/probe_explain/test_final_predictions.csv`, `test_contributions.csv`.
 
 ## Evidence maps
-Each test image has a map in `demo/public/evidence/<site>.png` (dashboard tab "Test calls", click a card to enlarge). Si particles and pores are tinted red where their patch agrees with the call and blue where it argues against; graphite stays grey. Both Batch 3 calls are red throughout. `4hq27w4c` and `soo2ax3r` show visible blue clusters (top-right/centre pores; left third), matching their LOW confidence.
+Each test image has a map in `demo/public/evidence/<site>.jpg` (dashboard tab "Test calls", click a card to enlarge). Si particles and pores are tinted red where their patch agrees with the call and blue where it argues against; graphite stays grey. Both Batch 3 calls are red throughout. `4hq27w4c` and `soo2ax3r` show visible blue clusters (top-right/centre pores; left third), matching their LOW confidence.
