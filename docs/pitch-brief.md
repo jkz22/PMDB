@@ -1,5 +1,7 @@
 # Pitch brief: Si/graphite anode batch QC from SEM cross-sections
 
+> Paths under `.claude/` cited here (plans, agent reports) were removed from the tree in the release cleanup (#169). Read them from history: `git show ed0a840:<path>`.
+
 Deck source for the 2026-10-04 pitch (decision D19, `.claude/plans/fem-swelling.md`). Every number below is copied from the file cited next to it. Paths are relative to the repository root. The "Numbers checklist" at the end lists each number once, for fact-checking.
 
 Revision 2 (2026-10-04): the story now follows the FEM diagnosis (`.claude/checkpoint/reports/fem-why.synthesiser.md`) and the pre-registered test D21 (`.claude/plans/fem-swelling.md`). Leo's spatial fingerprint model (`pmdb/fingerprint.py`, `docs/fingerprint.md`) is the classifier of record. Our two-stage random forest, whose rule had picked the KPI arm, is now a cross-check only.

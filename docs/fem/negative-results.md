@@ -1,5 +1,7 @@
 # Negative results: FEM features for batch classification
 
+> Paths under `.claude/` cited here (plans, agent reports) were removed from the tree in the release cleanup (#169). Read them from history: `git show ed0a840:<path>`.
+
 Provenance record. Not part of the pitch. Classifier of record: Leo's spatial fingerprint (`pmdb/fingerprint.py`, LOO 21/31).
 
 ## Why the FEM features did not help (diagnosis)

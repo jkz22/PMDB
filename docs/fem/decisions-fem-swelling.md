@@ -1,5 +1,7 @@
 # FEM lithiation-swelling simulation — decisions so far (pre-spec)
 
+> Paths under `.claude/` cited here (plans, agent reports) were removed from the tree in the release cleanup (#169). Read them from history: `git show ed0a840:<path>`.
+
 Status: DONE 2026-10-04 — 68/68 simulations, 34 GIFs, classifier ablation + held-out predictions, pitch brief (docs/pitch-brief.md), PR #32. Literature review complete: `docs/fem/literature-review.md` (parameter table, SOC→Si/graphite mapping, validation bands, accepted risks; evidence in `docs/fem/evidence/`). Full spec to follow.
 
 ## Decided by user

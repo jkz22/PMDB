@@ -1,5 +1,7 @@
 # FEM lithiation-swelling simulation: results
 
+> Paths under `.claude/` cited here (plans, agent reports) were removed from the tree in the release cleanup (#169). Read them from history: `git show ed0a840:<path>`.
+
 Generated blocks below are filled by `python scripts/fem_docs.py --method --results` from `outputs/fem/`. Method and parameters: [method.md](method.md).
 
 ## Flags

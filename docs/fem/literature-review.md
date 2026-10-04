@@ -1,5 +1,7 @@
 # FEM literature review (final): 2D plane-strain finite-strain lithiation mechanics of Si/graphite SEM cross-sections
 
+> Paths under `.claude/` cited here (plans, agent reports) were removed from the tree in the release cleanup (#169). Read them from history: `git show ed0a840:<path>`.
+
 > Citation keys map to evidence files in [`evidence/`](evidence/): R1 = `R1-si.md`, R2 = `R2-graphite-binder.md`, R3 = `R3-method.md`, R4 = `R4-gaps.md`, R5 = `R5-shah2022.md`, P / Vn = `P-round1-synthesis.md` (round-1 synthesis and its targeted PDF checks). Items tagged "tool summary" in the evidence files were not verified against the source page. Decisions log: `.claude/plans/fem-swelling.md`.
 
 ## Answer

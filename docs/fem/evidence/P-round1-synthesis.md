@@ -1,5 +1,7 @@
 # FEM literature synthesis: 2D finite-strain lithiation mechanics of Si/graphite SEM cross-sections
 
+> Paths under `.claude/` cited here (plans, agent reports) were removed from the tree in the release cleanup (#169). Read them from history: `git show ed0a840:<path>`.
+
 ## Answer
 The literature backs the overall approach: image-based multiphase models, finite-strain F = Fe·Fλ kinematics, quasi-static uniform lithiation within each phase, and a compressive stack pressure of 0.1-1 MPa [R3:E2][R3:E7][R3:E8][R3:E10][R3:E12]. Four of the proposed defaults need revising.
 - **Graphite strain:** it follows staging rather than rising linearly with SOC. The c-axis strain is about +5.5% by stage II (about 25% graphite lithiation), stays flat until about 50%, then reaches about +10% at LiC6 [V2][V4].

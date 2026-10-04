@@ -56,7 +56,7 @@ Loader options, harmonisation routes and known imaging confounds: [`docs/data-lo
 |---|---|---|---|
 | Geometry fingerprint (LOO accuracy, permutation p, held-out calls) | `python scripts/run_fingerprint.py --heldout-dir outputs/heldout/kpis` | CPU | `outputs/fingerprint/`, [`docs/fingerprint.md`](docs/fingerprint.md) |
 | Patch-embedding classifier (LOPO, held-out) | `modal run modal_patch_mil.py` | Modal GPU | `outputs/patch_mil/`, [`docs/patch_mil.md`](docs/patch_mil.md) |
-| FEM charging simulations | `modal run modal_fem.py`, then `python scripts/fem_docs.py --method --results` | Modal CPU | `outputs/fem/`, [`docs/fem/results.md`](docs/fem/results.md) |
+| FEM charging simulations | `modal run modal_fem.py --mode full --orientation bottom`, the same with `--orientation top`, then `python scripts/fem_collect.py --results outputs/modal/fem/results` and `python scripts/fem_docs.py --method --results` | Modal CPU | `outputs/fem/`, [`docs/fem/results.md`](docs/fem/results.md) |
 | Harmonisation evaluation | `python scripts/eval_harmonisation.py` | CPU | `outputs/harmonisation/`, [`docs/harmonisation.md`](docs/harmonisation.md) |
 | Test-day submission | `python scripts/score_test_all.py` | CPU (after Modal prep) | `outputs/test/`, [`docs/patch_mil.md`](docs/patch_mil.md) |
 
