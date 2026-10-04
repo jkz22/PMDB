@@ -1,0 +1,7 @@
+method,site,parent,assigned,credibility,confidence,ood,p_Batch_1,p_Batch_2,p_Batch_3,score_Batch_1,score_Batch_2,score_Batch_3,P_Batch_1,P_Batch_2,P_Batch_3,P_pred,conf_label
+baseline,3e122cbj,G2316,Batch_1,0.8750,0.0000,False,0.8750,0.8750,1.0000,0.3859,0.8694,0.4363,0.6912,0.0003,0.3085,0.6912,high
+baseline,fn0mhxef,G2048,Batch_3,0.4444,0.1250,False,0.1250,0.8750,0.4444,1.0918,1.0195,0.8620,0.0229,0.0728,0.9043,0.9043,high
+baseline,xrv9xvzb,G2088,Batch_2,1.0000,0.5000,False,0.5000,1.0000,0.3889,0.8386,0.7351,0.9246,0.1541,0.8070,0.0389,0.8070,high
+paired,3e122cbj,G2316,Batch_1,0.2500,0.8750,False,0.2500,0.1250,0.1111,2.0442,2.4182,2.3838,0.8089,0.0857,0.1054,0.8089,high
+paired,fn0mhxef,G2048,Batch_2,0.6250,0.6250,False,0.3750,0.6250,0.1111,2.2220,1.2179,1.9241,0.0024,0.9834,0.0142,0.9834,high
+paired,xrv9xvzb,G2088,Batch_1,0.8750,0.2500,False,0.8750,0.7500,0.6667,0.6832,1.6991,0.7794,0.6395,0.0014,0.3590,0.6395,high
