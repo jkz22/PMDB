@@ -40,17 +40,25 @@ def _prepare_folds(X_by_site, site_parent, seed):
     return folds
 
 
+def _site_weights(train, n_patches, site_batch):
+    """Per-patch weights: each site sums to 1/(sites in its batch), so batches weigh equally."""
+    n_sites = {}
+    for s in train:
+        n_sites[site_batch[s]] = n_sites.get(site_batch[s], 0) + 1
+    w = np.concatenate([np.full(n, 1.0 / (n_sites[site_batch[s]] * n)) for s, n in zip(train, n_patches)])
+    return w * len(w) / w.sum()
+
+
 def _fit_predict(folds, site_batch, strict=True):
     rows = []
     for par, test, train, Z in folds:
         Xtr = np.concatenate([Z[s] for s in train])
         ytr = np.concatenate([[site_batch[s]] * len(Z[s]) for s in train])
-        w = np.concatenate([np.full(len(Z[s]), 1.0 / len(Z[s])) for s in train])
-        w = w * len(w) / w.sum()
+        w = _site_weights(train, [len(Z[s]) for s in train], site_batch)
         present = set(ytr)
         if strict:
             assert present == set(BATCHES), f"fold {par}: training lacks {set(BATCHES) - present}"
-        clf = LogisticRegression(C=C, class_weight="balanced", max_iter=3000)
+        clf = LogisticRegression(C=C, max_iter=3000)
         clf.fit(Xtr, ytr, sample_weight=w)
         for s in test:
             lp = np.full(len(BATCHES), -50.0)

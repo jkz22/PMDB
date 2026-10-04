@@ -18,3 +18,9 @@ def load_params(path: Path = FEM_CONFIG_PATH) -> dict:
 
 def params_hash(p: dict) -> str:
     return hashlib.sha1(json.dumps(p, sort_keys=True).encode()).hexdigest()[:12]
+
+
+def case_params_hash(p: dict, lateral: str = "both") -> str:
+    """Hash of the params plus the lateral boundary condition. run_case pops `solver.lateral` out of the params
+    before simulating, so it must be folded back in here; the default "both" leaves the hash unchanged."""
+    return params_hash(p if lateral == "both" else {**p, "lateral": lateral})

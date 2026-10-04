@@ -3,5 +3,29 @@
   "confidence_mode": "rule",
   "rubric": 1.2058823529411764,
   "rule": "max LOPO expected rubric with the option's flag rule (ties: fewer components, then menu order)",
-  "selected_on": "LOPO, 34 labelled sites, r3 run"
+  "selected_on": "LOPO, 34 labelled sites, r3 run",
+  "registry": {
+    "fem_a1": {
+      "description": "Leo 16 fingerprint features + swell_resid + si_stress_spread from free-lateral FEM (right edge free)",
+      "fem_site_curves": "outputs/fem/free_lateral/site_curves.csv",
+      "cv": "leave-one-parent-out (parent_id from pmdb.parents.parent_groups), 34 labelled sites incl. the 3 held-out sites with organiser truths; same protocol as the other menu options",
+      "lopo_correct": 21,
+      "lopo_n": 34,
+      "lopo_accuracy": 0.618,
+      "lopo_balanced_accuracy": 0.574,
+      "lopo_a0_correct_check": "16/34, identical to the menu 'fingerprint' option (0.471), so the A1 number is protocol-comparable",
+      "lopo_metrics": "outputs/fem_fingerprint/lopo/metrics.json",
+      "rubric": "not computed: A1 has no confidence-flag rule in the menu, so it is not ranked by rubric",
+      "superseded_site_loo": "24/31 leave-one-site-out (balanced acc 0.695, perm p 0.001) had sibling crops of the same parent in training; do not compare with menu numbers",
+      "heldout_correct": 0,
+      "heldout_n": 3,
+      "heldout_calls": {"3e122cbj": "Batch_1", "fn0mhxef": "Batch_3", "xrv9xvzb": "Batch_2"},
+      "predictions": {
+        "loo": "outputs/fem_fingerprint/main/loo_predictions.csv (arm A1)",
+        "heldout": "outputs/fem_fingerprint/main/heldout_predictions.csv (arm A1)"
+      },
+      "produced_by": "python scripts/fem_a1_lopo.py (LOPO); python scripts/fem_fingerprint_eval.py --fem-site-curves outputs/fem/free_lateral/site_curves.csv --tag main (site-LOO, superseded)",
+      "status": "registered, not selected"
+    }
+  }
 }

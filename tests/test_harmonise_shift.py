@@ -123,6 +123,32 @@ def test_corner_frequencies_do_not_enter_the_nyquist_bin():
     F = np.abs(np.fft.fft2(rng.normal(0, 1, (512, 512))))
     F2 = F.copy()
     F2[r > 0.5] *= 10  # change only the corners
-    prof = lambda a: np.bincount(bins.ravel(), a.ravel(), minlength=S.N_BINS + 1)[:S.N_BINS]  # noqa: E731
+    prof = lambda a: np.bincount(bins.ravel(), a.ravel(), minlength=S.N_BINS + 1)[:S.N_BINS]
     assert np.array_equal(prof(F), prof(F2))
     assert bins.max() == S.N_BINS and (bins == S.N_BINS).sum() > 0
+
+
+def _eval_script():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "eval_harmonise_ext.py"
+    spec = importlib.util.spec_from_file_location("eval_harmonise_ext_script", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_figures_only_methods_come_from_saved_summary(tmp_path):
+    import pandas as pd
+
+    mod = _eval_script()
+    pd.DataFrame({"method": ["none", "spectrum", "fda"]}).to_csv(tmp_path / "summary.csv", index=False)
+    assert mod.resolve_methods(None, True, tmp_path) == ["none", "spectrum", "fda"]
+    assert mod.resolve_methods(["none", "fda"], True, tmp_path) == ["none", "fda"]
+    assert mod.resolve_methods(None, False, tmp_path) == ["none", "nyul", "basic", "hybrid"]
+
+
+def test_figures_only_without_summary_fails_clearly(tmp_path):
+    with pytest.raises(SystemExit):
+        _eval_script().resolve_methods(None, True, tmp_path)

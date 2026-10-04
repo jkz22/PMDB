@@ -9,7 +9,7 @@ from typing import Literal
 
 import numpy as np
 
-from pmdb.fem.config import load_params, params_hash
+from pmdb.fem.config import case_params_hash, load_params
 from pmdb.fem.features import run_curves
 from pmdb.fem.geometry import central_cols, coarsen_image, coarsen_labels, labels_from_masks
 from pmdb.fem.gif import render_site_gif
@@ -37,6 +37,7 @@ def run_case(batch: str, site: str, orientation: Literal["bottom", "top"], *,
     p = load_params()
     if solver_overrides:
         p["solver"].update(solver_overrides)
+    lateral = p["solver"].pop("lateral", "both")  # "left" = right edge free: crops of a strip may expand in x
     s_obj = load_site(batch, site, resolution="half", normalise="none", cache_root=cache_root)
     masks = segment(s_obj)
     labels = labels_from_masks(masks)
@@ -51,7 +52,7 @@ def run_case(batch: str, site: str, orientation: Literal["bottom", "top"], *,
     px_um = factor * s_obj.nm_per_px / 1000.0
     H, W = labels.shape
 
-    r = simulate(labels, px_um, lambda s: phase_properties(s, p), BCSpec(orientation), p["solver"],
+    r = simulate(labels, px_um, lambda s: phase_properties(s, p), BCSpec(orientation, lateral), p["solver"],
                  np.linspace(0.0, 1.0, p["soc"]["frames"]), extra_targets=(p["soc"]["s_star"],),
                  log=lambda rec: log(f"  substep {rec}"),
                  compaction=(p["pore"]["compaction_Jc"], p["pore"]["compaction_kappa_MPa"]),
@@ -74,9 +75,9 @@ def run_case(batch: str, site: str, orientation: Literal["bottom", "top"], *,
         row.update(key)
     fpc = site_rows[0]["first_pore_closure_s"] if site_rows else float("nan")
     meta = {**key, "H": int(H), "W": int(W), "px_um": px_um, "n_cells": int(H * W),
-            "crop_um": crop_um, "res_nm": res, "failed_at_s": float(r.failed_at_s),
+            "crop_um": crop_um, "res_nm": res, "lateral": lateral, "failed_at_s": float(r.failed_at_s),
             "first_pore_closure_s": fpc, "n_substeps": len(r.substeps),
             "newton_its_total": int(sum(x["its"] for x in r.substeps)), "substeps": r.substeps,
             "wall_s": float(r.wall_s), "peak_rss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0,
-            "versions": _versions(), "params": p, "params_hash": params_hash(p), "gif_error": gif_error}
+            "versions": _versions(), "params": p, "params_hash": case_params_hash(p, lateral), "gif_error": gif_error}
     return {"meta": meta, "site_rows": site_rows, "tile_rows": tile_rows, "gif": gif}

@@ -346,7 +346,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
         raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe")
     root = Path(__file__).resolve().parent
     if mode == "probe":
-        _probe(root, centre)
+        _probe(root, n_perm, centre)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -421,7 +421,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
             print(f"  {r['site']} -> {r['assigned']} ({r['confidence_flag']})")
 
 
-def _probe(root: Path, centre: str = "none") -> None:
+def _probe(root: Path, n_perm: int = 200, centre: str = "none") -> None:
     import pandas as pd
 
     from pmdb.batch_menu import labelled_sites
@@ -431,7 +431,7 @@ def _probe(root: Path, centre: str = "none") -> None:
     lab = labelled_sites()
     menu = pd.read_csv(root / "outputs" / "menu" / "menu_predictions.csv", dtype={"site": str})
     res = probe_lopo.remote("full", lab.to_dict("records"), parent_groups().to_dict("records"),
-                            menu.to_dict("records"), centre=centre)
+                            menu.to_dict("records"), n_perm, centre=centre)
     out = root / "outputs" / ("patch_probe_centred" if centre == "parent" else "patch_probe")
     ev = {k: res[k] for k in ("metrics", "heldout", "permutation", "elapsed_s")}
     _atomic_write(out / "evaluation.json", json.dumps(ev, indent=2).encode())

@@ -24,7 +24,7 @@ def train(n_epochs: int = 60, n_decay: int = 20, mode: str = "FastCUT"):
     cmd = ["python", "train.py", "--dataroot", "./datasets/pmdb", "--name", "pmdb_cut", "--CUT_mode", mode,
            "--load_size", "256", "--crop_size", "256", "--preprocess", "none",
            "--n_epochs", str(n_epochs), "--n_epochs_decay", str(n_decay), "--display_id", "0", "--no_html",
-           "--batch_size", "4", "--num_threads", "4", "--save_epoch_freq", "10", "--checkpoints_dir", "/data/checkpoints"]
+           "--batch_size", "4", "--num_threads", "4", "--save_epoch_freq", "2", "--checkpoints_dir", "/data/checkpoints"]
     print(" ".join(cmd), flush=True)
     r = subprocess.run(cmd, cwd="/cut", capture_output=False)
     vol.commit()
@@ -58,13 +58,13 @@ def translate(epoch: str = "latest"):
     return list(out)
 
 @app.local_entrypoint()
-def main(stage: str = "train", epochs: int = 60):
+def main(stage: str = "train", epochs: int = 60, decay: int = 20):
     if stage == "upload":
         with vol.batch_upload(force=True) as b:
             b.put_file("patches.npz", "/patches.npz"); b.put_file("strong_full.npz", "/strong_full.npz")
         print("uploaded")
     elif stage == "train":
-        rc = train.remote(n_epochs=epochs)
+        rc = train.remote(n_epochs=epochs, n_decay=decay)
         print("train rc", rc)
         if rc == 0:
             print(translate.remote("latest"))
