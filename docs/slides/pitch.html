@@ -34,7 +34,7 @@
     font-size: 2.1vh; font-weight: 600; letter-spacing: .08em;
     text-transform: uppercase; color: var(--accent);
   }
-  h1 { font-size: 5.4vh; line-height: 1.12; letter-spacing: -0.01em; max-width: 28ch; }
+  h1 { font-size: 5.4vh; line-height: 1.12; letter-spacing: -0.01em; max-width: 48ch; }
   .sub { font-size: 2.7vh; color: var(--ink-2); max-width: 62ch; line-height: 1.4; }
   .tiles { display: flex; gap: 1.6vw; margin-top: 1vh; }
   .tile {
@@ -67,6 +67,29 @@
     display: flex; justify-content: space-between; align-items: baseline;
     color: var(--muted); font-size: 1.9vh; border-top: 1px solid var(--hairline); padding-top: 1.4vh;
   }
+  .tiles.fill { flex: none; height: 40vh; margin-top: 4vh; }
+  .tiles.fill .tile { display: flex; flex-direction: column; justify-content: center; gap: 1.4vh; }
+  .tiles.fill .tile .label { font-size: 2.6vh; }
+  .tiles.fill .tile .value { font-size: 8vh; }
+  .tiles.fill .tile .note { font-size: 2.4vh; }
+  .cards .call { justify-content: flex-start; gap: 2.2vh; padding-top: 8vh; }
+  .cards .call .site { font-size: 2.8vh; }
+  .cards .call .batch { font-size: 8vh; }
+  .cards .call .why { font-size: 2.8vh; }
+  .cards .call .stab { font-size: 2.3vh; padding-top: 2vh; }
+  .tiles.fill .flip { gap: .8vw; }
+  .tiles.fill .flip .chip { font-size: 2.1vh; padding: 1.4vh .9vw; white-space: nowrap; }
+  .tiles.fill .flip .arrow { white-space: nowrap; font-size: 2.4vh; }
+  .gifs { display: flex; gap: 1.2vw; flex: 1; min-height: 0; align-items: flex-start; margin-top: 2vh; }
+  .gifs .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2vh; }
+  .gifs figure { flex: none; padding: .8vh; aspect-ratio: 900 / 537; }
+  .gifs figure img { width: 100%; height: 100%; object-fit: contain; }
+  .gifs .tile .value { font-size: 7vh; }
+  .hero { justify-content: center; }
+  .hero h1 { font-size: 9vh; max-width: 18ch; }
+  .gifs .cap { font-size: 3vh; font-weight: 600; color: var(--ink-2); }
+  .cards { flex: none; height: 40vh; margin-top: 4vh; }
+  .cards .call { align-items: flex-start; justify-content: center; padding-top: 0; }
   .hud {
     position: fixed; right: 1.4vw; bottom: 1.6vh; color: var(--muted);
     font-size: 1.9vh; font-variant-numeric: tabular-nums; user-select: none;
@@ -85,119 +108,65 @@
 </head>
 <body>
 
-<!-- 1 · THE TRAP -->
-<section class="slide active">
-  <div class="kicker">1 · The trap</div>
+<!-- 1 · THE QUESTION -->
+<section class="slide active hero">
+  <h1>Which batch is this sample from?</h1>
+</section>
+
+<!-- 2 · THE TRAP -->
+<section class="slide">
+  <div class="kicker">2 · The trap</div>
   <h1>The obvious model learns the microscope, not the material.</h1>
-  <p class="sub">An intensity-only classifier (BSE grey-level stats, no geometry) looks like the winner on this dataset — until you touch one acquisition knob.</p>
-  <div class="tiles">
+  <div class="tiles fill">
     <div class="tile">
-      <div class="label">Intensity-only model, leave-one-site-out</div>
+      <div class="label">Intensity-only model</div>
       <div class="value bad">0.71</div>
-      <div class="note">“better” than ours — keep that number in mind</div>
     </div>
     <div class="tile" style="flex:1.6">
-      <div class="label">Same site, +7 grey-level offset — material untouched</div>
+      <div class="label">Same site, +7 grey levels</div>
       <div class="flip">
         <span class="chip">4ih2ggld → Batch 1 ✓</span>
         <span class="arrow">→ +7 →</span>
         <span class="chip">4ih2ggld → Batch 3 ✗</span>
       </div>
-      <div class="note">it learned the black level of a Batch-3 imaging session (elevated in 9 of 17 Batch 3 sites, 0 of 14 in Batches 1–2)</div>
     </div>
   </div>
-  <div class="foot"><span>Any pixel- or embedding-trained model inhales this confound. Ours is built from segmentation geometry only — a flat offset cannot move a single feature.</span><span>live demo in 90 s</span></div>
 </section>
 
-<!-- 2 · THE FINDING -->
+<!-- 3 · THE AMOUNT -->
 <section class="slide">
-  <div class="kicker">2 · The finding</div>
-  <h1>Composition is identical. Arrangement is not.</h1>
-  <p class="sub">All 51 scalar KPIs are batch-blind (best: KW p = 0.065). The signal is <em>where the silicon sits</em>: Batch 3 uniform · Batch 2 top-heavy, depleted mid-depth · Batch 1 bottom-heavy and variable.</p>
-  <figure><img src="../../outputs/fingerprint/figures/depth_profiles.png" alt="Si depth profiles per batch with held-out sites against batch medians"></figure>
-  <div class="foot"><span>Drying migration vs. sedimentation — physics you can act on, not a pixel artifact.</span><span>16 curve-shape features</span></div>
-</section>
-
-<!-- 3 · THE KPIs -->
-<section class="slide">
-  <div class="kicker">3 · The KPIs</div>
-  <h1>Two independent segmentations, same batch picture.</h1>
-  <p class="sub">Analytical benchmark vs materials classifier, 31 sites, each KPI indexed to its own all-site mean. Batch 1 skews Si-rich (a few sites); porosity is similar across batches.</p>
+  <div class="kicker">3 · The amount</div>
+  <h1>Every batch has the same amount of silicon.</h1>
   <figure><img src="../../outputs/slides/kpi_distributions_by_batch.png" alt="Per-batch porosity and Si fraction distributions, analytical benchmark vs materials classifier"></figure>
-  <div class="foot"><span>Raw porosity differs by segmentation (about 6% vs 9%); indexing removes the offset.</span><span>outputs/slides/ · scripts/make_kpi_dist_slide.py</span></div>
 </section>
 
-<!-- 4 · THE PHYSICS -->
+<!-- 4 · THE SWELLING -->
 <section class="slide">
-  <div class="kicker">4 · The physics</div>
-  <h1>Same silicon, same swelling. The signal is the arrangement.</h1>
-  <p class="sub">We simulated lithiation inside every real microstructure: 34 sites × 2 collector orientations = 68 FEM runs on Modal, 0 failures, $2.61 total.</p>
-  <div style="display:flex;gap:1.6vw;flex:1;min-height:0">
-    <figure style="flex:1.5"><img src="../../outputs/fem/figures/swelling_vs_si.png" alt="Simulated swelling at 100% SOC vs Si area fraction, R² = 0.97"></figure>
-    <div style="flex:1;display:flex;flex-direction:column;gap:1.6vh">
-      <div class="tile"><div class="label">Swelling vs Si area fraction</div><div class="value accent">R² = 0.97</div><div class="note">swelling is set by how much Si there is</div></div>
-      <div class="tile"><div class="label">Si fraction across batches</div><div class="value">p = 0.38</div><div class="note">Kruskal–Wallis: the batches hold the same amount</div></div>
-      <div class="tile"><div class="label">FEM features added to the fingerprint</div><div class="value">rejected</div><div class="note">pre-registered rule ≥ 23/31: got 20/31 and 17/31</div></div>
-    </div>
+  <div class="kicker">4 · The swelling</div>
+  <h1>So every batch swells the same.</h1>
+  <div class="gifs">
+    <div class="col"><figure><img src="../../outputs/fem/gifs/Batch_1__5n1q8atc.gif" alt="Simulated charge 0 to 100%, Batch 1 site 5n1q8atc"></figure><div class="cap">Batch 1</div></div>
+    <div class="col"><figure><img src="../../outputs/fem/gifs/Batch_2__b3esycq1.gif" alt="Simulated charge 0 to 100%, Batch 2 site b3esycq1"></figure><div class="cap">Batch 2</div></div>
+    <div class="col"><figure><img src="../../outputs/fem/gifs/Batch_3__x7u69zsw.gif" alt="Simulated charge 0 to 100%, Batch 3 site x7u69zsw"></figure><div class="cap">Batch 3</div></div>
   </div>
-  <div class="foot"><span>Median swelling: Batch 1 0.132 · Batch 2 0.125 · Batch 3 0.125 — amount explains swelling; it cannot tell batches apart.</span><span>outputs/fem/ · outputs/fem_fingerprint/</span></div>
 </section>
 
-<!-- 4 · THE PROOF -->
+<!-- 5 · THE ARRANGEMENT -->
 <section class="slide">
-  <div class="kicker">5 · The proof</div>
-  <h1>Small model, adversarially validated.</h1>
-  <p class="sub">Robust per-batch naive Bayes + conformal p-values — 31 sites forbid fitted weights, so every claim is stress-tested instead.</p>
-  <div class="tiles">
-    <div class="tile">
-      <div class="label">Leave-one-site-out</div>
-      <div class="value accent">0.677</div>
-      <div class="note">vs 0.548 majority baseline</div>
-    </div>
-    <div class="tile">
-      <div class="label">Label permutations (10,000)</div>
-      <div class="value accent">p = 0.0025</div>
-      <div class="note">null p95 = the majority baseline</div>
-    </div>
-    <div class="tile">
-      <div class="label">Jackknife refits</div>
-      <div class="value accent">1,496</div>
-      <div class="note">held-out calls stable in 87–100%</div>
-    </div>
-    <div class="tile">
-      <div class="label">Pre-registered extension</div>
-      <div class="value">rejected</div>
-      <div class="note">failed its own rule (LOO 0.613) — no second attempt, by design</div>
-    </div>
-  </div>
-  <div class="foot"><span>Caveats stated in the repo before you ask: features explored on labelled data; conformal grid coarse at n=7.</span><span>docs/fingerprint.md · docs/eval-plan-oct4.md</span></div>
+  <div class="kicker">5 · The arrangement</div>
+  <h1>What differs is where the silicon sits.</h1>
+  <figure><img src="../../outputs/fingerprint/figures/depth_profiles.png" alt="Si depth profiles per batch with held-out sites against batch medians"></figure>
 </section>
 
-<!-- 5 · THE CALLS -->
+<!-- 6 · THE ANSWER -->
 <section class="slide">
-  <div class="kicker">6 · The calls</div>
-  <h1>Three held-out sites, assigned with honest confidence.</h1>
+  <div class="kicker">6 · The answer</div>
+  <h1>That is enough to call the three held-out sites.</h1>
   <div class="cards">
-    <div class="call">
-      <div class="site">fn0mhxef</div>
-      <div class="batch">Batch 3</div>
-      <div class="why">Mid-band Si in a region only Batch 3 occupies; every Batch 2 site is mid-depth depleted. Batch 1 excluded (p = 0.12).</div>
-      <div class="stab">Batch 3 in 92–100% of jackknife refits · 45/45 configs</div>
-    </div>
-    <div class="call">
-      <div class="site">xrv9xvzb</div>
-      <div class="batch">Batch 2</div>
-      <div class="why">Mid-depth dip −0.72, inside the Batch 2 cluster. Carries a Batch-3-style black level — we bet the material over the microscope, on the record.</div>
-      <div class="stab">Batch 2 in 97.7–100% of refits · 45/45 configs</div>
-    </div>
-    <div class="call">
-      <div class="site">3e122cbj</div>
-      <div class="batch">Batch 1</div>
-      <div class="why">Typical of every batch (all p = 1.0) — confidence 0.00 is the model refusing to manufacture certainty. The decision itself is stable.</div>
-      <div class="stab">Batch 1 in 87–94% of refits; only alternative Batch 3, never Batch 2</div>
-    </div>
+    <div class="call"><div class="site">fn0mhxef</div><div class="batch">Batch 3</div></div>
+    <div class="call"><div class="site">xrv9xvzb</div><div class="batch">Batch 2</div></div>
+    <div class="call"><div class="site">3e122cbj</div><div class="batch">Batch 1</div></div>
   </div>
-  <div class="foot"><span>And when a shipment matches <em>no</em> batch, the same p-values say REJECT — that’s the live demo.</span><span>cards: outputs/fingerprint/figures/</span></div>
 </section>
 
 <section class="slide">
@@ -207,7 +176,7 @@
   <div class="foot"><span>We stitched the dataset back together: 17 seams, z &ge; 5.6, zero false positives across 2,108 wrong pairings. One parent spans several &ldquo;batches&rdquo;, and every held-out site sits between neighbours carrying a <em>different</em> label &mdash; the label follows the crop, not the material.</span><span>full figure &amp; method: outputs/stitching/</span></div>
 </section>
 
-<div class="hud"><span id="counter">1 / 5</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
+<div class="hud"><span id="counter">1 / 7</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
 
 <script>
   const slides = [...document.querySelectorAll(".slide")];
