@@ -147,3 +147,46 @@ All-low scores 1.0 by construction. Fingerprint-confidence diagnostic (not used 
 - Confidence is a softmax heuristic, not a calibrated probability.
 - MicroNet's training pixel scale is undocumented.
 - affine2 does not remove noise, sharpness, 0-clipping or grey-level re-quantisation differences (`grey_step`: `9luzk4jm`, `hzumfsms`, `ufdvpb81` and held-out `xrv9xvzb` populate every 3rd DN), which a CNN may detect.
+
+## Feedback round 1 (2026-10-04)
+
+**Submission.** Fingerprint classifier of record (`outputs/fingerprint/heldout_predictions.csv`): 3e122cbj Batch_1, fn0mhxef Batch_3, xrv9xvzb Batch_2. Organiser truths: Batch_2 / Batch_1 / Batch_3 (`outputs/heldout_labels.csv`): 0/3 correct. The majority batch of the labelled siblings would have been right on 1/3, so parent images are deliberately split across batches. Lesson: the designed batch signal is what differs between crops of the same parent. The 3 truths are now labelled sites (34 sites, 13 parents). Their fingerprint features were recomputed on Modal (`outputs/heldout_features_modal.csv`; the original rows came from a newer local numeric stack; per-feature differences up to 0.45 labelled SD, graphite-clustering features).
+
+**Within-parent contrasts** (`pmdb/within_parent.py`, `scripts/within_parent.py`, `outputs/within_parent/`). For each parent and batch pair with both batches present, `diff = mean_a - mean_b` per feature; per feature x pair: sign counts over parents, exact two-sided sign test, median diff in labelled SD. Pre-registered `is_signal`: >= 3 parents and all the same sign. Parents per pair: B1-B2 = 5, B1-B3 = 1, B2-B3 = 3. Min achievable p is 0.0625 (n = 5) / 0.25 (n = 3), so p is reported, not thresholded. Figure: `outputs/within_parent/within_parent.png`.
+
+| feature | pair | k/n | sign p | median diff (SD) |
+|---|---|---|---|---|
+| Si fraction in depth band 3 of 5 | B1 - B2 | 5/5 higher in B1 | 0.0625 | +1.57 |
+| variability of Si-graphite contact across the image | B2 - B3 | 3/3 higher in B2 | 0.25 | +1.94 |
+| Si depletion at mid-depth | B2 - B3 | 3/3 lower in B2 | 0.25 | -1.24 |
+| Si fraction in depth band 3 of 5 | B2 - B3 | 3/3 lower in B2 | 0.25 | -1.08 |
+| Si fraction in depth band 1 of 5 | B2 - B3 | 3/3 higher in B2 | 0.25 | +0.57 |
+
+Plain language: between crops of the same source image, only the mid-depth Si fraction separates Batch 1 from Batch 2 in all 5 source images (Batch 1 higher), and four depth-profile / contact-variability features separate Batch 2 from Batch 3 in all 3 source images. None is statistically strong with so few source images, and the graphite-clustering features show no consistent within-source-image difference. B1-B3 has a single source image, so no conclusion.
+
+**Parent-centred fingerprint.** `Xc = X - mean of the parent's rows in the pool` (labels never read; a test site's own row joins its parent's mean). Singleton rule: a site that is the only member of its parent in the pool is excluded from centred-model training and predicted with the uncentred fingerprint (its centred row is identically zero and carries no information).
+
+**Model menu (LOPO, 34 sites, `outputs/menu/`).** Ensembles use `fp_prob = softmax(-score / 0.1)` of the fingerprint likelihood scores (same tau as the patch softmax), so the fingerprint probability agrees with its call (the lopo run normalised conformal p-values, which could contradict the call).
+
+| option | accuracy | balanced acc | rubric (flag rule) | rubric SE | rubric all-high | n high |
+|---|---|---|---|---|---|---|
+| fingerprint | 0.471 | 0.412 | 0.912 | 0.049 | 0.941 | 3 |
+| fingerprint_centred | 0.441 | 0.486 | 1.000 | 0.000 | 0.882 | 0 |
+| patch | 0.529 | 0.495 | 0.794 | 0.145 | 1.059 | 25 |
+| ensemble | 0.618 | 0.597 | 1.206 | 0.168 | 1.235 | 33 |
+| ensemble_centred | 0.559 | 0.583 | 0.971 | 0.130 | 1.118 | 19 |
+| all-low | - | - | 1.000 | - | - | 0 |
+
+Selection (`outputs/menu/selection.json`, frozen): option `ensemble`, confidence mode `rule`. Caveat: Selection is the maximum of 5 LOPO rubric estimates on 34 sites from 13 parent images; the winning estimate is optimistically biased (winner's curse). Differences smaller than about one SE are not meaningful. The 3 held-out sites enter LOPO as ordinary labelled sites; nothing was tuned on them.
+
+Explanations: the confidence sentence is built from the four evidence items (3 depth/graphite lines + local appearance) that resemble the called batch, not from the flag; `n_evidence_for_call` (0-4) is reported. "Consistently" appears only if all 4 resemble the call.
+
+**Test day runbook.** Copy the organiser TIFFs to `data_test/Batch_test/img_<site>_<BSE|Inlens|ETD|SE>.tif` (gitignored), then:
+
+```
+bash scripts/score_test_sites.sh
+```
+
+which runs `modal run modal_test_prep.py::main` (uploads only those TIFFs to `pmdb-data:/test/raw`; on Modal: half cache, affine2 LUTs against the shipped labelled reference, clean, KPIs, fingerprint features; pulls back small CSV/JSON to `cache_test/`, `outputs/clean_test/`, `outputs/test/`) and `modal run modal_patch_mil.py --mode test` (GPU embedding, 34-site distances, frozen-selection prediction). Everything runs on Modal; the prep image pins the labelled KPI run's package versions. Storage on the volume: `/test/raw`, `/test/half`, `/test/harmonised`, `/test/clean`, `/test/kpis`, `/test/features.csv`. Outputs: `outputs/test/final_predictions.csv`, `outputs/test/submission.md`. The selection is frozen in `outputs/menu/selection.json`; do not re-run `--mode menu` after test images arrive.
+
+Rehearsal (the 3 held-out sites copied to `data_test/`, then removed): half cache exact, affine2 LUT exact, parent key equal for all 3; Modal-vs-old held-out feature differences are informational (max 0.45 labelled SD). Prep ~3.3 min wall incl. image build (clean 127 s, KPIs 22 s for 3 sites); `--mode test` ~3 min wall total with script. Expected for 4-6 sites: ~10 min prep, ~10 min test, well under USD 2.
