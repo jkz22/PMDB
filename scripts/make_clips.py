@@ -231,12 +231,14 @@ def clip_depth() -> None:
             P.set_xlabel("Si fraction / site mean")
         for sp in ("top", "right"):
             P.spines[sp].set_visible(False)
-        prof_site = X.loc[(b, s), BANDS].to_numpy(dtype=float)
+        # profile of the visible crop (what the scan line passes over), relative to the crop mean
+        bands = np.array_split(si, len(centres), axis=0)
+        prof_site = np.array([band.mean() for band in bands]) / max(si.mean(), 1e-9)
         prof_med = X.xs(b, level="batch")[BANDS].median().to_numpy(dtype=float)
         fs = np.interp(depth, centres, prof_site)
         fm = np.interp(depth, centres, prof_med)
-        ls, = P.plot([], [], color=COL[b], lw=1.5, alpha=0.55)
-        lm, = P.plot([], [], color=COL[b], lw=4.5)
+        ls, = P.plot([], [], color=COL[b], lw=4.5)
+        lm, = P.plot([], [], color=COL[b], lw=1.5, alpha=0.55)
         dot, = P.plot([], [], "o", color="white", ms=9)
         rows.append(dict(img=img, lit=lit, dimmed=dimmed, line=line, h=h, ls=ls, lm=lm, dot=dot, fs=fs, fm=fm,
                          lab=lab))
@@ -253,7 +255,7 @@ def clip_depth() -> None:
             k = max(1, int(round(d * (len(depth) - 1))) + 1)
             R["ls"].set_data(R["fs"][:k], depth[:k])
             R["lm"].set_data(R["fm"][:k], depth[:k])
-            R["dot"].set_data([R["fm"][k - 1]], [depth[k - 1]])
+            R["dot"].set_data([R["fs"][k - 1]], [depth[k - 1]])
             R["dot"].set_alpha(1 if d < 1 else 0)
             R["lab"].set_alpha(ramp(t, 5.3, 5.9))
 
