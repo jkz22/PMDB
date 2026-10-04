@@ -52,6 +52,16 @@ def _paths(row) -> dict[str, Path]:
     return {"BSE": Path(row.path_bse), "Inlens": Path(row.path_inlens), "SE_type": Path(row.path_se_type)}
 
 
+def _portable(p: str | Path) -> str:
+    """Repo-relative POSIX path when the file lives inside the repository, else absolute (committed
+    ``params.json`` must be readable from any checkout)."""
+    q = Path(p).resolve()
+    try:
+        return q.relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(q)
+
+
 def run_norm(batch: str, site: str, paths: dict[str, str], out_dir: str, nm_per_px: float) -> dict:
     t0 = time.time()
     raw, markers = {}, None
@@ -60,7 +70,7 @@ def run_norm(batch: str, site: str, paths: dict[str, str], out_dir: str, nm_per_
         raw[d] = img
         markers = cols if markers is None else (markers | cols)
     res = C.clean_site(raw, marker_cols=markers, nm_per_px=nm_per_px)
-    res.params.update({"batch": batch, "site": site, "paths": {d: str(p) for d, p in paths.items()},
+    res.params.update({"batch": batch, "site": site, "paths": {d: _portable(p) for d, p in paths.items()},
                        "seconds_norm": round(time.time() - t0, 1)})
     C.write_site(out_dir, res)
     _thumbs(Path(out_dir), raw, res)

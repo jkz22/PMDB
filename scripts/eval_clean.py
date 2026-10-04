@@ -25,6 +25,7 @@ from sklearn.preprocessing import StandardScaler
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pmdb.clean as C  # noqa: E402
+from pmdb.io import REPO_ROOT  # noqa: E402
 from scripts.build_clean import REFERENCE_SITES  # noqa: E402
 
 STRONG = ("71vgq3fw", "kbdh4tri", "tuy3zymq", "x7u69zsw")
@@ -45,6 +46,13 @@ def group_of(site: str) -> str:
 def _hsm_blocks(z: np.ndarray, sel: np.ndarray, block: int = 128) -> np.ndarray:
     b = C.block_medians(z, sel, block_px=block, min_cover=0.2)
     return b["median"].to_numpy()
+
+
+def _resolve_path(p: str) -> Path:
+    """``params.json`` stores raw-TIFF paths relative to the repository root (absolute only for files
+    outside it); resolve against this checkout."""
+    q = Path(p)
+    return q if q.is_absolute() else REPO_ROOT / q
 
 
 def site_residuals(site_dir: Path, params: dict, rng: np.random.Generator) -> dict:
@@ -89,7 +97,7 @@ def site_residuals(site_dir: Path, params: dict, rng: np.random.Generator) -> di
                 out.update({f"harm_{d}_p01": float(np.percentile(s2, 1)), f"harm_{d}_p50": float(np.percentile(s2, 50)), f"harm_{d}_p99": float(np.percentile(s2, 99))})
     # raw-domain percentiles from the source TIFF (imaging fingerprint "before")
     for d, p in params["paths"].items():
-        raw, _ = C.read_rgb_tiff(p)
+        raw, _ = C.read_rgb_tiff(_resolve_path(p))
         rr = raw[8:-8, 8:-8].ravel()[::50]
         out.update({f"raw_{d}_p01": float(np.percentile(rr, 1)), f"raw_{d}_p50": float(np.percentile(rr, 50)), f"raw_{d}_p99": float(np.percentile(rr, 99)),
                     f"raw_{d}_frac0": float((rr == 0).mean()), f"raw_{d}_frac255": float((rr == 255).mean())})
@@ -347,7 +355,7 @@ def _figures(res: pd.DataFrame, ev: Path, out: Path) -> None:
         y0, x0 = p["shape"][0] // 2 - 300, p["shape"][1] // 2 - 500
         for j, k in enumerate(kinds):
             if k == "raw":
-                img = C.read_rgb_tiff(p["paths"]["BSE"])[0][y0: y0 + 600, x0: x0 + 1000]
+                img = C.read_rgb_tiff(_resolve_path(p["paths"]["BSE"]))[0][y0: y0 + 600, x0: x0 + 1000]
                 axes[i, j].imshow(img, cmap="gray", vmin=0, vmax=255)
             else:
                 z, _ = C.read_site(sd, "BSE", k)

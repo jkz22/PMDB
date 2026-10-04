@@ -33,24 +33,24 @@
  },
  "anchors": {
   "BSE": {
-   "D": 16.500183614431375,
-   "D_se": 0.016675317244044776,
+   "D": 16.500187288683723,
+   "D_se": 0.016675316610234595,
    "D_method": "tobit",
    "D_n": 481323,
    "D_frac_zero": 0.04886115976174004,
    "D_mode": 0.0,
    "D_median": 15.686022758483887,
-   "G_level": 39.554302851359054,
+   "G_level": 39.55429903666179,
    "G_coef": [
-    39.65536799040325,
-    0.3198205988752387,
-    -0.6885435615883988,
-    -0.6833030617300554,
-    0.629849031181426,
-    0.31607547524190627
+    39.65536417570591,
+    0.3198205988752931,
+    -0.6885435615883814,
+    -0.6833030617300354,
+    0.6298490311814047,
+    0.3160754752418696
    ],
    "G_blocks": 2516,
-   "G_ptp_rel": 0.010374579578638077,
+   "G_ptp_rel": 0.01037448551505804,
    "si_graphite_ratio": 2.638866901397705,
    "grey_levels_used": 189,
    "grey_step": 1
@@ -65,12 +65,12 @@
    "D_median": 47.426692962646484,
    "G_level": 56.99260266621907,
    "G_coef": [
-    56.90415888870117,
-    0.421604789956356,
-    -0.07004535234460166,
-    -0.5314309941686954,
-    0.23240899186457134,
-    -0.005917720338701499
+    56.90415888870119,
+    0.4216047899563022,
+    -0.07004535234454515,
+    -0.5314309941687294,
+    0.23240899186457598,
+    -0.0059177203386290705
    ],
    "G_blocks": 2516,
    "G_ptp_rel": 0.0041249883361160755,
@@ -79,25 +79,25 @@
    "grey_step": 2
   },
   "SE_type": {
-   "D": 5.436040101268256,
-   "D_se": 0.012033536181939376,
+   "D": 5.4360297225180005,
+   "D_se": 0.012033538075205949,
    "D_method": "tobit",
    "D_n": 481323,
    "D_frac_zero": 0.18036121274071673,
    "D_mode": 0.0,
    "D_median": 4.149175643920898,
-   "G_level": 63.9996395111084,
+   "G_level": 63.999650955200195,
    "G_coef": [
-    62.96980758448582,
-    2.4297796829962013,
-    -0.30122496311576863,
-    -1.4367257216731273,
-    -0.14509624723571835,
-    0.6054687375412153
+    62.969818614680094,
+    2.429781428654704,
+    -0.30122665453083974,
+    -1.436726227063033,
+    -0.145096857610575,
+    0.6054707368904713
    ],
    "G_blocks": 2516,
-   "G_ptp_rel": 0.0196089930832386,
-   "si_graphite_ratio": 1.8884837627410889,
+   "G_ptp_rel": 0.019608929753303528,
+   "si_graphite_ratio": 1.8884836435317993,
    "grey_levels_used": 211,
    "grey_step": 2
   }
@@ -108,28 +108,28 @@
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.3476278643316033,
-   "edge_10_90_nm": 86.34873867443811,
+   "sigma_e_px": 1.3476278696080417,
+   "edge_10_90_nm": 86.34873901252388,
    "edge_n_kept": 716,
-   "noise_alpha": 0.04563311036392227,
-   "noise_beta": 0.014261553935712443,
-   "noise_sigma_graphite": 0.24473386422731674
+   "noise_alpha": 0.04563734362083954,
+   "noise_beta": 0.01425785908041803,
+   "noise_sigma_graphite": 0.24473496419853372
   },
   "Inlens": {
-   "sigma_e_px": 1.1925592727328302,
-   "edge_10_90_nm": 76.4127781270382,
+   "sigma_e_px": 1.1925593101454712,
+   "edge_10_90_nm": 76.41278052423881,
    "edge_n_kept": 2738,
    "noise_alpha": 0.01440301509560018,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.12001256224079286
   },
   "SE_type": {
-   "sigma_e_px": 1.231041253892845,
-   "edge_10_90_nm": 78.87849631438722,
-   "edge_n_kept": 1417,
-   "noise_alpha": 0.0124496511569676,
+   "sigma_e_px": 1.2299682189248775,
+   "edge_10_90_nm": 78.80974201025778,
+   "edge_n_kept": 1419,
+   "noise_alpha": 0.012456698059181634,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.11157800480815025
+   "noise_sigma_graphite": 0.11160957870712367
   }
  },
  "material": {
@@ -225,45 +225,45 @@
  "batch": "Batch_3",
  "site": "ptg8lmto",
  "paths": {
-  "BSE": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_ptg8lmto_BSE.tif",
-  "Inlens": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_ptg8lmto_Inlens.tif",
-  "SE_type": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_ptg8lmto_ETD.tif"
+  "BSE": "data/Batch_3/img_ptg8lmto_BSE.tif",
+  "Inlens": "data/Batch_3/img_ptg8lmto_Inlens.tif",
+  "SE_type": "data/Batch_3/img_ptg8lmto_ETD.tif"
  },
- "seconds_norm": 77.0,
+ "seconds_norm": 34.5,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.3476278643316033,
-   "sigma_t_px": 1.3955730649632416,
-   "sigma_k_px": 0.36266143843526827,
+   "sigma_e_px": 1.3476278696080417,
+   "sigma_t_px": 1.3962085795872072,
+   "sigma_k_px": 0.36509933274195083,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.3433867775557635,
+   "sigma_e_after_px": 1.3529135971135802,
    "noise_before": {
-    "alpha": 0.03853282181843915,
-    "beta": 0.01182191684745236
+    "alpha": 0.038194332200326656,
+    "beta": 0.01175702554229772
    },
    "noise_target": {
-    "alpha": 0.04506658986444896,
-    "beta": 0.021315812431302882
+    "alpha": 0.04507331353571918,
+    "beta": 0.02134361435082474
    },
    "noise_after": {
-    "alpha": 0.04497361902391196,
-    "beta": 0.02100997848117879
+    "alpha": 0.04496202462278574,
+    "beta": 0.02104970410351446
    },
-   "noise_sigma_graphite_after": 0.25687272627721836,
-   "noise_sigma_graphite_target": 0.25764782610329134,
+   "noise_sigma_graphite_after": 0.25692747756186024,
+   "noise_sigma_graphite_target": 0.25771481891141595,
    "noise_within_10pct": true,
-   "d_alpha": 0.006533768046009809,
-   "d_beta": 0.009493895583850522,
+   "d_alpha": 0.0068789813353925255,
+   "d_beta": 0.009586588808527021,
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.1925592727328302,
-   "sigma_t_px": 1.2142698479797196,
-   "sigma_k_px": 0.22859056133540248,
+   "sigma_e_px": 1.1925593101454712,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.22859051845342915,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.1699346057240443,
+   "sigma_e_after_px": 1.1694108219226007,
    "noise_before": {
-    "alpha": 0.014377588268638797,
+    "alpha": 0.01437758824296792,
     "beta": 0.0
    },
    "noise_target": {
@@ -271,59 +271,59 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.014377588268638797,
+    "alpha": 0.01437758824296792,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.11990658142336807,
+   "noise_sigma_graphite_after": 0.11990658131632276,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 2.542682696138332e-05,
+   "d_alpha": 2.5426852632260202e-05,
    "d_beta": 0.0,
    "added": false
   },
   "SE_type": {
-   "sigma_e_px": 1.231041253892845,
-   "sigma_t_px": 1.2511406818415192,
-   "sigma_k_px": 0.22336167301664195,
+   "sigma_e_px": 1.2299682189248775,
+   "sigma_t_px": 1.250251553827863,
+   "sigma_k_px": 0.22429250608023035,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.2512386607367065,
+   "sigma_e_after_px": 1.2113896039633618,
    "noise_before": {
-    "alpha": 0.012433578617052257,
+    "alpha": 0.012452307730834604,
     "beta": 0.0
    },
    "noise_target": {
-    "alpha": 0.0124496511569676,
+    "alpha": 0.012456698059181634,
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.012433578617052257,
+    "alpha": 0.012452307730834604,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.11150595776483092,
-   "noise_sigma_graphite_target": 0.11157800480815025,
+   "noise_sigma_graphite_after": 0.11158990873208295,
+   "noise_sigma_graphite_target": 0.11160957870712367,
    "noise_within_10pct": true,
-   "d_alpha": 1.6072539915342257e-05,
+   "d_alpha": 4.39032834703007e-06,
    "d_beta": 0.0,
    "added": false
   }
  },
  "targets": {
   "sigma_t": {
-   "BSE": 1.3955730649632416,
-   "Inlens": 1.2142698479797196,
-   "SE_type": 1.2511406818415192
+   "BSE": 1.3962085795872072,
+   "Inlens": 1.2142698766507591,
+   "SE_type": 1.250251553827863
   },
   "noise": {
    "BSE": {
-    "alpha": 0.04506658986444896,
-    "beta": 0.021315812431302882
+    "alpha": 0.04507331353571918,
+    "beta": 0.02134361435082474
    },
    "Inlens": {
     "alpha": 0.01440301509560018,
     "beta": 0.0
    },
    "SE_type": {
-    "alpha": 0.0124496511569676,
+    "alpha": 0.012456698059181634,
     "beta": 0.0
    }
   },
@@ -334,5 +334,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 65.0
+ "seconds_harm": 30.6
 }
