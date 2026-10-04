@@ -10,6 +10,9 @@ Run:
     modal run modal_patch_mil.py --mode eval  # re-run only a stage (embed | distances | eval | lopo | all)
     modal run modal_patch_mil.py --mode lopo     # leave-one-parent-out eval + ensemble + final held-out calls
     modal run modal_patch_mil.py --mode heldout  # embed only missing held-out sites, then distances, eval, lopo
+    modal run modal_patch_mil.py --mode menu     # 34-site (31 + 3 held-out truths) LOPO model menu + frozen selection
+    modal run modal_test_prep.py::main           # prerequisite of --mode test: preprocess data_test/ on Modal
+    modal run modal_patch_mil.py --mode test     # embed + score new organiser test sites with the frozen selection
 
 See docs/patch_mil.md.
 """
@@ -89,7 +92,7 @@ def embed_sites(sites: list[tuple[str, str]], tag: str, skip_existing: bool = Fa
             print("skip", batch, site)
             continue
         t0 = time.time()
-        cache_root = "/data/heldout" if batch == "Batch_heldout" else "/data"
+        cache_root = {"Batch_heldout": "/data/heldout", "Batch_test": "/data/test"}.get(batch, "/data")
         s = load_site(batch, site, resolution="half", normalise="fixed", harmonise=HARMONISE,
                       cache_root=cache_root)
         img = s.image
@@ -115,7 +118,8 @@ def _load_emb(tag: str, batch: str, site: str):
 
 
 @app.function(volumes={"/out": out_vol}, cpu=4.0, memory=8192, timeout=1800)
-def compute_distances(labelled: list[tuple[str, str]], heldout: list[str], tag: str) -> dict:
+def compute_distances(labelled: list[tuple[str, str]], heldout: list[str], tag: str,
+                      heldout_batch: str = "Batch_heldout", out_name: str = "distances.npz") -> dict:
     import numpy as np
 
     from pmdb.patch_mil import site_distance_matrix
@@ -135,18 +139,22 @@ def compute_distances(labelled: list[tuple[str, str]], heldout: list[str], tag: 
 
     hfeats, hcoords, hbse, hps = [], [], [], []
     for j, s in enumerate(heldout):
-        f, c, h = _load_emb(tag, "Batch_heldout", s)
+        f, c, h = _load_emb(tag, heldout_batch, s)
         hfeats.append(f)
         hcoords.append(c)
         hbse.append(h)
         hps.append(np.full(len(f), j))
-    Qh = np.concatenate(hfeats)
-    Dh = site_distance_matrix(Qh, np.full(len(Qh), -1), feats)
-    np.savez(f"/out/{tag}/distances.npz", D=D, Dh=Dh, patch_site=patch_site,
-             patch_site_h=np.concatenate(hps), coords=np.concatenate(coords),
-             coords_h=np.concatenate(hcoords),
+    if heldout:
+        Qh = np.concatenate(hfeats)
+        Dh = site_distance_matrix(Qh, np.full(len(Qh), -1), feats)
+        psh, coords_h, bse_h = np.concatenate(hps), np.concatenate(hcoords), np.array(hbse)
+    else:
+        Dh, psh, coords_h, bse_h = np.zeros((0, len(labelled))), np.zeros(0, int), np.zeros((0, 2), int), np.zeros(0)
+    np.savez(f"/out/{tag}/{out_name}", D=D, Dh=Dh, patch_site=patch_site,
+             patch_site_h=psh, coords=np.concatenate(coords),
+             coords_h=coords_h,
              site_batch=np.array([b for b, _ in labelled]), site_id=np.array([s for _, s in labelled]),
-             heldout_id=np.array(heldout), bse_hf=np.array(bse_hf), bse_hf_h=np.array(hbse))
+             heldout_id=np.array(heldout), bse_hf=np.array(bse_hf), bse_hf_h=bse_h)
     out_vol.commit()
     return {"D_shape": list(D.shape), "Dh_shape": list(Dh.shape),
             "n_inf_per_row_ok": bool((np.isinf(D).sum(axis=1) == 1).all()),
@@ -217,6 +225,60 @@ def evaluate_lopo(tag: str, n_perm: int, parents: list[dict], fp_features: list[
             "elapsed_s": round(time.time() - t0, 2)}
 
 
+@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=8192, timeout=3600)
+def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[dict], fp_lab: list[dict],
+                  fp_test: list[dict], test_batch: str, selection: dict | None) -> dict:
+    import numpy as np
+    import pandas as pd
+
+    from pmdb import batch_menu as bm
+    from pmdb.patch_mil import BATCHES
+
+    t0 = time.time()
+    out_vol.reload()
+    z = np.load(f"/out/{tag}/{dist_name}", allow_pickle=False)
+    lab = pd.DataFrame(labels)
+    assert [str(x) for x in z["site_batch"]] == list(lab["batch"])
+    assert [str(x) for x in z["site_id"]] == list(lab["site"])
+    keys = list(zip(lab["batch"], lab["site"]))
+    site_labels = np.array([BATCHES.index(b) for b in lab["label"]])
+    par = pd.DataFrame(parents).drop_duplicates(["batch", "site"]).set_index(["batch", "site"])["parent_id"]
+    lab_par = par.reindex(pd.MultiIndex.from_tuples(keys))
+    assert not lab_par.isna().any()
+    groups, uniques = pd.factorize(lab_par.to_numpy())
+    X = pd.DataFrame(fp_lab).set_index(["batch", "site"]).loc[keys]
+    y = pd.Series([BATCHES[c] for c in site_labels], index=X.index)
+    test_sites = [str(x) for x in z["heldout_id"]]
+    test_keys = [(test_batch, s) for s in test_sites]
+    if test_sites:
+        H = pd.DataFrame(fp_test).set_index(["batch", "site"]).loc[test_keys][list(X.columns)]
+        t_par = [par.get(k) for k in test_keys]
+        t_par_ids = [p if p is not None else f"new_{k[1]}" for p, k in zip(t_par, test_keys)]
+        code_of = {u: i for i, u in enumerate(uniques)}
+        test_codes = np.array([code_of.get(p, -1) if p is not None else -1 for p in t_par])
+        pool_par = np.concatenate([lab_par.to_numpy(), t_par_ids])
+        pool = pd.concat([X, H])
+    else:
+        H, t_par_ids, test_codes = X.iloc[:0], [], np.zeros(0, int)
+        pool_par, pool = lab_par.to_numpy(), X
+    Xc_all, sing_all = bm.centre_by_parent(pool, pd.Series(pool_par))
+    n = len(X)
+    Xc, Hc = Xc_all.iloc[:n], Xc_all.iloc[n:]
+    singleton, singleton_h = sing_all.to_numpy()[:n], sing_all.to_numpy()[n:]
+    menu_df, sc = bm.menu_cv(z["D"], z["patch_site"], site_labels, groups, X, Xc, y, singleton)
+    summary = bm.menu_summary(menu_df, site_labels)
+    if selection is None:
+        selection = bm.select_option(summary)
+    test_pred = []
+    if test_sites:
+        test_pred = bm.predict_test(z["D"], z["patch_site"], site_labels, groups, X, Xc, y, singleton, menu_df, sc,
+                                    z["Dh"], z["patch_site_h"], test_keys, test_codes, H, Hc, singleton_h,
+                                    z["coords_h"], selection, test_parent_ids=t_par_ids).to_dict("records")
+    menu_df.insert(0, "parent_id", lab_par.to_numpy())
+    return {"summary": summary, "selection": selection, "menu_predictions": menu_df.to_dict("records"),
+            "test_predictions": test_pred, "elapsed_s": round(time.time() - t0, 2)}
+
+
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -231,9 +293,12 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
     from pmdb.parents import write_parent_groups
     from pmdb.patch_mil import fingerprint_comparison
 
-    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all"):
-        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all")
+    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test"):
+        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test")
     root = Path(__file__).resolve().parent
+    if mode in ("menu", "test"):
+        _menu_or_test(mode, root)
+        return
     man = pd.read_csv(root / "cache" / "half" / "manifest.csv")
     labelled = [(str(b), str(s)) for b, s in zip(man["batch"], man["site"])]
     if smoke:
@@ -302,3 +367,69 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
               f"wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
         for r in res["final_heldout"]:
             print(f"  {r['site']} -> {r['assigned']} ({r['confidence_flag']})")
+
+
+def _menu_or_test(mode: str, root: Path) -> None:
+    import pandas as pd
+
+    from pmdb.batch_menu import feature_table, labelled_sites
+    from pmdb.parents import parent_groups, write_parent_groups
+    from pmdb.within_parent import signal_sentence
+
+    t0 = time.time()
+    lab = labelled_sites()
+    labelled34 = [(b, s) for b, s in zip(lab["batch"], lab["site"])]
+    lab_rec = lab.to_dict("records")
+    fp_lab = feature_table(labelled34).reset_index()
+    sel_path = root / "outputs" / "menu" / "selection.json"
+    if mode == "menu":
+        parents = write_parent_groups()
+        print("distances:", compute_distances.remote(labelled34, [], "full", "Batch_test", "distances_r3.npz"))
+        res = evaluate_menu.remote("full", "distances_r3.npz", lab_rec, parents.to_dict("records"),
+                                   fp_lab.to_dict("records"), [], "Batch_test", None)
+        summ, sel = res["summary"], res["selection"]
+        out = root / "outputs" / "menu"
+        _atomic_write(out / "menu_evaluation.json",
+                      json.dumps({"summary": summ, "selection": sel, "n_sites": 34}, indent=2).encode())
+        _atomic_write(out / "menu_predictions.csv", pd.DataFrame(res["menu_predictions"]).to_csv(index=False).encode())
+        _atomic_write(sel_path, json.dumps({**sel, "selected_on": "LOPO, 34 labelled sites, r3 run"},
+                                           indent=2).encode())
+        for o in ("fingerprint", "fingerprint_centred", "patch", "ensemble", "ensemble_centred"):
+            r = summ[o]
+            print(f"{o:20s} acc {r['accuracy']:.3f} bal {r['balanced_accuracy']:.3f} rubric {r['rubric']:.3f} "
+                  f"(SE {r['rubric_se']:.3f}) all-high {r['rubric_all_high']:.3f} n_high {r['n_high']}")
+        print("selection:", sel, f"wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
+        return
+    cm = root / "cache_test" / "half" / "manifest.csv"
+    if not cm.exists():
+        raise SystemExit("cache_test/half/manifest.csv missing: run `modal run modal_test_prep.py::main` first")
+    test_sites = [str(x) for x in pd.read_csv(cm, dtype={"site": str})["site"]]
+    if not sel_path.exists():
+        raise SystemExit("outputs/menu/selection.json missing: run --mode menu first")
+    selection = json.loads(sel_path.read_text())
+    ft = root / "outputs" / "test" / "features.csv"
+    if not ft.exists():
+        raise SystemExit("outputs/test/features.csv missing: run `modal run modal_test_prep.py::main` first")
+    fp_test = pd.read_csv(ft, dtype={"batch": str, "site": str})
+    if set(test_sites) - set(fp_test["site"]):
+        raise SystemExit("test sites missing from outputs/test/features.csv: run `modal run modal_test_prep.py::main`")
+    parents = parent_groups()
+    embed_sites.remote([("Batch_test", s) for s in test_sites], "full", True)
+    print("distances:", compute_distances.remote(labelled34, test_sites, "full", "Batch_test", "distances_r3.npz"))
+    res = evaluate_menu.remote("full", "distances_r3.npz", lab_rec, parents.to_dict("records"),
+                               fp_lab.to_dict("records"), fp_test.to_dict("records"), "Batch_test", selection)
+    sig = signal_sentence(pd.read_csv(root / "outputs" / "within_parent" / "summary.csv"))
+    preds = pd.DataFrame(res["test_predictions"])
+    preds["explanation"] = [e.replace(f" (see outputs/patch_mil/figures/heldout_{s}.png)", "") + (" " + sig if sig else "")
+                            for s, e in zip(preds["site"], preds["explanation"])]
+    out = root / "outputs" / "test"
+    _atomic_write(out / "menu_evaluation.json",
+                  json.dumps({"summary": res["summary"], "selection": selection}, indent=2).encode())
+    _atomic_write(out / "final_predictions.csv", preds.to_csv(index=False).encode())
+    md = ["| site | batch | confidence | explanation |", "|---|---|---|---|"]
+    for r in preds.itertuples():
+        md.append(f"| {r.site} | Batch {r.assigned.split('_')[1]} | {r.confidence} | {r.explanation} |")
+    _atomic_write(out / "submission.md", ("\n".join(md) + "\n").encode())
+    for r in preds.itertuples():
+        print(f"{r.site} -> {r.assigned} ({r.confidence})")
+    print(f"test: wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
