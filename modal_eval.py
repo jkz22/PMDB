@@ -74,7 +74,11 @@ def main(tag: str = "main", n_perm: int = 1000, n_chunks: int = 50, seed: int = 
     if tag not in ARMS:
         raise SystemExit(f"unknown tag {tag}")
     arms = ARMS[tag]
+    fem_bytes = (ROOT / FEM_TABLE[tag]).read_bytes()
+    fem_sha256 = hashlib.sha256(fem_bytes).hexdigest()  # hash what the permutations are built from
     tr, _, y, _ = load_inputs(ROOT / FEM_TABLE[tag])
+    if hashlib.sha256((ROOT / FEM_TABLE[tag]).read_bytes()).hexdigest() != fem_sha256:
+        raise SystemExit(f"{FEM_TABLE[tag]} changed while loading inputs; rerun")
     batches = sorted(y.unique())
     codes = np.array([batches.index(b) for b in y])
     chunks = [c.tolist() for c in np.array_split(np.arange(n_perm), n_chunks)]
@@ -104,7 +108,7 @@ def main(tag: str = "main", n_perm: int = 1000, n_chunks: int = 50, seed: int = 
     out.mkdir(parents=True, exist_ok=True)
     (out / "permutation_null.json").write_text(json.dumps(
         {"seed": seed, "n_perm": n_perm, "fem_table": FEM_TABLE[tag],
-         "fem_sha256": hashlib.sha256((ROOT / FEM_TABLE[tag]).read_bytes()).hexdigest(), "null": null}))
+         "fem_sha256": fem_sha256, "null": null}))
     cost = sum(modal_fem.cost_usd(r["wall_s"], CPU, MEMORY_MB) for r in res)
     print(f"done: wall {wall:.0f}s, summed container time {sum(r['wall_s'] for r in res):.0f}s, "
           f"ledgered cost ${cost:.2f}, ledger total ${modal_fem.ledger_total():.2f}")
