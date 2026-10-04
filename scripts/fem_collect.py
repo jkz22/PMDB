@@ -53,6 +53,11 @@ def _read(d: Path) -> dict[tuple, dict]:
 
 def g2(dir100: Path, dir50: Path) -> int:
     a, b = _read(dir100), _read(dir50)
+    if set(a) != set(b):
+        for name, miss in (("100nm", sorted(set(b) - set(a))), ("50nm", sorted(set(a) - set(b)))):
+            if miss:
+                print(f"missing in {name}: {', '.join('/'.join(k) for k in miss)}")
+        return 1
     rows = []
     for key in sorted(set(a) & set(b)):
         for s, fr in FRAMES.items():

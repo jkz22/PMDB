@@ -93,6 +93,13 @@ def _worst(n_calls: int, cpu: float, memory_mb: int, timeout_s: int) -> float:
     return n_calls * (timeout_s + OVERHEAD_S) / 3600.0 * _rate(cpu, memory_mb)
 
 
+def _worst_with_retry(n_calls: int, cpu: float, memory_mb: int, timeout_s: int) -> float:
+    """Worst case for n cases: every first attempt and every retry (1.5x memory and timeout, as run_cases) times out."""
+    mem2 = int(math.ceil(1.5 * memory_mb / 1024.0) * 1024)
+    to2 = int(min(86400, math.ceil(1.5 * timeout_s)))
+    return _worst(n_calls, cpu, memory_mb, timeout_s) + _worst(n_calls, cpu, mem2, to2)
+
+
 def _save_budget(budget: dict) -> None:
     BUDGET_JSON.parent.mkdir(parents=True, exist_ok=True)
     BUDGET_JSON.write_text(json.dumps(budget, indent=2))
@@ -148,6 +155,10 @@ def budget_check(mode: str, tag: str, items: list, cpu: float, memory_mb: int, t
     if mode != "full":
         raise NotImplementedError(f"budget rule for mode {mode!r}")
     orientation = items[0]["orientation"]
+    chunk_worst = ledger_total() + _worst_with_retry(len(items), cpu, memory_mb, timeout_s) + DEV_ALLOWANCE_USD
+    if chunk_worst > CAP_USD:
+        print(f"BUDGET REFUSAL: ledger + worst case (with retries) + allowance = {chunk_worst:.2f} > {CAP_USD}")
+        raise SystemExit(3)
     stage2_open = not budget["drop_stage2"] and not (FEM_DIR / "results" / "stage2_50").exists()
 
     def remaining(this_chunk: bool) -> float:
@@ -453,6 +464,13 @@ def _load_results(tag: str) -> list[dict]:
     return [json.loads(rp.read_text()) for rp in sorted((FEM_DIR / "results" / tag).rglob("*.json"))]
 
 
+def _failed_cases(cases: list[dict], results: list[dict]) -> list[str]:
+    """IDs (batch/site) of launched cases whose result is missing or carries meta.error."""
+    ok = {(d["meta"]["batch"], d["meta"]["site"], d["meta"]["orientation"]) for d in results
+          if not d["meta"].get("error")}
+    return [f"{c['batch']}/{c['site']}" for c in cases if (c["batch"], c["site"], c["orientation"]) not in ok]
+
+
 def summarize(tag: str) -> list[dict]:
     """Print the per-case table and gates; returns the swelling gate dicts."""
     import numpy as np
@@ -620,6 +638,10 @@ def _mode_full(orientation: str, sites: str, tag: str, cpu: float, memory: int, 
     sync(tag)
     summarize(tag)
     print(f"SYNC DONE {tag}")
+    bad = _failed_cases(cases, _load_results(tag))
+    if bad:
+        print(f"FAILED CASES ({len(bad)}): {', '.join(bad)}")
+        raise SystemExit(1)
     return 0
 
 
