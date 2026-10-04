@@ -1,0 +1,30 @@
+method,truth,kind,source,call_3e122cbj,call_fn0mhxef,call_xrv9xvzb,n_correct,loso_acc,loso_recall_1,loso_recall_2,loso_recall_3
+"fingerprint (16 curve features, conformal NB)",Batch_2 / Batch_1 / Batch_3,arrangement,outputs/crosswalk/heldout_consensus.csv,Batch_1,Batch_3,Batch_2,0,0.6774193548387096,0.7142857142857143,0.42857142857142855,0.7647058823529411
+fingerprint + stretch S01-S04,Batch_2 / Batch_1 / Batch_3,arrangement,outputs/crosswalk/heldout_consensus.csv,Batch_1,Batch_3,Batch_3,1,,,,
+fingerprint + functional F,Batch_2 / Batch_1 / Batch_3,arrangement,outputs/crosswalk/heldout_consensus.csv,Batch_1,Batch_2,Batch_3,1,,,,
+"two-stage RF, KPI+FEM arm",Batch_2 / Batch_1 / Batch_3,arrangement,outputs/crosswalk/heldout_consensus.csv,Batch_1,Batch_3,Batch_2,0,,,,
+"two-stage RF, FEM arm",Batch_2 / Batch_1 / Batch_3,arrangement,outputs/crosswalk/heldout_consensus.csv,Batch_1,Batch_3,Batch_2,0,,,,
+"two-stage RF, KPI arm (final)",Batch_2 / Batch_1 / Batch_3,scalar KPIs,outputs/crosswalk/heldout_consensus.csv,Batch_1,Batch_3,Batch_3,1,,,,
+XGBoost reliable_kpis,Batch_2 / Batch_1 / Batch_3,scalar KPIs,outputs/xgb/heldout_predictions.csv,Batch_1,Batch_3,Batch_3,1,0.45161290322580644,0.2857142857142857,0.0,0.7058823529411765
+XGBoost fingerprint16,Batch_2 / Batch_1 / Batch_3,arrangement,outputs/xgb/heldout_predictions.csv,Batch_3,Batch_3,Batch_2,0,0.6774193548387096,0.42857142857142855,0.5714285714285714,0.8235294117647058
+XGBoost reliable_kpis+functional,Batch_2 / Batch_1 / Batch_3,arrangement,outputs/xgb/heldout_predictions.csv,Batch_1,Batch_3,Batch_2,0,0.5161290322580645,0.14285714285714285,0.14285714285714285,0.8235294117647058
+XGBoost all_reliable,Batch_2 / Batch_1 / Batch_3,arrangement,outputs/xgb/heldout_predictions.csv,Batch_1,Batch_3,Batch_2,0,0.6129032258064516,0.42857142857142855,0.2857142857142857,0.8235294117647058
+tile vote all|lr|16,Batch_2 / Batch_1 / Batch_3,tiles (scalar + per-tile depth),outputs/tilevote/heldout.csv,Batch_1,Batch_3,Batch_3,1,0.6129032258064516,0.2857142857142857,0.0,1.0
+nearest mean grey_raw,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_3,1,0.6129032258064516,0.5714285714285714,0.42857142857142855,0.7058823529411765
+nearest mean grey_harm,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_3,1,0.6451612903225806,0.7142857142857143,0.2857142857142857,0.7647058823529411
+nearest mean grey_depth_raw,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_3,Batch_2,Batch_3,1,0.5483870967741935,0.2857142857142857,0.8571428571428571,0.5294117647058824
+nearest mean grey_depth_harm,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_3,Batch_1,Batch_2,1,0.41935483870967744,0.2857142857142857,0.14285714285714285,0.5882352941176471
+nearest mean grey_harm_moments,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_3,1,0.6129032258064516,0.7142857142857143,0.42857142857142855,0.6470588235294118
+nearest mean grey_harm_std_only,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_1,0,0.2903225806451613,0.42857142857142855,0.42857142857142855,0.17647058823529413
+nearest mean grey_harm_hist,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_3,1,0.6774193548387096,0.7142857142857143,0.2857142857142857,0.8235294117647058
+nearest mean grey_harm_graphite_only,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_3,1,0.7419354838709677,0.8571428571428571,0.7142857142857143,0.7058823529411765
+nearest mean grey_harm_pore_only,Batch_2 / Batch_1 / Batch_3,grey level (acquisition),outputs/meanpred/heldout.csv,Batch_1,Batch_1,Batch_3,2,0.7096774193548387,0.8571428571428571,0.42857142857142855,0.7647058823529411
+nearest mean overlay_frac,Batch_2 / Batch_1 / Batch_3,scalar KPIs,outputs/meanpred/heldout.csv,Batch_1,Batch_2,Batch_2,0,0.4838709677419355,0.2857142857142857,0.42857142857142855,0.5882352941176471
+nearest mean overlay_depth,Batch_2 / Batch_1 / Batch_3,scalar KPIs,outputs/meanpred/heldout.csv,Batch_3,Batch_3,Batch_1,0,0.4838709677419355,0.5714285714285714,0.42857142857142855,0.47058823529411764
+nearest mean fingerprint16,Batch_2 / Batch_1 / Batch_3,arrangement,outputs/meanpred/heldout.csv,Batch_3,Batch_3,Batch_2,0,0.6451612903225806,0.7142857142857143,0.5714285714285714,0.6470588235294118
+decision card (consensus call),Batch_2 / Batch_1 / Batch_3,ensemble,outputs/decision/heldout_decisions.csv,Batch_1,Batch_3,Batch_2,0,,,,
+one-class kpi_v1 score (95th pct of Batch 3),Batch_2 / Batch_1 / Batch_3,binary off/baseline,outputs/acceptance/heldout_joint.csv,off,baseline,baseline,2,,,,
+one-class fingerprint score (95th pct of Batch 3),Batch_2 / Batch_1 / Batch_3,binary off/baseline,outputs/acceptance/heldout_joint.csv,baseline,baseline,baseline,1,,,,
+one-class functional score (95th pct of Batch 3),Batch_2 / Batch_1 / Batch_3,binary off/baseline,outputs/acceptance/heldout_joint.csv,off,baseline,baseline,2,,,,
+noise-aware KPI deviation (any KPI off),Batch_2 / Batch_1 / Batch_3,binary off/baseline,outputs/decision/heldout_decisions.csv,off,baseline,baseline,2,,,,
+"Modelling session binary off-detector (CNN, every route)",Batch_2 / Batch_1 / Batch_3,binary off/baseline,"Modelling session chat, 2026-10-04 11:04 UTC",off,off,baseline,3,,,,

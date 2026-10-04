@@ -118,7 +118,8 @@ Batch 1/2 settings) to close the noise/sharpness question, and (iii) a labelled 
 EDS carbon/fluorine map to give the binder / carbon phase a measured identity — the only way to
 decide whether the constrained-swelling difference is real.
 
-On the held-back sites every method agrees on two of three (`docs/crosswalk.md` §1): 3e122cbj → Batch 1
+*(Written before the labels were released; the released labels are 3e122cbj = Batch 2, fn0mhxef = Batch 1,
+xrv9xvzb = Batch 3 — see §9.)* On the held-back sites every method agrees on two of three (`docs/crosswalk.md` §1): 3e122cbj → Batch 1
 (unanimous, and the only field outside the Batch 3 baseline — off on 8 KPIs beyond its own sampling
 noise: twice the Si, denser, closer-packed, less graphite contact; `docs/acceptance.md` §5),
 fn0mhxef → Batch 3 (6 of 7). xrv9xvzb splits along the story's own fault line: methods that read depth
@@ -177,7 +178,7 @@ five mask fractions at site R² 0.91 and a spine adds nothing; pore loss gains �
 MicroNet features (n.s. on 31 fields). MicroNet > DINOv2 throughout, as in v2. The segmentation is the
 model; the deep embedding is a lossy re-estimate of it.
 
-**Addendum (cross-session crosswalk, `docs/crosswalk.md`).** Put next to each other: (i) the held-out calls
+**Addendum (cross-session crosswalk, `docs/crosswalk.md`; held-out calls in (i) scored 0/3 against the released labels, §9).** Put next to each other: (i) the held-out calls
 of every session agree on 3e122cbj (Batch 1, the only field outside the Batch 3 baseline) and fn0mhxef
 (Batch 3); xrv9xvzb splits exactly along the story's fault line — arrangement-reading methods say Batch 2,
 scalar composition/geometry methods say Batch 3. (ii) The 13-second geometric swelling test predicts the
@@ -200,3 +201,26 @@ split and is downgraded to a segmentation-dependent observation.
 field variance, so bigger fields do not buy power — K15 needs ≈ 50 fields per batch for 80 % power even at
 infinite area (`docs/reliability.md` §4). The binding constraint is the number of fields.
 
+## 9. What the released labels said (`docs/decision.md` §5, `outputs/decision/heldout_scored.md`)
+
+On 2026-10-04 the organiser released the held-out labels: **3e122cbj = Batch 2, fn0mhxef = Batch 1,
+xrv9xvzb = Batch 3.** Scored as they stood, every three-class method in this repository — fingerprint,
+XGBoost, both RF+FEM arms, the consensus card — is 0/3; 24 methods average 0.58 correct of 3 (chance 1.0).
+They all made the same two mistakes. 3e122cbj, with 13.7 % Si and the swelling behaviour of the two high-Si
+Batch 1 fields, is Batch 2: high Si is an outlier axis, not a Batch 1 property (§2 stands — composition is
+not what the labels encode — but every "Batch 1" call built on Si was wrong). xrv9xvzb, with the Batch 2-like
+mid-depth Si dip (§3, §6), is Batch 3: the arrangement signature that separates the labelled batches at
+LOSO 0.68 did not transfer, and the scalar readers that said Batch 3 were right. fn0mhxef is Batch 1 while
+sitting inside Batch 3 on every reliable KPI, the fingerprint, the functional score and the FEM features;
+only the acquisition-sensitive readers flag it (Modelling CNN off-detector 3/3 overall, sharpness −4 SD,
+noise −2 SD; grey-level nearest mean 2/3).
+
+Together with the organiser's note that the batches are artificial groupings of crops built from a
+calculated or observed feature, the chain in §1–§6 has to be re-read: harmonisation (§1) and the
+leakage controls (§5) are still the right discipline, composition (§2) is still at chance, the
+lithiation-consequence reading (§6) is still label-independent and FEM-validated — but §3's arrangement
+difference is a statement about these 31 fields, not a batch predictor, and whatever defines the labels
+co-varies with the imaging session at least as much as with any mask-derived quantity. The honest
+deliverable is an off/baseline card with separate *material* and *imaging* columns (3e122cbj: off/off;
+fn0mhxef: baseline/off; xrv9xvzb: baseline/baseline), no three-class accuracy, and one question to the
+organiser: which feature were the batches built from?

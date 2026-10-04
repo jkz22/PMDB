@@ -5,15 +5,20 @@
 
 ## 0. The verdict in one paragraph
 
-Thirty-one labelled fields support exactly one statistically significant batch signal — the **arrangement**
-of Si through the electrode thickness and in the plane (the 16 fingerprint features) — and no learner, however
-flexible, gets more out of them. Composition KPIs carry no batch information under any model; half of the
-KPI catalogue is sampling noise at this field size; the one functional quantity that looked batch-specific
-(constrained swelling) rests on an unvalidatable segmentation class. So the project "works" as what it is: a
-**batch-labelling tool at ≈ 0.68 leave-one-site-out accuracy (chance 0.55, p ≈ 0.003–0.005)**, a
-**per-field explanation that only quotes deviations larger than the field's own measurement noise**, and a
-**lithiation-consequence reading (pore loss) validated against the FEM**. Do not promise a Batch 3
-accept/reject rule; do not add models; add fields.
+*Revised 2026-10-04 after the organiser released the held-out labels (§5).* Thirty-one labelled fields
+support exactly one statistically significant **within-dataset** batch signal — the arrangement of Si through
+the electrode thickness (the 16 fingerprint features, LOSO 0.68 vs 0.55 chance, p ≈ 0.005) — and no learner
+gets more out of them (§1). **That signal did not transfer**: on the three released held-out labels the
+fingerprint, XGBoost, both RF+FEM arms and the shipped consensus card score **0/3**, and 24 three-class
+methods average 0.58 correct of 3 (chance 1.0). The two cues every model had learned — "very high Si ⇒
+Batch 1" (from two fields) and "mid-depth Si dip ⇒ Batch 2" — were each contradicted by one held-out field.
+What *did* hold: the off/baseline reading. Material deviation (KPIs + swelling) correctly puts 3e122cbj
+outside and xrv9xvzb inside Batch 3; the one field it misses, fn0mhxef (Batch 1), is at the Batch 3 baseline
+on every mask-based measure and is flagged only by the acquisition-sensitive readers (Modelling CNN
+off-detector 3/3; grey-level nearest mean 2/3). So the project "works" as: an **off/baseline detector with
+separate material and imaging columns**, a **per-field explanation that quotes only deviations larger than
+the field's measurement noise**, and a **lithiation-consequence reading (pore loss) validated against the
+FEM** — all three label-independent. Do not report a three-class batch accuracy from this dataset.
 
 ## 1. XGBoost on the reliable set (`scripts/run_xgb_reliable.py`, `outputs/xgb/`)
 
@@ -141,16 +146,17 @@ One card per held-back field, every line pointing at a committed file:
 | **arrangement** | Si depth mid-dip, SOC-1 pore-loss depth profile (`outputs/functional/depth_swelling.csv`) | the signal the call is actually made from, in physical terms |
 | **consequence** | SOC-1 geometric pore loss vs Batch 3 | validated against FEM pore closure (ρ 0.73, `docs/crosswalk.md` §2); segmenter-robust |
 
-Result (`outputs/decision/heldout_cards.md`, figure `figures/decision.png`):
+Result (`outputs/decision/heldout_cards.md`, figure `figures/decision.png`) — kept as written before the labels
+were released, so the pipeline can be judged honestly; see §5 for the score:
 
-- **3e122cbj → Batch 1.** 6/6 batch-calling methods agree; XGBoost P(B1) 0.63. *Outside* the Batch 3 baseline on
+- **3e122cbj → Batch 1** *(released label: **Batch 2** — wrong)*. 6/6 batch-calling methods agree; XGBoost P(B1) 0.63. *Outside* the Batch 3 baseline on
   composition and function (100th percentile) — Si fraction +10 robust SD (8× its sampling SD), number
   density +9, contact −5, spacing −5; SOC-1 pore loss 0.22, above every Batch 3 field. Arrangement alone cannot
   separate it from Batch 3 (conformal p 1.0): it is the functional twin of the two high-Si Batch 1 fields.
-- **fn0mhxef → Batch 3.** 5/6 agree; XGBoost P(B3) 0.83. Inside the baseline on every family (24th–65th
+- **fn0mhxef → Batch 3** *(released label: **Batch 1** — wrong)*. 5/6 agree; XGBoost P(B3) 0.83. Inside the baseline on every family (24th–65th
   percentile); no reliable KPI is off; pore loss at the Batch 3 median. The one field where "Batch 3" is a
   comfortable call.
-- **xrv9xvzb → Batch 2.** 3/6 agree, split along the method type: everything that reads depth arrangement says
+- **xrv9xvzb → Batch 2** *(released label: **Batch 3** — wrong; the scalar readers were right)*. 3/6 agree, split along the method type: everything that reads depth arrangement says
   Batch 2 (fingerprint credibility 1.0, confidence 0.5; XGBoost P(B2) 0.54), everything scalar says Batch 3.
   No reliable KPI is off and it is inside the Batch 3 cloud on every family, so if it *is* Batch 2 it is only
   by its mid-depth Si depletion (mid-dip −0.72 vs Batch 2 median −0.89, Batch 3 −0.10) and the matching
@@ -183,3 +189,79 @@ In order of leverage (`docs/reliability.md` §4, `docs/functional.md` §3):
    whether the constrained-swelling difference is real.
 4. **FEM at matched SOC on the two high-Si Batch 1 fields and 3e122cbj** — the geometric pore-loss ranking says
    those are where mechanics would differ; the FEM is where that becomes a number.
+
+## 5. Scored against the released labels (`scripts/run_heldout_score.py`, `outputs/decision/heldout_scored.md`)
+
+On 2026-10-04 (11:04 UTC) the organiser gave the held-out labels in the Modelling-session chat:
+**3e122cbj = Batch 2, fn0mhxef = Batch 1, xrv9xvzb = Batch 3.** Nothing was refitted; every call in this
+branch and on main was scored as it stood.
+
+| method (kind) | 3e122cbj | fn0mhxef | xrv9xvzb | correct | LOSO |
+|---|---|---|---|---|---|
+| fingerprint conformal NB (arrangement) | B1 | B3 | B2 | 0/3 | 0.68 |
+| XGBoost all reliable (arrangement) | B1 | B3 | B2 | 0/3 | 0.61 |
+| XGBoost reliable KPIs (scalar) | B1 | B3 | **B3** | 1/3 | 0.45 |
+| two-stage RF, KPI arm (scalar, main) | B1 | B3 | **B3** | 1/3 | — |
+| two-stage RF, FEM / KPI+FEM arms (arrangement, main) | B1 | B3 | B2 | 0/3 | — |
+| tile vote 16 (scalar + per-tile depth) | B1 | B3 | **B3** | 1/3 | 0.61 |
+| nearest mean, grey inside graphite (acquisition) | B1 | B2 | **B3** | 1/3 | 0.74 |
+| nearest mean, grey inside pores (acquisition) | B1 | **B1** | **B3** | 2/3 | 0.71 |
+| nearest mean, overlay fractions (scalar) | B1 | B2 | B2 | 0/3 | 0.48 |
+| **decision card (consensus)** | B1 | B3 | B2 | **0/3** | — |
+| one-class KPI / functional score ≥ 95th pct of B3 (off/baseline) | **off** | baseline | **baseline** | 2/3 | — |
+| noise-aware KPI deviation, any KPI off (off/baseline) | **off** | baseline | **baseline** | 2/3 | — |
+| Modelling session CNN off-detector, every route (off/baseline) | **off** | **off** | **baseline** | 3/3 | field acc 0.84–0.90 |
+
+Full table (24 three-class methods, 5 binary) in `outputs/decision/heldout_scored.md`: 11 methods at 0/3,
+12 at 1/3, one at 2/3, none at 3/3; mean 0.58 correct of 3 against 1.0 for uniform guessing.
+
+**What three fields can and cannot say.** One method at 0/3 is unremarkable (probability 8/27 ≈ 0.30 under
+chance), and three fields cannot validate or refute a 0.68 LOSO estimate on their own. What matters is the
+*pattern*: every three-class method, arrangement-based or scalar, made the **same** two mistakes — 3e122cbj →
+Batch 1 (its 13.7 % Si and swelling behaviour are the twin of the two high-Si Batch 1 fields; it is Batch 2)
+and fn0mhxef → Batch 3 or Batch 2 (it sits inside Batch 3 on every reliable KPI, the fingerprint, the
+functional score and the FEM features; it is Batch 1). The methods did not fail independently; they all
+learned the same two cues from 7 + 7 non-baseline fields, and both cues were wrong about the next field.
+Concretely:
+
+1. **High Si fraction is not a Batch 1 property.** Two Batch 1 fields and now one Batch 2 field are
+   high-Si (13.7–16.4 %); the rest of every batch is 5–8 %. Every "Batch 1" call in this project that
+   rested on Si (consensus, XGBoost, RF, the material deviation table's *batch* reading) was reading an
+   outlier axis that is orthogonal to the labels. The deviation itself is real and useful — it just says
+   "off baseline", not "Batch 1".
+2. **The mid-depth Si-depletion signature did not transfer.** xrv9xvzb has the Batch 2-like mid-dip
+   (−0.72) and the matching mid-depth pore-loss minimum, and is Batch 3. The arrangement-vs-scalar
+   disagreement recorded in `docs/crosswalk.md` §1 resolved in favour of the scalar readers.
+3. **fn0mhxef is Batch 1 with no material signature.** No reliable KPI is off, pore loss is at the Batch 3
+   median, the fingerprint conformal p(B3) is 0.44, FEM features are baseline; the Modelling session's
+   imaging statistics put its sharpness at −4 SD and noise at −2 SD, and its CNN off-detector called it
+   "off" with P 0.87–0.94 on every harmonisation route. Whatever makes it Batch 1 is visible to the
+   acquisition-sensitive readers and invisible to every mask-based one.
+
+**Combined with the organiser's other new information** (Modelling chat, 10:35 UTC: the batches are
+artificial groupings of crops from larger original images, built from "some feature they've calculated or
+observed"), the parsimonious reading is that the batch label tracks something that co-varies with the
+acquisition session at least as much as with any microstructure KPI we compute — the Modelling session
+reached the same conclusion from its side (its off-detector is reproduced by two noise/sharpness scalars,
+field acc 0.90). We cannot tell from three fields whether that something is a material property that none
+of our mask-derived KPIs captures, or an imaging property. Three fields also cannot establish the CNN's
+3/3 as validation: for a binary with prior ≈ 0.45 the chance of 3/3 is ≈ 0.11, and the Modelling session
+itself flags the fn0mhxef call as imaging-driven.
+
+**What stands, what falls, what to report.**
+
+- *Stands (label-independent):* the KPI reliability/ICC and fields-vs-area results; the noise-aware
+  deviation table; the geometric swelling test and its FEM crosswalk (3e122cbj's pore-closure risk is real
+  whichever batch it is); the microscope-session leakage control (§1c); the finding that composition
+  overlays are at chance; the LOSO 0.68 *as a statement about these 31 fields* (permutation p ≈ 0.005).
+- *Falls:* the fingerprint/XGBoost/consensus **as a batch predictor** for new fields (0/3, same errors as
+  every other method); "arrangement is the batch signal" as an out-of-sample claim; every sentence in
+  `docs/crosswalk.md`, `docs/story.md` and this document that read 3e122cbj as "Batch 1-like" or xrv9xvzb
+  as "Batch 2 by arrangement" — they are kept as written and marked, not rewritten.
+- *Report:* an **off/baseline card with two independent columns** — *material* (reliable-KPI deviation +
+  functional score vs Batch 3: 3e122cbj off, fn0mhxef baseline, xrv9xvzb baseline) and *imaging*
+  (noise/sharpness/grey-level session fingerprint: 3e122cbj off, fn0mhxef off, xrv9xvzb baseline) — with
+  the explicit statement that the held-out labels are matched by the union, not by the material column
+  alone. No three-class accuracy. The organiser's definition of the batches is the single piece of
+  information that would turn this into a model: if it is a computed feature of the crops, regress our
+  KPI and imaging statistics on it directly instead of classifying.
