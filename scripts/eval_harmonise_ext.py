@@ -155,13 +155,14 @@ def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict
 
 TEXTURE = ("hf_ratio", "noise_sigma", "grad_p90", "edge_sigma_px")
 METHOD_LABEL = {"none": "raw", "nyul": "N4 + Nyúl–Udupa", "basic": "BaSiC", "hybrid": "hybrid LUT",
-                "spectrum": "spectrum (NPS filter)", "fda": "FDA"}
+                "spectrum": "spectrum (NPS filter)", "fda": "FDA", "hybrid_spectrum": "hybrid LUT → spectrum"}
 METHOD_BLURB = {
     "nyul": "**nyul** = N4ITK bias-field correction → Nyúl–Udupa piecewise-linear histogram standardisation (`pmdb/harmonise_ext.py`, `docs/harmonisation_ext.md`)",
     "basic": "**basic** = BaSiC flat-field/dark-field + per-image baseline (`pmdb/harmonise_ext.py`)",
     "spectrum": "**spectrum** = radial amplitude-spectrum (MTF/NPS) matching filter to the labelled median, DC kept (`pmdb/harmonise_shift.py`, `docs/harmonisation_shift.md`)",
     "fda": "**fda** = Fourier Domain Adaptation, low-frequency amplitude window (β = 0.01) from the labelled reference (`pmdb/harmonise_shift.py`)",
     "hybrid": "**hybrid** = in-house LUT route (`pmdb/harmonise.py`), for reference",
+    "hybrid_spectrum": "**hybrid_spectrum** = hybrid LUT followed by the spectrum filter refit on the LUT-corrected grey; the recommended single modelling input (`pmdb/harmonise_shift.py`, `docs/harmonisation_shift.md` §2b)",
 }
 
 
@@ -560,7 +561,7 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
           "* `texture_shortcut_*`: the same leave-one-out classifier on the four texture statistics only (is the site still identifiable from blur/noise?); `all_shortcut_batch_acc` uses grey + texture.", ""]
     L += ["## What is cut out ('crops')", "",
           "No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so",
-          "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where the mask excludes more than 0.2 % of the interior and why", ""]
+          "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, any interior pixel is KPI-invalid (bad band / charging), or a crack is flagged, and why", ""]
     worst = crops.sort_values("frac_invalid_stats_inner", ascending=False).head(12)
     L.append("| batch | site | detector | interior excluded | border |")
     L.append("|---|---|---|---|---|")

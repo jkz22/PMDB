@@ -3,6 +3,7 @@
 Methods compared on the `pmdb.clean`-masked half-res grey (`none` is the raw grey at the same coordinates):
 
 * **hybrid** = in-house LUT route (`pmdb/harmonise.py`), for reference
+* **hybrid_spectrum** = hybrid LUT followed by the spectrum filter refit on the LUT-corrected grey; the recommended single modelling input (`pmdb/harmonise_shift.py`, `docs/harmonisation_shift.md` §2b)
 
 ## Summary (labelled sites)
 
@@ -54,7 +55,7 @@ Methods compared on the `pmdb.clean`-masked half-res grey (`none` is the raw gre
 ## What is cut out ('crops')
 
 No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so
-nothing is cropped for those reasons; `crops_gallery.png` shows the fields where the mask excludes more than 0.2 % of the interior and why
+nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, any interior pixel is KPI-invalid (bad band / charging), or a crack is flagged, and why
 
 | batch | site | detector | interior excluded | border |
 |---|---|---|---|---|

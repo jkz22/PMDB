@@ -1,0 +1,4 @@
+method,grey_batch_LOO,grey_batch_LOPO,texture_batch_LOO,texture_batch_LOPO,all_batch_LOPO
+none,0.6129,0.4194,0.6774,0.5161,0.4194
+hybrid,0.5484,0.4194,0.6452,0.4839,0.4194
+hybrid_spectrum,0.6774,0.7097,0.6774,0.4194,0.6129

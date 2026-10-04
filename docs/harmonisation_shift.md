@@ -208,12 +208,18 @@ Held-out (models fitted on labelled sites only, applied as-is): BSE hf-ratio 0.1
 Reading: the stack does both jobs on BSE — black level and gain fixed (p1 gap 22 → 3, p90−p10 gap −9 →
 0), and the texture shift gone (hf-ratio gap −0.064 → −0.006, across-site CV 0.11 → 0.009, edge-σ SD
 0.024 → 0.002), with 1.4 % contrast change on clean sites and phase fractions within the `hybrid` range.
-Two honest caveats. (i) The grey-statistics batch shortcut goes 0.61 → 0.68 (chance 0.45): the LUT makes
-the strong group look like the rest, but the spectrum filter maps every site to one noise level, so the
-per-site grey *spread* (p1, p99, std) is now a cleaner function of the parent image and the NB
-classifier picks it up — texture no longer identifies the batch (0.68 → 0.68) and the strong session is
-hidden (strong-vs-rest 1.00 → 0.94 vs chance 0.87), so this is a parent effect, not an imaging one;
-model it with leave-one-parent-out, not with a grey-stat shortcut check. (ii) On Inlens the 1st
+Two honest caveats. (i) The grey-statistics batch shortcut goes 0.61 → 0.68 under leave-one-site-out and,
+under the leave-one-parent-out CV that AGENTS.md requires (`outputs/harmonisation_shift_stack/shortcut_lopo.csv`,
+13 parent folds, chance 0.55), 0.42 → 0.42 → **0.71** for none → hybrid → hybrid_spectrum, while the
+texture-only shortcut falls to chance (0.52 → 0.48 → 0.42) and the strong session cannot be LOPO-tested at
+all (its four sites are one parent). Per detector the grey-stat LOPO accuracy is BSE 0.45 / Inlens 0.58 /
+SE 0.65 for `hybrid_spectrum` (BSE 0.61 / SE 0.65 already for `hybrid`), and material fractions alone give
+0.52–0.58, so the residual batch signal sits in the Inlens/SE tail statistics (p1, std) that the spectrum
+stage moves per site — see (ii) — not in BSE grey levels or in texture. So: the imaging-session (strong)
+fingerprint and the texture shift are removed, but a 27-feature grey-statistics classifier on all three
+detectors is *not* at chance after `hybrid_spectrum`; use BSE as the primary channel and run the grey-stat
+shortcut check on whatever channel set a model actually consumes.
+(ii) On Inlens the 1st
 percentile is a noise-floor measure, not a black level: the strong sites' Inlens high-frequency deficit
 is −41 %, so matching their spectrum to the reference adds high-frequency amplitude and their p1 rises
 from 9 to 24–27 (raw clean sites sit at 15–32), while eight clean sites that were *smoothed* towards the
