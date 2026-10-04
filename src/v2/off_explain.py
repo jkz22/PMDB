@@ -73,10 +73,25 @@ def heldout_imaging(site: str) -> dict:
 
 
 def heldout_kpis() -> pd.DataFrame:
-    p = pd.read_csv(OUT / "predict_heldout_kpi.csv")
-    p = p[p.field.str.contains("Batch_heldout")].copy()
-    p["field"] = "Batch_heldout/" + p.field.str.extract(r"Batch_heldout__([a-z0-9]+)")[0]
-    return p.pivot(index="field", columns="kpi", values="value")[KPIS]
+    """Held-out field KPIs on the same scale as the labelled reference: mean over the non-overlapping
+    256-px eval-grid crops (K04 agglomerate fraction is scale dependent, so whole-field values from
+    predict_heldout_kpi.csv are not comparable with crop means)."""
+    cache = OFF_OUT / "heldout_crop_kpis.csv"
+    if cache.exists():
+        crops = pd.read_csv(cache)
+    else:
+        from src.v2 import kpi_adapter as K
+        from src.v2.common import CROP, NM_HALF, grid
+        rows = []
+        for site in HELDOUT:
+            bse = _route_array(site, "none")[0][..., 0]
+            m = K.segment(bse, NM_HALF)
+            for r in K.crop_kpis(m, NM_HALF, f"Batch_heldout/{site}", grid(*bse.shape, CROP, CROP), CROP):
+                rows.append({"group_id": f"Batch_heldout/{site}", **r})
+        crops = pd.DataFrame(rows)
+        OFF_OUT.mkdir(parents=True, exist_ok=True)
+        crops.to_csv(cache, index=False)
+    return crops.groupby("group_id")[KPIS].mean()
 
 
 # ----------------------------------------------------------------------------------------------- runs
@@ -241,8 +256,12 @@ def heldout_why(r: pd.Series, zk: pd.Series, zi: pd.Series, route: str) -> str:
 
 
 # ----------------------------------------------------------------------------------------------- report
-def main(with_heldout: bool = True):
+def main(with_heldout: bool = True, reuse_heldout: bool = False):
     OFF_OUT.mkdir(parents=True, exist_ok=True)
+    reuse = None
+    if reuse_heldout and (OFF_OUT / "heldout.csv").exists():  # keep the (slow) held-out model scores, redo z-scores / text
+        reuse = pd.read_csv(OFF_OUT / "heldout.csv")
+        reuse = reuse[[c for c in reuse.columns if not c.startswith("z_") and c != "why"]]
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     runs = load_binary_runs()
     kref, iref = kpi_reference(), imaging_reference()
@@ -263,7 +282,9 @@ def main(with_heldout: bool = True):
         summ.append(met)
         if with_heldout:
             try:
-                h = heldout_scores(folds, dev)
+                h = reuse[(reuse.route == key[0]) & (reuse.arch == key[1])].drop(columns=["route", "arch"]) if reuse is not None else None
+                if h is None or h.empty:
+                    h = heldout_scores(folds, dev)
                 for _, r in h.iterrows():
                     gid = f"Batch_heldout/{r.site}"
                     zk = deviations(hk.loc[gid], kref[1], kref[2]) if gid in hk.index else pd.Series(np.nan, index=KPIS)
@@ -302,4 +323,4 @@ def main(with_heldout: bool = True):
 
 
 if __name__ == "__main__":
-    main(with_heldout="--no-heldout" not in sys.argv)
+    main(with_heldout="--no-heldout" not in sys.argv, reuse_heldout="--reuse-heldout" in sys.argv)

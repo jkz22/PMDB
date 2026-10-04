@@ -130,3 +130,26 @@ def test_extreme_blur_and_binary_labels():
     assert classes_of({"labels": "off"}) == ("Batch_1+2", "Batch_3")
     base = dict(task="cls", arch="resnet18_imnet", view="stack", harmonise="hybrid", fold=0)
     assert cfg_hash(base) == cfg_hash({**base, "labels": "batch"}) != cfg_hash({**base, "labels": "off"})
+
+
+import pytest as _pytest
+
+
+@_pytest.mark.data
+def test_ext_harmonised_arrays_align_with_cache_grid():
+    """Imported nyul/basic arrays (pmdb.harmonise_ext) keep the 4-px full-res border; the loader trims
+    2 px/side so crops index the same pixels as cache/half (and the KPI / imaging-stat tables)."""
+    import numpy as np
+    import pytest
+    from src.v2.common import REPO, load_half_raw
+
+    p = REPO / "cache" / "harmonised_ext" / "basic" / "half" / "Batch_1__4ih2ggld.npz"
+    if not p.exists():
+        pytest.skip("imported harmonisation arrays not built (scripts/build_harmonise_ext.py)")
+    raw = load_half_raw("Batch_1", "4ih2ggld", harm="none").astype(float)
+    for h in ("basic", "nyul"):
+        a = load_half_raw("Batch_1", "4ih2ggld", harm=h)
+        assert a.shape == raw.shape and a.dtype == np.uint8
+    b = load_half_raw("Batch_1", "4ih2ggld", harm="basic").astype(float)
+    win = (slice(200, 800), slice(500, 3000), 0)
+    assert np.corrcoef(b[win].ravel(), raw[win].ravel())[0, 1] > 0.99
