@@ -47,25 +47,25 @@
  },
  "anchors": {
   "BSE": {
-   "D": 32.67102003415733,
-   "D_se": 0.01043628909136547,
+   "D": 32.67102302707327,
+   "D_se": 0.010436288721821374,
    "D_method": "gauss",
    "D_n": 620499,
    "D_frac_zero": 0.0,
    "D_mode": 25.17824935913086,
    "D_median": 31.847877502441406,
-   "G_level": 28.44263203938802,
+   "G_level": 28.442628224690754,
    "G_coef": [
-    28.02082254762594,
-    0.4256865500345951,
-    -0.13868386331240543,
-    0.2316750350697966,
-    -1.461065837522547,
-    1.021222037270003
+    28.020818732928674,
+    0.4256865500346001,
+    -0.13868386331240862,
+    0.23167503506978265,
+    -1.4610658375225598,
+    1.0212220372699907
    ],
    "G_blocks": 3057,
    "G_ptp_rel": 0.03141138330101967,
-   "si_graphite_ratio": 2.6365668773651123,
+   "si_graphite_ratio": 2.6365671157836914,
    "grey_levels_used": 158,
    "grey_step": 1
   },
@@ -79,12 +79,12 @@
    "D_median": 42.07274627685547,
    "G_level": 31.250900904337566,
    "G_coef": [
-    31.077703630506456,
-    -1.3803607600518386,
-    1.122607516556861,
-    2.1009662648439686,
-    -3.1308746416018485,
-    0.937662193932226
+    31.077703630506445,
+    -1.380360760051881,
+    1.1226075165569012,
+    2.1009662648439376,
+    -3.130874641601858,
+    0.9376621939322427
    ],
    "G_blocks": 3057,
    "G_ptp_rel": 0.07725423574447632,
@@ -93,8 +93,8 @@
    "grey_step": 1
   },
   "SE_type": {
-   "D": 23.602983508395724,
-   "D_se": 0.0068865971858602885,
+   "D": 23.602984266689514,
+   "D_se": 0.006886596676928305,
    "D_method": "gauss",
    "D_n": 620499,
    "D_frac_zero": 0.0,
@@ -102,12 +102,12 @@
    "D_median": 22.021039962768555,
    "G_level": 47.23845418294271,
    "G_coef": [
-    47.15520481727892,
-    2.138797746582823,
-    -0.8462973694989196,
-    -2.4675441382125016,
-    -1.6173395683706069,
-    1.9956455050208768
+    47.155204817278936,
+    2.1387977465827737,
+    -0.846297369498913,
+    -2.467544138212586,
+    -1.6173395683705865,
+    1.9956455050209594
    ],
    "G_blocks": 3057,
    "G_ptp_rel": 0.04792574420571327,
@@ -117,33 +117,33 @@
   }
  },
  "phase_thresholds_bse": [
-  0.6824184656143188,
-  1.6779465675354004
+  0.6824185252189636,
+  1.6779468059539795
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.4031376920112955,
-   "edge_10_90_nm": 89.9065686489665,
-   "edge_n_kept": 943,
-   "noise_alpha": 0.04271585592303111,
-   "noise_beta": 0.018080943357253867,
-   "noise_sigma_graphite": 0.24657006971707854
+   "sigma_e_px": 1.4032823968633055,
+   "edge_10_90_nm": 89.91584066609293,
+   "edge_n_kept": 942,
+   "noise_alpha": 0.04270338004163353,
+   "noise_beta": 0.018112106519925387,
+   "noise_sigma_graphite": 0.24660796126962103
   },
   "Inlens": {
-   "sigma_e_px": 1.2572295196321952,
-   "edge_10_90_nm": 80.55744832304681,
-   "edge_n_kept": 3962,
-   "noise_alpha": 0.012527887034660627,
+   "sigma_e_px": 1.2577880289823427,
+   "edge_10_90_nm": 80.59323501705127,
+   "edge_n_kept": 3959,
+   "noise_alpha": 0.012532072519282188,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.11192804400444344
+   "noise_sigma_graphite": 0.1119467396545437
   },
   "SE_type": {
-   "sigma_e_px": 1.2622702769742986,
-   "edge_10_90_nm": 80.88043672154888,
+   "sigma_e_px": 1.2622702788017004,
+   "edge_10_90_nm": 80.88043683864034,
    "edge_n_kept": 1845,
-   "noise_alpha": 0.011036305305949035,
+   "noise_alpha": 0.011028249457516971,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.10505382099642561
+   "noise_sigma_graphite": 0.1050154724672368
   }
  },
  "material": {
@@ -239,45 +239,45 @@
  "batch": "Batch_3",
  "site": "kbdh4tri",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_3/img_kbdh4tri_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_3/img_kbdh4tri_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_3/img_kbdh4tri_ETD.tif"
+  "BSE": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_kbdh4tri_BSE.tif",
+  "Inlens": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_kbdh4tri_Inlens.tif",
+  "SE_type": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_kbdh4tri_ETD.tif"
  },
- "seconds_norm": 38.9,
+ "seconds_norm": 91.9,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.4031376920112955,
-   "sigma_t_px": 1.3962085795872072,
+   "sigma_e_px": 1.4032823968633055,
+   "sigma_t_px": 1.3955730649632416,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.4031376920112955,
+   "sigma_e_after_px": 1.4032823968633055,
    "noise_before": {
-    "alpha": 0.04271585592303111,
-    "beta": 0.018080943357253867
+    "alpha": 0.04270338004163353,
+    "beta": 0.018112106519925387
    },
    "noise_target": {
-    "alpha": 0.04507331353571918,
-    "beta": 0.02134361435082474
+    "alpha": 0.04506658986444896,
+    "beta": 0.021315812431302882
    },
    "noise_after": {
-    "alpha": 0.04271585592303111,
-    "beta": 0.018080943357253867
+    "alpha": 0.04270338004163353,
+    "beta": 0.018112106519925387
    },
-   "noise_sigma_graphite_after": 0.24657006971707854,
-   "noise_sigma_graphite_target": 0.25771481891141595,
+   "noise_sigma_graphite_after": 0.24660796126962103,
+   "noise_sigma_graphite_target": 0.25764782610329134,
    "noise_within_10pct": true,
-   "d_alpha": 0.002357457612688074,
-   "d_beta": 0.0032626709935708736,
+   "d_alpha": 0.002363209822815432,
+   "d_beta": 0.0032037059113774954,
    "added": false
   },
   "Inlens": {
-   "sigma_e_px": 1.2572295196321952,
-   "sigma_t_px": 1.2140094207959984,
+   "sigma_e_px": 1.2577880289823427,
+   "sigma_t_px": 1.2142698479797196,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.2572295196321952,
+   "sigma_e_after_px": 1.2577880289823427,
    "noise_before": {
-    "alpha": 0.012527887034660627,
+    "alpha": 0.012532072519282188,
     "beta": 0.0
    },
    "noise_target": {
@@ -285,59 +285,59 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.014429418157982155,
+    "alpha": 0.0143678375233183,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.12012251311882446,
+   "noise_sigma_graphite_after": 0.11986591476862093,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.001875128060939554,
+   "d_alpha": 0.001870942576317992,
    "d_beta": 0.0,
    "added": true
   },
   "SE_type": {
-   "sigma_e_px": 1.2622702769742986,
-   "sigma_t_px": 1.250251553827863,
+   "sigma_e_px": 1.2622702788017004,
+   "sigma_t_px": 1.2511406818415192,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.2622702769742986,
+   "sigma_e_after_px": 1.2622702788017004,
    "noise_before": {
-    "alpha": 0.011036305305949035,
+    "alpha": 0.011028249457516971,
     "beta": 0.0
    },
    "noise_target": {
-    "alpha": 0.012456698059181634,
+    "alpha": 0.0124496511569676,
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.012459684291475391,
+    "alpha": 0.012481212332258558,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.11162295593414193,
-   "noise_sigma_graphite_target": 0.11160957870712367,
+   "noise_sigma_graphite_after": 0.11171934627564985,
+   "noise_sigma_graphite_target": 0.11157800480815025,
    "noise_within_10pct": true,
-   "d_alpha": 0.001420392753232599,
+   "d_alpha": 0.0014214016994506286,
    "d_beta": 0.0,
    "added": true
   }
  },
  "targets": {
   "sigma_t": {
-   "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
-   "SE_type": 1.250251553827863
+   "BSE": 1.3955730649632416,
+   "Inlens": 1.2142698479797196,
+   "SE_type": 1.2511406818415192
   },
   "noise": {
    "BSE": {
-    "alpha": 0.04507331353571918,
-    "beta": 0.02134361435082474
+    "alpha": 0.04506658986444896,
+    "beta": 0.021315812431302882
    },
    "Inlens": {
     "alpha": 0.01440301509560018,
     "beta": 0.0
    },
    "SE_type": {
-    "alpha": 0.012456698059181634,
+    "alpha": 0.0124496511569676,
     "beta": 0.0
    }
   },
@@ -348,5 +348,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 20.7
+ "seconds_harm": 38.9
 }
