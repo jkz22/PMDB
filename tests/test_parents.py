@@ -12,7 +12,7 @@ EXPECTED = {"h1612_ETD_s1": 2, "h1780_ETD_s1": 1, "h1880_ETD_s1": 1, "h1904_ETD_
 
 def test_labelled_parents():
     df = parent_groups()
-    lab = df[df["batch"] != "Batch_heldout"]
+    lab = df[~df["batch"].isin(["Batch_heldout", "Batch_test"])]
     assert len(lab) == 31 and lab["parent_id"].nunique() == 13
     assert lab["parent_id"].value_counts().to_dict() == EXPECTED
 
@@ -26,7 +26,7 @@ def test_heldout_parents():
 
 def test_batches_have_six_parents():
     lab = parent_groups()
-    lab = lab[lab["batch"] != "Batch_heldout"]
+    lab = lab[~lab["batch"].isin(["Batch_heldout", "Batch_test"])]
     assert (lab.groupby("batch")["parent_id"].nunique() >= 6).all()
 
 
