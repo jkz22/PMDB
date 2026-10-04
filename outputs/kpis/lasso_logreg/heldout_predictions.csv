@@ -1,4 +1,4 @@
-site,true,pred,p_Batch_1,p_Batch_2,p_Batch_3
-3e122cbj,Batch_2,Batch_3,0.33,0.33,0.34
-fn0mhxef,Batch_1,Batch_3,0.33,0.33,0.34
-xrv9xvzb,Batch_3,Batch_3,0.33,0.33,0.34
+site,true,parent_id,n_sibling_crops_excluded,C,pred,p_Batch_1,p_Batch_2,p_Batch_3
+3e122cbj,Batch_2,h2316_ETD_s2,2,0.2395026619987486,Batch_3,0.131,0.297,0.572
+fn0mhxef,Batch_1,h2048_ETD_s2,2,0.17433288221999882,Batch_2,0.293,0.377,0.33
+xrv9xvzb,Batch_3,h2088_ETD_s3,3,0.01,Batch_1,0.346,0.321,0.333
