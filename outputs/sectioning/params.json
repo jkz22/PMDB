@@ -1,0 +1,24 @@
+{
+  "vox_um": 0.1,
+  "box_um": [
+    50.0,
+    16.0,
+    175.0
+  ],
+  "si_frac": 0.06,
+  "gr_frac": 0.65,
+  "pore_frac": 0.04,
+  "si_d_median_um": 0.6,
+  "si_d_sigma": 0.7,
+  "gr_axes_um": [
+    1.2,
+    4.0,
+    4.0
+  ],
+  "pore_d_um": [
+    0.4,
+    1.0
+  ],
+  "packings": 4,
+  "slices": 8
+}

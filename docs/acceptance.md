@@ -106,3 +106,5 @@ therefore cannot separate 3e122cbj from the baseline; the evidence that it is *n
 composition (twice the Si) and lithiation geometry, both at the 100th percentile of Batch 3. That is the
 defensible held-out statement for this site: "Batch 1-like by composition and swelling behaviour,
 arrangement indistinguishable from Batch 3".
+
+> Caveat (`docs/reliability.md` §3): the functional family's AUC 0.71 rests mainly on the constrained share, whose batch difference does not reproduce under an independently written segmenter. Read the family result as segmentation-dependent.

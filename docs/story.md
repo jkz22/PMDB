@@ -149,3 +149,14 @@ FEM. (iii) Run per depth band, pore loss follows the fingerprint's depth profile
 KW p 0.003; constrained share depth-independent): the arrangement difference *is* the depth profile of
 pore-closure risk.
 
+**Addendum (sampling and segmentation, `docs/reliability.md`).** (i) ICC from 16 tiles × 31 fields: most
+site-level KPIs are 0.76–0.99 reliable at the current field size, but K07 (Clark–Evans R) is 70 %
+sampling noise and K04 agglomerate fraction / K14 p50 about half; K15 contact has the largest batch range
+relative to its own sampling noise (1.8 SD) — still a one-field effect, hence the power problem. (ii) A
+synthetic 3D sectioning model puts ~44 % of the within-Batch-3 Si-fraction spread down to where the plane
+cut; number density, size and pore loss are not sectioning-limited. Real Si–graphite contact is far more
+consistent across sections than random geometry allows. (iii) An independently written segmenter
+reproduces Si fraction, the two high-Si outliers and pore loss (ρ 0.86–0.97) but **not** the
+constrained-share batch difference (KW p 0.015 → 0.73): that result is about the v0r1 graphite/binder
+split and is downgraded to a segmentation-dependent observation.
+

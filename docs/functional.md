@@ -47,6 +47,14 @@ D06 Euler number restated (Spearman 0.98) and pore chords track D05 pore size (0
 columns are kept for completeness, they are not new information.
 
 ### 2.3 The swelling budget is the new result
+
+> **Caveat added after the segmenter-agreement test (`docs/reliability.md` §3).** The batch difference in
+> the constrained share (B1 < B2 < B3) exists under `pmdb.segment` v0r1 but not under the independently
+> written anchored segmenter of the analytical-benchmarks session (KW p 0.015 → 0.73; Spearman between
+> segmenters only 0.38). The effect lives in the graphite-vs-binder allocation of the growth, a BSE
+> grey-level split the alternative segmenter does not make; the pore-avoidance share and pore loss are
+> segmenter-independent (Spearman 0.84 / 0.97). Treat "Batch 3 is the most constrained" as a v0r1
+> segmentation result until a segmenter with a validated binder class confirms it.
 At every SOC, **most of the Si growth collides with graphite**: batch medians 0.77 / 0.81 / 0.83 at
 SOC 0.25 and 0.86 / 0.87 / 0.88 at SOC 1 (`figures/swelling_budget.png`). Only 5–6 % of the growth
 finds pore; the rest of the free space is binder / carbon black.
