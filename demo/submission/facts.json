@@ -1,0 +1,183 @@
+{
+ "any_challenger_passes": false,
+ "best_challenger_correct": 21,
+ "challengers": [
+  {
+   "arm": "A1",
+   "correct": 21,
+   "family": "fem_fingerprint",
+   "label": "FEM features added to the fingerprint (D21)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.005994005994005994,
+   "tag": "edge5"
+  },
+  {
+   "arm": "A2",
+   "correct": 18,
+   "family": "fem_fingerprint",
+   "label": "FEM features added to the fingerprint (D21)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.03696303696303696,
+   "tag": "edge5"
+  },
+  {
+   "arm": "A1",
+   "correct": 20,
+   "family": "fem_fingerprint",
+   "label": "FEM features added to the fingerprint (D21)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.005994005994005994,
+   "tag": "main"
+  },
+  {
+   "arm": "A2",
+   "correct": 17,
+   "family": "fem_fingerprint",
+   "label": "FEM features added to the fingerprint (D21)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.08091908091908091,
+   "tag": "main"
+  },
+  {
+   "arm": "X2e",
+   "correct": 16,
+   "family": "xgb_kpi",
+   "label": "XGBoost on screened KPIs (+FEM) (D22)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.13886113886113885,
+   "tag": "edge5"
+  },
+  {
+   "arm": "X3e",
+   "correct": 11,
+   "family": "xgb_kpi",
+   "label": "XGBoost on screened KPIs (+FEM) (D22)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.7222777222777222,
+   "tag": "edge5"
+  },
+  {
+   "arm": "X1",
+   "correct": 10,
+   "family": "xgb_kpi",
+   "label": "XGBoost on screened KPIs (+FEM) (D22)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.8491508491508492,
+   "tag": "main"
+  },
+  {
+   "arm": "X2",
+   "correct": 15,
+   "family": "xgb_kpi",
+   "label": "XGBoost on screened KPIs (+FEM) (D22)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.23176823176823177,
+   "tag": "main"
+  },
+  {
+   "arm": "X3",
+   "correct": 11,
+   "family": "xgb_kpi",
+   "label": "XGBoost on screened KPIs (+FEM) (D22)",
+   "n": 31,
+   "passes": false,
+   "perm_p": 0.7112887112887113,
+   "tag": "main"
+  }
+ ],
+ "fem_cost_usd": 2.6081,
+ "fem_missing": 0,
+ "fem_r2": 0.9710058548516488,
+ "fem_runs": 68,
+ "fem_sites": 34,
+ "flip1": 14,
+ "flip7": 14,
+ "flip_total": 14,
+ "fp_acc": 0.6774193548387096,
+ "fp_correct": 21,
+ "fp_features": 16,
+ "fp_n": 31,
+ "heldout": [
+  {
+   "assigned": "Batch_1",
+   "confidence": 0.0,
+   "credibility": 0.875,
+   "hp_agree": 39,
+   "hp_configs": 45,
+   "jk_share_max": 0.935483870967742,
+   "jk_share_min": 0.869,
+   "ood": false,
+   "site": "3e122cbj"
+  },
+  {
+   "assigned": "Batch_3",
+   "confidence": 0.125,
+   "credibility": 0.4444444444444444,
+   "hp_agree": 45,
+   "hp_configs": 45,
+   "jk_share_max": 1.0,
+   "jk_share_min": 0.922,
+   "ood": false,
+   "site": "fn0mhxef"
+  },
+  {
+   "assigned": "Batch_2",
+   "confidence": 0.5,
+   "credibility": 1.0,
+   "hp_agree": 45,
+   "hp_configs": 45,
+   "jk_share_max": 1.0,
+   "jk_share_min": 0.977,
+   "ood": false,
+   "site": "xrv9xvzb"
+  }
+ ],
+ "hp_configs": 45,
+ "intensity_acc": 0.7096774193548387,
+ "jk_refits": 1496,
+ "jk_stable_min": 0.869,
+ "majority_baseline": 0.5483870967741935,
+ "perm_n": 10000,
+ "perm_null_p95": 0.5483870967741935,
+ "perm_p": 0.0024997500249975004,
+ "si_kw_p": 0.3767861372157942,
+ "sources": {
+  "fem/run_log.json": "250e63b8344e",
+  "fem/validation.csv": "4d338c7d4488",
+  "fem_fingerprint/edge5/metrics.csv": "118f49958428",
+  "fem_fingerprint/main/metrics.csv": "40acdd27a208",
+  "fingerprint/evaluation.json": "cd350b1cc0ac",
+  "fingerprint/features.csv": "80bcb0c3c61e",
+  "fingerprint/heldout_explain.csv": "7965597fe9ae",
+  "fingerprint/heldout_features.csv": "9b6913120e3f",
+  "fingerprint/heldout_predictions.csv": "1ea89a1961b2",
+  "fingerprint/loo_predictions.csv": "c1879d14e22d",
+  "heldout/kpis/site_kpis.csv": "841fd6ca7b1f",
+  "heldout/raw_intensity_stats.csv": "3344f97a5917",
+  "kpis/site_kpis.csv": "13e15112f050",
+  "overnight/eval_extended/evaluation.json": "aee20a2f83b6",
+  "overnight/permutation/null_accuracies.csv": "b9b12b2eb731",
+  "overnight/permutation/permutation_10k.json": "88995f140395",
+  "overnight/stability/hyperparam_grid.csv": "548cdafed0dd",
+  "overnight/stability/jackknife_summary.csv": "068b7a922d9b",
+  "raw_intensity_stats.csv": "19eef5eef9bf",
+  "xgb_kpi/edge5/metrics.csv": "062655966954",
+  "xgb_kpi/main/metrics.csv": "f238ca341e17"
+ },
+ "swell_median": {
+  "Batch_1": 0.131527,
+  "Batch_2": 0.125333,
+  "Batch_3": 0.124651
+ },
+ "unreviewed_output_dirs": [],
+ "xgb_best_correct": 15,
+ "xgb_kpi_only_correct": 10
+}

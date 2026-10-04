@@ -22,10 +22,12 @@ from demo_confound import BATCHES, load_bse_stats, nearest_centroid  # noqa: E40
 
 O = ROOT / "outputs"
 SOURCES = [
-    "fingerprint/evaluation.json", "fingerprint/heldout_predictions.csv",
-    "overnight/permutation/permutation_10k.json", "overnight/stability/jackknife_summary.csv",
-    "overnight/stability/hyperparam_grid.csv", "raw_intensity_stats.csv", "fem/run_log.json",
-    "fem/validation.csv", "kpis/site_kpis.csv",
+    "fingerprint/features.csv", "fingerprint/heldout_features.csv", "fingerprint/heldout_predictions.csv",
+    "fingerprint/heldout_explain.csv", "fingerprint/loo_predictions.csv", "fingerprint/evaluation.json",
+    "overnight/permutation/permutation_10k.json", "overnight/permutation/null_accuracies.csv",
+    "overnight/stability/jackknife_summary.csv", "overnight/stability/hyperparam_grid.csv",
+    "overnight/eval_extended/evaluation.json", "raw_intensity_stats.csv", "heldout/raw_intensity_stats.csv",
+    "fem/run_log.json", "fem/validation.csv", "kpis/site_kpis.csv", "heldout/kpis/site_kpis.csv",
 ]
 # directories whose metrics.csv are pre-registered challengers to the fingerprint (passes_rule column)
 CHALLENGERS = {"fem_fingerprint": "FEM features added to the fingerprint (D21)",

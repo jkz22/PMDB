@@ -105,17 +105,19 @@ def script(d):
     d.uncard()
     d.cap("An intensity model scores <b>{{intensity_acc}}</b> on this data. Looks like a winner.")
     d.wait(5)
-    d.cap("Brighten the image slightly (a microscope setting; the electrode is unchanged)…")
+    d.cap("Brighten the image by <b>{{offset_step_word}} grey level</b> "
+          "(a microscope setting; the electrode is unchanged)…")
     d.step(1, 2.5)
     d.mark("confound_flip")
-    d.cap("…and it calls <b>every</b> Batch 1 and 2 site Batch 3 ({{flip}}). It learned the microscope, not the material.")
+    d.cap("…and it calls <b>every</b> {{batch_1}} and {{batch_2}} site {{batch_3}} ({{flip}}). "
+          "It learned the microscope, not the material.")
     d.step(6, 0.5)
     d.wait(4.5)
     d.cap("Our model only uses geometry, so a brightness offset cannot move a single feature.")
     d.wait(4)
 
     d.view(2)
-    d.cap("All composition KPIs are batch-blind: the three batches contain the same material.", top=True)
+    d.cap("All composition KPIs are batch-blind: the {{batch_count_word_lower}} batches contain the same material.", top=True)
     d.mark("view2_top")
     d.wait(5)
     d.cap("{{fem_runs}} FEM charging simulations ({{fem_cost}} on Modal): swelling follows the Si amount (R² {{fem_r2}}), "
