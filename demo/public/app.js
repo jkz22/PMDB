@@ -414,6 +414,7 @@ async function load() {
   derive(bundle);
   describeLive();
   render();
+  boot();
 }
 
 function connect() {
@@ -463,5 +464,6 @@ window.addEventListener('hashchange', () => { const v = location.hash.slice(1); 
 const initial = location.hash.slice(1);
 if (VIEWS.some((v) => v.id === initial)) state.view = initial;
 connect();
-load().then(() => { if (new URLSearchParams(location.search).get('autoplay')) autoplay(); })
-  .catch((e) => { setLive('err', 'failed to load /api/data'); console.error(e); });
+let booted = false;
+const boot = () => { if (booted) return; booted = true; if (new URLSearchParams(location.search).get('autoplay')) autoplay(); };
+load().catch((e) => { if (!state.bundle) setLive('err', 'failed to load /api/data'); console.error(e); });

@@ -14,7 +14,8 @@ export function parseRange(header, size) {
   } else {
     start = Number(m[1]); end = m[2] === '' ? size - 1 : Number(m[2]);
   }
-  if (!(start <= end && end < size)) return 'invalid';
+  if (end >= size) end = size - 1;
+  if (!(start < size && start <= end)) return 'invalid';
   return { start, end };
 }
 
@@ -26,24 +27,29 @@ export async function realInside(dir, abs) {
   } catch { return undefined; } // undefined = does not exist
 }
 
-export function serveFile(req, res, dir, abs, mime) {
-  realInside(dir, abs).then((real) => {
-    if (real === null) { res.writeHead(403).end(); return; }
-    if (real === undefined) { res.writeHead(404).end('not found'); return; }
-    fs.stat(real, (err, st) => {
-      if (err || !st.isFile()) { res.writeHead(404).end('not found'); return; }
-      const type = mime[path.extname(real).toLowerCase()] || 'application/octet-stream';
-      const range = parseRange(req.headers.range, st.size);
-      if (range === 'invalid') { res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }).end(); return; }
-      const opts = range || {};
-      if (range) res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${range.start}-${range.end}/${st.size}`,
-        'Accept-Ranges': 'bytes', 'Content-Length': range.end - range.start + 1, 'Cache-Control': 'no-cache' });
-      else res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Cache-Control': 'no-cache' });
-      const stream = fs.createReadStream(real, opts);
-      stream.on('error', () => { if (!res.headersSent) res.writeHead(404).end(); else res.destroy(); });
-      stream.pipe(res);
-    });
-  });
+export async function serveFile(req, res, dir, abs, mime) {
+  let fh;
+  try {
+    fh = await fs.promises.open(abs, 'r');
+    const real = await realInside(dir, abs);
+    if (real === null) { await fh.close(); res.writeHead(403).end(); return; }
+    // Verify the opened handle is the file at the resolved path (guards against a swap after open).
+    const [hs, rs] = [await fh.stat(), real ? await fs.promises.stat(real) : null];
+    if (!rs || !hs.isFile() || hs.ino !== rs.ino || hs.dev !== rs.dev) { await fh.close(); res.writeHead(real === undefined ? 404 : 403).end(); return; }
+    const size = hs.size;
+    const type = mime[path.extname(real).toLowerCase()] || 'application/octet-stream';
+    const range = parseRange(req.headers.range, size);
+    if (range === 'invalid') { await fh.close(); res.writeHead(416, { 'Content-Range': `bytes */${size}` }).end(); return; }
+    if (range) res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${range.start}-${range.end}/${size}`,
+      'Accept-Ranges': 'bytes', 'Content-Length': range.end - range.start + 1, 'Cache-Control': 'no-cache' });
+    else res.writeHead(200, { 'Content-Type': type, 'Content-Length': size, 'Cache-Control': 'no-cache' });
+    const stream = fh.createReadStream(range ? { start: range.start, end: range.end } : {});
+    stream.on('error', () => { if (!res.headersSent) res.writeHead(404).end(); else res.destroy(); });
+    stream.pipe(res);
+  } catch {
+    if (fh) await fh.close().catch(() => {});
+    if (!res.headersSent) res.writeHead(404).end('not found'); else res.destroy();
+  }
 }
 
 // Upstream state from `git rev-list --count` (true count) and the truncated `git log` (display only).
