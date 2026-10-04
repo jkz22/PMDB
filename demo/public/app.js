@@ -1,7 +1,7 @@
 import * as fp from '/lib/fingerprint.js';
 import * as cf from '/lib/confound.js';
 import { el, lineChart, stripPlot, histogram, scatter, BATCH_COLOR, BATCH_LABEL } from './charts.js';
-import { findCell, headerRow, clampTip, storyIsStale } from './embed_logic.js';
+import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs } from './embed_logic.js';
 
 const BATCHES = ['Batch_1', 'Batch_2', 'Batch_3'];
 const short = (b) => b.replace('Batch_', 'Batch ').replace('heldout', 'held-out');
