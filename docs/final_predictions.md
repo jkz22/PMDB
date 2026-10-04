@@ -15,33 +15,33 @@
 ## Explanations (vs Batch 3, the supplier baseline)
 
 **`0eryguqq` → Batch 3 (0.999, HIGH)**
-1. A denser Si particle population, with more Si area and porosity than a Batch 2 crop.
-2. Consistent through the full coating depth.
+1. Every measured trait except Si–graphite contact points to Batch 3 over Batch 2, led by Si particle density and Si area fraction; the support is spread across the whole image.
+2. Evidence map: red Si/pores support the call, blue argue against.
 3. 54% of the judgement maps onto measured microstructure.
 
 **`fhwrjtet` → Batch 3 (0.994, HIGH)**
-1. Same picture: Batch-3-like Si area fraction, particle density and porosity.
-2. Holds through the depth.
+1. Same picture as 0eryguqq: Si area fraction, Si particle density and the depth pattern all point to Batch 3; only Si–graphite contact dissents.
+2. Evidence map: red Si/pores support the call, blue argue against.
 3. 58% maps onto measured microstructure.
 
 **`fspqbkxl` → Batch 2 (0.72, MEDIUM)**
-1. Differs from Batch 3 mainly in fine texture.
-2. Measurable differences (Si fraction, Si–graphite contact) are small.
+1. Porosity, Si–graphite contact and Si area fraction point to Batch 2; the depth pattern, Si particle size and density point back toward Batch 1. Over half of the call rests on texture we do not measure.
+2. Evidence map: red Si/pores support the call, blue argue against.
 3. Only 44% maps onto measured microstructure.
 
 **`y59rxmxl` → Batch 1 (0.62, LOW)**
-1. Lower Si area fraction and fewer Si particles than Batch 2.
-2. Less Si–graphite contact.
+1. Mixed evidence: the depth pattern and Si particle size point to Batch 1, but Si area fraction, particle density, contact and porosity look more like Batch 2.
+2. Evidence map: red Si/pores support the call, blue argue against.
 3. 54% maps onto measured microstructure.
 
 **`soo2ax3r` → Batch 1 (0.59, LOW)**
-1. Fewer but larger Si particles.
-2. Most visible deeper in the coating.
+1. The depth pattern, Si area fraction, particle size and porosity point to Batch 1; Si particle density and Si–graphite contact look more like Batch 2, mostly in the left third of the image.
+2. Evidence map: red Si/pores support the call, blue argue against.
 3. 60% maps onto measured microstructure.
 
 **`4hq27w4c` → Batch 2 (0.57, LOW)**
-1. Near tie with Batch 1 (0.43).
-2. Slightly more porosity and Si area, fewer Si particles.
+1. Near tie: porosity, Si–graphite contact and Si area fraction point to Batch 2; Si particle density, size and the depth pattern point to Batch 1.
+2. Evidence map: red Si/pores support the call, blue argue against.
 3. 53% maps onto measured microstructure.
 
 ## Method note
