@@ -33,6 +33,12 @@ from pmdb.segment import segment_bse  # noqa: E402
 
 OUT = ROOT / "outputs" / "clips"
 FPS = 30
+try:  # no system ffmpeg needed: fall back to the imageio-ffmpeg binary
+    import imageio_ffmpeg
+    FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
+except ImportError:
+    FFMPEG = "ffmpeg"
+matplotlib.rcParams["animation.ffmpeg_path"] = FFMPEG
 BATCHES = ["Batch_1", "Batch_2", "Batch_3"]
 COL = {"Batch_1": "#3d8bfd", "Batch_2": "#ff7a45", "Batch_3": "#22c38e"}
 BG, FG, DIM, RED = "#0d1117", "#f0f3f6", "#8b949e", "#ff4d5e"
@@ -72,7 +78,7 @@ def render(name: str, fig, update, seconds: float) -> None:
     plt.close(fig)
     gif = OUT / f"{name}.gif"
     vf = "fps=15,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4"
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(mp4), "-vf", vf, str(gif)], check=True)
+    subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", str(mp4), "-vf", vf, str(gif)], check=True)
     print(f"wrote {mp4.relative_to(ROOT)} and {gif.name}")
 
 
@@ -139,45 +145,59 @@ def clip_confound() -> None:
 
     fig = new_fig()
     fig.text(0.05, 0.90, "Same electrode. Slightly brighter microscope.", fontsize=40, weight="bold")
-    sub = fig.text(0.05, 0.845, f"{LABEL[batch]} site {site}: add a flat grey-level offset, change nothing about the material",
-                   fontsize=19, color=DIM)
-    ax = fig.add_axes([0.05, 0.12, 0.42, 0.68])
+    sub = fig.text(0.05, 0.845, f"this electrode is a known {LABEL[batch]} - we only turn up the image brightness; "
+                   "the material never changes", fontsize=19, color=DIM)
+    ax = fig.add_axes([0.05, 0.17, 0.42, 0.63])
     ax.set_axis_off()
     im = ax.imshow(crop, cmap="gray", vmin=0, vmax=150, interpolation="lanczos")
-    off_txt = fig.text(0.26, 0.055, "", fontsize=30, weight="bold", ha="center")
+
+    # brightness slider under the image
+    sax = fig.add_axes([0.05, 0.085, 0.30, 0.03])
+    sax.set_axis_off()
+    sax.set_xlim(0, 8)
+    sax.set_ylim(-1, 1)
+    sax.plot([0, 8], [0, 0], color="#30363d", lw=7, solid_capstyle="round")
+    sl_fill, = sax.plot([], [], color="#ffcf5c", lw=7, solid_capstyle="round")
+    sl_knob, = sax.plot([], [], "o", ms=15, color="#ffcf5c", mec=BG, mew=2)
+    fig.text(0.05, 0.125, "image brightness", fontsize=16, color=DIM)
+    off_txt = fig.text(0.37, 0.088, "", fontsize=22, weight="bold", ha="left")
 
     A = fig.add_axes([0.52, 0.12, 0.44, 0.68])
     A.set_axis_off()
     A.set_xlim(0, 1)
     A.set_ylim(0, 1)
     c1 = card(A, 0.02, 0.55, 0.96, 0.40, COL[batch])
-    A.text(0.07, 0.86, "Intensity model", fontsize=24, weight="bold", transform=A.transAxes)
-    A.text(0.07, 0.79, "reads grey levels  -  71% LOO accuracy", fontsize=16, color=DIM, transform=A.transAxes)
+    A.text(0.07, 0.86, "Model trained on brightness", fontsize=24, weight="bold", transform=A.transAxes)
+    A.text(0.07, 0.79, "reads grey levels  -  scores 71% in cross-validation", fontsize=16, color=DIM,
+           transform=A.transAxes)
     v1 = A.text(0.07, 0.63, "", fontsize=38, weight="bold", transform=A.transAxes)
     card(A, 0.02, 0.05, 0.96, 0.40, COL[batch])
-    A.text(0.07, 0.36, "Fingerprint model", fontsize=24, weight="bold", transform=A.transAxes)
-    A.text(0.07, 0.29, "reads Si arrangement  -  blind to grey-level offsets", fontsize=16, color=DIM,
+    A.text(0.07, 0.36, "Our model (geometry only)", fontsize=24, weight="bold", transform=A.transAxes)
+    A.text(0.07, 0.29, "reads where the silicon sits  -  cannot see brightness", fontsize=16, color=DIM,
            transform=A.transAxes)
-    A.text(0.07, 0.13, f"-> {LABEL[batch]}", fontsize=38, weight="bold", color=COL[batch], transform=A.transAxes)
-    A.text(0.93, 0.13, f"Si map {same:.0%} identical", fontsize=16, color=DIM, ha="right", transform=A.transAxes)
+    A.text(0.07, 0.13, f"-> {LABEL[batch]}  ✓", fontsize=38, weight="bold", color=COL[batch],
+           transform=A.transAxes)
+    A.text(0.93, 0.13, "unchanged", fontsize=16, color=DIM, ha="right", transform=A.transAxes)
     flip_note = A.text(0.07, 0.575, "", fontsize=16, color=RED, transform=A.transAxes)
-    punch = fig.text(0.5, 0.035, "It learned the microscope, not the material.", fontsize=30, weight="bold",
+    punch = fig.text(0.5, 0.025, "It learned the microscope settings, not the material.", fontsize=30, weight="bold",
                      ha="center", color=RED, alpha=0)
 
     def update(t):
-        o = 0 if t < 1.2 else (1 if t < 2.6 else 1 + int(6 * ramp(t, 2.6, 4.4)))
+        o = 0 if t < 2.0 else (1 if t < 3.6 else 1 + int(6 * ramp(t, 3.6, 5.8)))
         im.set_data(np.clip(crop + o, 0, 255))
-        off_txt.set_text(f"black level  +{o} / 255")
+        sl_fill.set_data([0, o], [0, 0])
+        sl_knob.set_data([o], [0])
+        off_txt.set_text("original image" if o == 0 else f"+{o} grey levels")
+        off_txt.set_color(FG if o == 0 else "#ffcf5c")
         p = intensity_pred(o)
-        v1.set_text(f"-> {LABEL[p]}")
-        v1.set_color(COL[p] if p == batch else RED)
-        flip_note.set_text("" if p == batch else "flipped at +1: no pixel clips to black any more")
-        c1.set_edgecolor(COL[p] if p == batch else RED)
-        a = ramp(t, 5.0, 5.6)
-        punch.set_alpha(a)
-        off_txt.set_alpha(1 - a)
+        correct = p == batch
+        v1.set_text(f"-> {LABEL[p]}  " + ("✓" if correct else "✗ wrong"))
+        v1.set_color(COL[p] if correct else RED)
+        flip_note.set_text("" if correct else "one grey level of brightness flipped its answer")
+        c1.set_edgecolor(COL[p] if correct else RED)
+        punch.set_alpha(ramp(t, 6.6, 7.2))
 
-    render("01_confound_flip", fig, update, 7.5)
+    render("01_confound_flip", fig, update, 9.0)
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +214,7 @@ def clip_depth() -> None:
     fig.text(0.05, 0.935, "Same ingredients. Different arrangement.", fontsize=40, weight="bold")
     fig.text(0.05, 0.893, "Scanning each coating from top to bottom: where does the silicon sit?", fontsize=19,
              color=DIM)
+    fig.text(0.825, 0.893, "plots: amount of silicon at each depth", fontsize=16, color=FG, ha="center")
     depth = np.linspace(0, 1, 400)
     centres = (np.arange(5) + 0.5) / 5
     rows = []
@@ -230,11 +251,11 @@ def clip_depth() -> None:
         P.set_ylim(1, 0)
         P.axvline(1.0, color="#30363d", lw=1.5, ls="--")
         P.set_yticks([0, 1], ["top", "bottom"])
-        P.set_xticks([0.5, 1.0, 1.5])
+        P.set_xticks([0.5, 1.0, 1.5], ["less", "even", "more"])
         if r == 2:
-            P.set_xlabel("Si fraction / site mean")
+            P.set_xlabel("silicon vs the site's own average")
         if r == 0:
-            P.text(1.8, -0.1, "thick: this site   thin: batch median", fontsize=12, color=DIM, ha="right",
+            P.text(1.8, -0.07, "bold: this site   thin: batch median", fontsize=13, color=DIM, ha="right",
                    va="bottom", transform=P.transData)
         for sp in ("top", "right"):
             P.spines[sp].set_visible(False)
