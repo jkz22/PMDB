@@ -33,13 +33,33 @@ def normalise_p(p: np.ndarray) -> np.ndarray:
     return p / p.sum(axis=-1, keepdims=True)
 
 
+def softmax_neg_score(score: np.ndarray) -> np.ndarray:
+    """Fingerprint vote: softmax of the negated likelihood scores.
+
+    fp.predict assigns the batch with the LOWEST `score_<batch>`, so this vote's argmax equals the
+    fingerprint call by construction. The conformal p-values are NOT used as the vote (their ordering
+    can differ from the assignment); they are kept only for credibility/confidence/OOD.
+    """
+    s = -np.asarray(score, dtype=float)
+    s = s - s.max(axis=-1, keepdims=True)
+    e = np.exp(s)
+    return e / e.sum(axis=-1, keepdims=True)
+
+
 def ensemble(p_patch: np.ndarray, q_fp: np.ndarray) -> np.ndarray:
     return 0.5 * (np.asarray(p_patch, dtype=float) + np.asarray(q_fp, dtype=float))
 
 
+def final_call(p_ens: np.ndarray, patch_call, fp_call):
+    """Ensemble argmax, except that unanimous patch and fingerprint calls are never overturned."""
+    p_ens = np.asarray(p_ens, dtype=float)
+    k = np.argmax(p_ens, axis=-1)
+    return np.where(np.asarray(patch_call) == np.asarray(fp_call), np.asarray(patch_call), k)
+
+
 def _pred_frame(pr: pd.DataFrame) -> pd.DataFrame:
     p = pr[[f"p_{b}" for b in BATCHES]].to_numpy(dtype=float)
-    q = normalise_p(p)
+    q = softmax_neg_score(pr[[f"score_{b}" for b in BATCHES]].to_numpy(dtype=float))
     out = pd.DataFrame({"fp_call": pr["assigned"].to_numpy(), "fp_ood": pr["ood"].to_numpy(dtype=bool),
                         "fp_confidence": pr["confidence"].to_numpy(dtype=float)}, index=pr.index)
     for j, b in enumerate(BATCHES):
@@ -129,7 +149,7 @@ def _run_cv(D, patch_site, site_labels, groups, X, y):
     p_ens = ensemble(p_patch, q_fp)
     patch_call = top.argmin(axis=1)
     fp_call = np.array([BATCHES.index(c) for c in fpf["fp_call"]])
-    ens_call = p_ens.argmax(axis=1)
+    ens_call = final_call(p_ens, patch_call, fp_call)
     df = pd.DataFrame({
         "batch": [i[0] for i in X.index], "site": [i[1] for i in X.index],
         "true": [BATCHES[c] for c in site_labels],
@@ -209,7 +229,8 @@ def _join(items: list[str]) -> str:
 
 
 def make_explanation(site: str, k: int, high: bool, expl: pd.DataFrame, patch_call: int, frac: float,
-                     anom_rows: np.ndarray, n_rows: int, b3_median_frac: float) -> str:
+                     anom_rows: np.ndarray, n_rows: int, b3_median_frac: float,
+                     figure_ref: bool = True) -> str:
     e = expl.copy()
     e = e.sort_values("dev_Batch_3", ascending=False, kind="stable").head(3)
     items, resembles = [], []
@@ -226,17 +247,26 @@ def make_explanation(site: str, k: int, high: bool, expl: pd.DataFrame, patch_ca
         third = image_third(anom_rows, n_rows)
         th = np.minimum(2, np.asarray(anom_rows) * 3 // max(n_rows, 1))
         if np.bincount(th, minlength=3).max() / len(anom_rows) > 0.5:
-            where = (f"mostly in the {third} third of the image "
-                     f"(see outputs/patch_mil/figures/heldout_{site}.png)")
+            where = f"mostly in the {third} third of the image"
+            if figure_ref:
+                where += f" (see outputs/patch_mil/figures/heldout_{site}.png)"
         else:
             where = "spread across the whole image"
     parts.append(f"(4) local microstructure appearance: {frac:.0%} of the image's 11.2 um areas look unlike "
                  f"any Batch 3 image (Batch 3 images: typically {b3_median_frac:.0%}), {where}; "
                  f"overall it looks most like Batch {k + 1}")
     all_items = [(ph, res) for ph, _, res in items] + [("the local microstructure appearance", patch_call)]
-    if high:
+    with_k_all = all(res == k for _, res in all_items)
+    if high and with_k_all:
         conf = (f"Confidence is high because the depth-profile, graphite-arrangement and local-appearance "
                 f"evidence consistently point to Batch {k + 1}.")
+    elif high:
+        dissent: dict[int, list[str]] = {}
+        for ph, res in all_items:
+            if res != k:
+                dissent.setdefault(res, []).append(ph)
+        rest = "; ".join(f"{_join(v)} look like Batch {o + 1}" for o, v in sorted(dissent.items()))
+        conf = (f"Confidence is high because the combined evidence favours Batch {k + 1}, although {rest}.")
     else:
         with_k = [ph for ph, res in all_items if res == k]
         other: dict[int, list[str]] = {}
@@ -330,7 +360,7 @@ def build_lopo_outputs(D, patch_site, site_labels, sites: pd.DataFrame, parents:
                     "fingerprint marks the site OOD",
             "strata": stratum_table(c_e, agree), "fp_confidence_diagnostic": diag},
         "rubric_expected_score": rubric,
-        "fingerprint_probability": "conformal p-values normalised to sum 1 (heuristic, not a posterior)",
+        "fingerprint_probability": "softmax of negated likelihood scores (the quantity fingerprint assignment minimises); conformal p-values only for credibility/confidence/OOD",
         "parents_used_as_evidence": False,
     }
 
@@ -344,9 +374,9 @@ def build_lopo_outputs(D, patch_site, site_labels, sites: pd.DataFrame, parents:
         p_patch = pm.softmax_conf(top)
         q = fph[[f"q_fp_{b}" for b in BATCHES]].to_numpy()[h]
         p_e = ensemble(p_patch, q)
-        k = int(np.argmax(p_e))
         pc = int(np.argmin(top))
         fc = BATCHES.index(fph["fp_call"].iloc[h])
+        k = int(final_call(p_e, pc, fc))
         ag = pc == fc
         high = heldout_flag(c_e, agree, ag) and not bool(fph["fp_ood"].iloc[h])
         sel = patch_site_h == h
@@ -358,7 +388,9 @@ def build_lopo_outputs(D, patch_site, site_labels, sites: pd.DataFrame, parents:
             **{f"p_ens_{b}": float(p_e[j]) for j, b in enumerate(BATCHES)},
             "patch_call": BATCHES[pc], "fingerprint_call": BATCHES[fc],
             "explanation": make_explanation(sid, k, high, expl[expl["site"] == sid], pc, frac,
-                                            c[anom, 0], int(c[:, 0].max()) + 1, b3_med),
+                                            c[anom, 0], int(c[:, 0].max()) + 1, b3_med,
+                                            # the committed heldout_<site>.png uses sibling-inclusive scores
+                                            figure_ref=bool(h_codes[h] < 0)),
         })
     final = pd.DataFrame(rows)[["site", "assigned", "confidence_flag", "p_ens_Batch_1", "p_ens_Batch_2",
                                 "p_ens_Batch_3", "patch_call", "fingerprint_call", "explanation"]]
