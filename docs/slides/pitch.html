@@ -165,9 +165,17 @@
   </div>
 </section>
 
-<!-- 6 · THE MODEL -->
+<!-- 6 · THE TWIST -->
 <section class="slide">
-  <div class="kicker">6 · The model</div>
+  <div class="kicker">6 · The twist</div>
+  <h1>The 34 &ldquo;sites&rdquo; are crops of 13 parent electrodes.</h1>
+  <figure><img src="../../outputs/slides/parents_heldout.png" alt="Top three reconstructed parent images: each held-out site abuts at least one labelled crop, and one parent spans several batch labels"></figure>
+  <div class="foot"><span>We stitched the dataset back together: 17 seams, z &ge; 5.6, zero false positives across 2,108 wrong pairings. One parent spans several &ldquo;batches&rdquo;, and two of the three round-1 images abut crops whose organiser-released label is <em>different</em> (fn0mhxef has a single confirmed neighbour) &mdash; the label follows the crop, not the material. This is why validation is leave-one-parent-out.</span><span>full figure &amp; method: outputs/stitching/</span></div>
+</section>
+
+<!-- 7 · THE MODEL -->
+<section class="slide">
+  <div class="kicker">7 · The model</div>
   <h1>A linear probe on NASA&rsquo;s MicroNet.</h1>
   <div style="display:flex;align-items:center;gap:5vw;margin-top:6vh">
     <img src="../../outputs/slides/nasa_logo.svg" alt="NASA insignia" style="height:30vh;flex:none">
@@ -177,13 +185,6 @@
       <p><b>Leave-one-parent-out: accuracy 0.71 &middot; p = 0.005.</b></p>
     </div>
   </div>
-</section>
-
-<section class="slide">
-  <div class="kicker">7 · The twist</div>
-  <h1>The 34 &ldquo;sites&rdquo; are crops of 13 parent electrodes.</h1>
-  <figure><img src="../../outputs/slides/parents_heldout.png" alt="Top three reconstructed parent images: each held-out site abuts at least one labelled crop, and one parent spans several batch labels"></figure>
-  <div class="foot"><span>We stitched the dataset back together: 17 seams, z &ge; 5.6, zero false positives across 2,108 wrong pairings. One parent spans several &ldquo;batches&rdquo;, and two of the three round-1 images abut crops whose organiser-released label is <em>different</em> (fn0mhxef has a single confirmed neighbour) &mdash; the label follows the crop, not the material. This is why validation is leave-one-parent-out.</span><span>full figure &amp; method: outputs/stitching/</span></div>
 </section>
 
 <!-- 8 · OUTRO -->
