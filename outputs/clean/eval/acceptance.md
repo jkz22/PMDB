@@ -31,7 +31,7 @@
 - **fingerprint**
   - **before_acquisition_and_percentiles**
     - accuracy: 0.6129
-    - null_mean: 0.3931
+    - null_mean: 0.3932
     - null_p95: 0.5484
     - p_value: 0.03483
     - chance: 0.5484
@@ -43,9 +43,9 @@
     - chance: 0.5484
   - **after_acquisition_only**
     - accuracy: 0.4194
-    - null_mean: 0.4423
+    - null_mean: 0.4434
     - null_p95: 0.5484
-    - p_value: 0.6866
+    - p_value: 0.6965
     - chance: 0.5484
   - **after_intensity_percentiles**
     - accuracy: 0.7097
@@ -54,10 +54,10 @@
     - p_value: 0.004975
     - chance: 0.5484
   - **after_all**
-    - accuracy: 0.6129
-    - null_mean: 0.4035
+    - accuracy: 0.6452
+    - null_mean: 0.4065
     - null_p95: 0.5484
-    - p_value: 0.0199
+    - p_value: 0.00995
     - chance: 0.5484
   - **strong_vs_rest_before**
     - accuracy: 1
@@ -67,7 +67,7 @@
     - chance: 0.871
   - **strong_vs_rest_after**
     - accuracy: 0.9355
-    - null_mean: 0.8195
+    - null_mean: 0.8203
     - null_p95: 0.871
     - p_value: 0.01493
     - chance: 0.871
@@ -115,21 +115,21 @@
     - resolution_outliers: ['mgxahqnk']
     - n_noise_added: 29
     - noise_within_10pct_all: True
-    - noise_sigma_g_after_cv: 0.007393
+    - noise_sigma_g_after_cv: 0.007365
     - noise_sigma_g_before_cv: 0.09537
     - sigma_e_before_cv: 0.05313
-    - sigma_e_after_cv: 0.04863
+    - sigma_e_after_cv: 0.04933
   - **Inlens**
     - sigma_t: 1.214
     - n_blurred: 13
-    - sigma_e_after_max_abs_dev: 0.07947
+    - sigma_e_after_max_abs_dev: 0.07469
     - resolution_outliers: ['f1vzngrs', '3806gxp0', 'avn74qx1', 'b3esycq1', '0grcilhi', 'hawkfj64', 'mgxahqnk']
     - n_noise_added: 27
     - noise_within_10pct_all: True
-    - noise_sigma_g_after_cv: 0.01428
+    - noise_sigma_g_after_cv: 0.01395
     - noise_sigma_g_before_cv: 0.1638
     - sigma_e_before_cv: 0.1151
-    - sigma_e_after_cv: 0.1062
+    - sigma_e_after_cv: 0.1069
   - **SE_type**
     - sigma_t: 1.25
     - n_blurred: 11
@@ -137,10 +137,10 @@
     - resolution_outliers: ['5n1q8atc', 'f1vzngrs', 'iv6g2oq0', '3806gxp0', 'avn74qx1', 'i9jiqjwl', '0grcilhi', 'hawkfj64', 'mgxahqnk', 'pl8uabbv']
     - n_noise_added: 28
     - noise_within_10pct_all: True
-    - noise_sigma_g_after_cv: 0.01041
+    - noise_sigma_g_after_cv: 0.01044
     - noise_sigma_g_before_cv: 0.09511
-    - sigma_e_before_cv: 0.1145
-    - sigma_e_after_cv: 0.1061
+    - sigma_e_before_cv: 0.1144
+    - sigma_e_after_cv: 0.1075
 - **heldout**
   - n_sites: 3
   - sites: ['3e122cbj', 'fn0mhxef', 'xrv9xvzb']

@@ -214,10 +214,14 @@ def test_load_clean_roundtrip_and_half(phantom, result, tmp_path):
     # a fully masked block stays invalid
     _, mh_all = pio.downsample_clean(z4, np.full((2, 2), C.BIT_CHARGE_LOCAL, dtype=np.uint16))
     assert not C.valid_for_kpis(mh_all)[0, 0]
-    # clip bits do not exclude a pixel from the KPI-valid mean
+    # clip bits do not exclude a pixel from the KPI-valid mean, and are carried by the block
     m4c = np.array([[0, 0], [0, C.BIT_CLIP_HIGH]], dtype=np.uint16)
-    zh3, _ = pio.downsample_clean(z4, m4c)
-    assert abs(zh3[0, 0] - z4.mean()) < 1e-5
+    zh3, mh3 = pio.downsample_clean(z4, m4c)
+    assert abs(zh3[0, 0] - z4.mean()) < 1e-5 and not C.valid_for_stats(mh3)[0, 0]
+    # a clipped parent that was excluded from the mean must not make the clean mean stats-invalid
+    m4x = np.array([[0, 0], [0, C.BIT_CHARGE_LOCAL | C.BIT_CLIP_HIGH]], dtype=np.uint16)
+    zh4, mh4 = pio.downsample_clean(z4, m4x)
+    assert abs(zh4[0, 0] - 3.0) < 1e-6 and C.valid_for_stats(mh4)[0, 0]
     import pytest
 
     with pytest.raises(FileNotFoundError):
@@ -234,6 +238,27 @@ def test_collector_touching_edge_is_masked(edge):
     coll, info = C.detect_collector(raw, valid)
     assert info["found"] and info["edge"] == edge
     assert coll[rows, 20:-20].all()
+
+
+def test_interior_saturation_starting_at_first_valid_row_is_not_a_collector():
+    # bright feature on rows 8-17 (the first valid rows after the border mask) that never reaches the
+    # image edge must not be taken for a collector
+    h, w = 400, 600
+    raw = np.full((h, w), 120, dtype=np.uint8)
+    raw[8:18, :] = 255
+    valid = C.valid_for_kpis(C.sanitise((h, w)))
+    coll, info = C.detect_collector(raw, valid)
+    assert not info["found"] and not coll.any()
+
+
+def test_params_paths_are_repo_relative(tmp_path):
+    from pmdb.io import REPO_ROOT
+    from scripts.build_clean import _portable
+
+    inside = REPO_ROOT / "data" / "Batch_1" / "img_x_BSE.tif"
+    assert _portable(inside) == "data/Batch_1/img_x_BSE.tif"
+    outside = tmp_path / "img_x_BSE.tif"
+    assert Path(_portable(outside)).is_absolute()
 
 
 def test_harmonise_blur_is_mask_aware():

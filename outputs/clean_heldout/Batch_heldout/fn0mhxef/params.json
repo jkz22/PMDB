@@ -239,7 +239,7 @@
   "Inlens": "data_heldout/Batch_heldout/img_fn0mhxef_Inlens.tif",
   "SE_type": "data_heldout/Batch_heldout/img_fn0mhxef_ETD.tif"
  },
- "seconds_norm": 33.6,
+ "seconds_norm": 44.5,
  "harmonisation": {
   "BSE": {
    "sigma_e_px": 1.5126322714802536,
@@ -268,7 +268,7 @@
   },
   "Inlens": {
    "sigma_e_px": 1.5160627660517196,
-   "sigma_t_px": 1.2140094207959984,
+   "sigma_t_px": 1.2142698766507591,
    "sigma_k_px": 0.0,
    "resolution_outlier": true,
    "sigma_e_after_px": 1.5160627660517196,
@@ -320,7 +320,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -344,5 +344,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 41.5
+ "seconds_harm": 30.8
 }

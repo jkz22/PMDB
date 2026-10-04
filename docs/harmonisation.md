@@ -172,8 +172,20 @@ methods are LUT-only (applied in < 1 ms at load time); `--materialise <method>` 
   checked for new batches.
 * The reference is the labelled-set median, so the absolute grey scale is a convention; only
   differences between sites are meaningful.
-* Harmonisation does not touch curtaining, noise, or focus differences; those remain as
-  documented in `docs/data-processing.md`.
+* Harmonisation does not touch curtaining, noise, focus or 0-clipping differences; those remain
+  as documented in `docs/data-processing.md`. The Modelling session's artefact-injection ablation
+  (`outputs/v2/injection_ablation/`, `outputs/v2/RESULTS.md` §9.5 on its branch) quantifies this:
+  the +22 grey / 0.69× artefact is removed to the pixel and a `hybrid`-trained classifier is
+  invariant to it, but injected σ = 6 grey noise or a 1 px blur pass straight through (a 1 px blur
+  flips 4/6 fields to Batch 3, same as raw), Batch 3's lower BSE noise (−20 %) and sharpness
+  (−25 %) remain a batch shortcut (two scalar statistics recognise 82–88 % of Batch 3 fields), and
+  the BSE zero-clipped fraction (1.5–1.7 % in Batches 1/2 vs 0.4 % in Batch 3) alone gives 84 %
+  Batch-3-vs-rest accuracy — no grey-level map can change a pixel that is already 0. For a route
+  that equalises resolution and noise (downwards only) and flags clipping per pixel, use the
+  physical pipeline `pmdb.clean` / `load_clean(..., kind="harm")` (`docs/clean.md`).
+* `histmatch` (and therefore the Inlens channel of `hybrid`) changes gated KPIs by 5–12 % per
+  field and alters the noise texture differently per batch (same ablation); `affine2` is the safer
+  choice for texture-sensitive models, `hybrid` for models that need the Inlens grey scale aligned.
 * `histmatch`/`hybrid` LUTs are fitted on the half-resolution histograms and `load_site` only
   accepts them with `resolution="half"`; a 2×2 mean changes the histogram, so the same LUT would
   not match the full-resolution Inlens distribution. The affine methods work at both resolutions.

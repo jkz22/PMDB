@@ -114,9 +114,9 @@
    "noise_sigma_graphite": 0.23351657818912222
   },
   "Inlens": {
-   "sigma_e_px": 1.1377688059334043,
-   "edge_10_90_nm": 72.90020802566515,
-   "edge_n_kept": 3262,
+   "sigma_e_px": 1.137950862754084,
+   "edge_10_90_nm": 72.91187294390761,
+   "edge_n_kept": 3259,
    "noise_alpha": 0.013947423461867291,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.1180992102508196
@@ -223,11 +223,11 @@
  "batch": "Batch_3",
  "site": "utfgcjfa",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_3/img_utfgcjfa_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_3/img_utfgcjfa_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_3/img_utfgcjfa_SE.tif"
+  "BSE": "data/Batch_3/img_utfgcjfa_BSE.tif",
+  "Inlens": "data/Batch_3/img_utfgcjfa_Inlens.tif",
+  "SE_type": "data/Batch_3/img_utfgcjfa_SE.tif"
  },
- "seconds_norm": 35.0,
+ "seconds_norm": 46.4,
  "harmonisation": {
   "BSE": {
    "sigma_e_px": 1.337721599273746,
@@ -255,13 +255,13 @@
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.1377688059334043,
-   "sigma_t_px": 1.2140094207959984,
-   "sigma_k_px": 0.42343950928829355,
+   "sigma_e_px": 1.137950862754084,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.4236970229995554,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.17415073823129,
+   "sigma_e_after_px": 1.1588591790613352,
    "noise_before": {
-    "alpha": 0.009886996390784062,
+    "alpha": 0.009875787142802057,
     "beta": 0.0
    },
    "noise_target": {
@@ -269,13 +269,13 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.014442615731206239,
+    "alpha": 0.014455564623083589,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.12017743436771414,
+   "noise_sigma_graphite_after": 0.12023129635449993,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.004516018704816119,
+   "d_alpha": 0.004527227952798123,
    "d_beta": 0.0,
    "added": true
   },
@@ -308,7 +308,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -332,5 +332,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 46.9
+ "seconds_harm": 60.7
 }

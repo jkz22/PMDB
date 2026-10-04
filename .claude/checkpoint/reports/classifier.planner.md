@@ -1,0 +1,32 @@
+## Plan ready
+- **Plan file**: `/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/plans/classifier.md`
+- **Steps**: 7 steps (Step 7 runs only once `outputs/fem/tile_curves.csv` exists). Complexity: MEDIUM.
+- **Key decisions**:
+  - **Features**:
+    - 16 curated FEM tile features (sym orientation), each with its source metric/frame and physical meaning (plan §2a). Examples: swelling at 50% and 100% SOC, OLS swelling slopes over frames 0-2 and 3-10, fraction of pore area left at 100%, per-tile first pore-closure SOC (1.1 if never), p95 Si von Mises stress, binder p95 stress.
+    - The FEM output contract has no interface metric, so binder p95 stress stands in for interface stress, and the docs say so.
+    - 15 KPI tile features: the 16 per-tile catalogue columns minus the zero-variance ones. This is the same rule as check 3, so K16 is expected to drop.
+    - KPIs are recomputed on the 6-tile FEM grid (P15 edges reproduced at half resolution as `fem_grid_slices`) using a copy of the `compute_tile_kpis` loop in `pmdb/classify/kpi_tiles.py`. `pmdb/kpis` is not touched. A data test checks that the copy matches the original exactly on the 4-tile grid.
+  - **Model**:
+    - Random forest per stage, fixed and never tuned: 500 trees, `max_features="sqrt"`, `min_samples_leaf=3`, `class_weight="balanced"`, `random_state=0`, `n_jobs=1` so the md5 check is reproducible.
+    - Missing values: median imputation inside each training fold, with `keep_empty_features=True`.
+    - Stage 2 is trained only on true Batch_1/Batch_2 sites.
+    - Each site's probability is the mean of its 6 tile probabilities, per stage.
+    - The decision is hierarchical: Batch_3 if p_b3 ≥ 0.5, else stage 2 at 0.5. Confidence is the product of probabilities along the chosen branch.
+  - **Evaluation**:
+    - Leave-one-site-out results at three levels (stage1 with 31 sites, stage2 with the 14 true Batch_1/Batch_2 sites, end_to_end with 3 classes). Each level gets balanced accuracy, macro-F1, Brier score, a confusion matrix, calibration bins, and a site-bootstrap 95% CI (1000 resamples, seed 0, same as check 3).
+    - Rule for picking the final arm, fixed before any FEM numbers exist: highest end-to-end balanced accuracy. Arms within 0.05 count as tied and are separated by lowest Brier score, then by the order KPI+FEM > FEM > KPI. With the KPI arm alone, the result is labelled "provisional".
+    - Explanation for each held-out site: its top 3 features ranked by stage-1 importance × |z|, where z compares the site's mean value to the 17 Batch_3 sites. The text template is fixed in the plan.
+  - **Running it**:
+    - `scripts/classify_batches.py kpi-tiles` builds `outputs/classifier/kpi_tiles6.csv` once (34 sites × 6 tiles; held-out sites read from `cache_heldout`).
+    - `scripts/classify_batches.py run` is the one command. It adds the FEM arms automatically when `outputs/fem/tile_curves.csv` exists; `--require-fem` makes their absence an error.
+    - It writes the CSVs, two PNGs, `outputs/classifier/report.md`, and the same text to `docs/classifier/results.md` (D19). Nothing it writes contains a timestamp, so two runs produce identical md5s.
+    - `docs/classifier/method.md` is written by hand: architecture with a mermaid diagram, the feature tables, the protocol and limitations. It holds no result numbers.
+    - Tests use a synthetic `tile_curves` fixture in the expected schema, including one failed tile series. Step 5 also smoke-tests all three arms on a synthetic FEM table covering the 34 real sites.
+- **Open questions for dispatcher**: none.
+
+Notes:
+- `.claude/reports/fem-build.planner-r2.md` did not exist yet, so the FEM side follows the current fem-build plan text: columns `region`, `orientation` sym, `config` si, 11 frames, the Step-5 metric names. All FEM column names live in one loader, `load_fem_tile_curves`, in `pmdb/classify/features.py`. Expected surprise 1 lets the implementer apply simple one-to-one renames; it must stop and escalate if a metric is removed or redefined, or if the tile or frame counts change.
+- I added your D19 documentation requirement to the plan (decisions C17-C18, Steps 5-6).
+- The file set does not overlap with the FEM build. The plan lists FEM files, `pmdb/kpis`, `outputs/kpis` and `outputs/pooling_checks` as off-limits.
+- Step 6 commits on `fem-sim` without pushing.

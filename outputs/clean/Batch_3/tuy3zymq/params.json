@@ -130,17 +130,17 @@
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.390423307414363,
-   "edge_10_90_nm": 89.09188973462922,
-   "edge_n_kept": 1060,
+   "sigma_e_px": 1.391053567360886,
+   "edge_10_90_nm": 89.1322738747399,
+   "edge_n_kept": 1059,
    "noise_alpha": 0.042644286210766255,
    "noise_beta": 0.014959695989532552,
    "noise_sigma_graphite": 0.24000829610723626
   },
   "Inlens": {
-   "sigma_e_px": 1.3079054604570803,
-   "edge_10_90_nm": 83.8045280491232,
-   "edge_n_kept": 4137,
+   "sigma_e_px": 1.3078388301505144,
+   "edge_10_90_nm": 83.80025868748787,
+   "edge_n_kept": 4138,
    "noise_alpha": 0.011704328410131864,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.1081865444966788
@@ -247,18 +247,18 @@
  "batch": "Batch_3",
  "site": "tuy3zymq",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_3/img_tuy3zymq_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_3/img_tuy3zymq_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_3/img_tuy3zymq_ETD.tif"
+  "BSE": "data/Batch_3/img_tuy3zymq_BSE.tif",
+  "Inlens": "data/Batch_3/img_tuy3zymq_Inlens.tif",
+  "SE_type": "data/Batch_3/img_tuy3zymq_ETD.tif"
  },
- "seconds_norm": 37.5,
+ "seconds_norm": 43.5,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.390423307414363,
+   "sigma_e_px": 1.391053567360886,
    "sigma_t_px": 1.3962085795872072,
-   "sigma_k_px": 0.12697016937781322,
+   "sigma_k_px": 0.119868137740936,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.4470460611753058,
+   "sigma_e_after_px": 1.4427035617378623,
    "noise_before": {
     "alpha": 0.042644286210766255,
     "beta": 0.014959695989532552
@@ -279,11 +279,11 @@
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.3079054604570803,
-   "sigma_t_px": 1.2140094207959984,
+   "sigma_e_px": 1.3078388301505144,
+   "sigma_t_px": 1.2142698766507591,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.3079054604570803,
+   "sigma_e_after_px": 1.3078388301505144,
    "noise_before": {
     "alpha": 0.011704328410131864,
     "beta": 0.0
@@ -332,7 +332,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -356,5 +356,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 29.9
+ "seconds_harm": 38.0
 }

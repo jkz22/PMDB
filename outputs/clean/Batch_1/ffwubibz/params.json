@@ -225,11 +225,11 @@
  "batch": "Batch_1",
  "site": "ffwubibz",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_1/img_ffwubibz_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_1/img_ffwubibz_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_1/img_ffwubibz_ETD.tif"
+  "BSE": "data/Batch_1/img_ffwubibz_BSE.tif",
+  "Inlens": "data/Batch_1/img_ffwubibz_Inlens.tif",
+  "SE_type": "data/Batch_1/img_ffwubibz_ETD.tif"
  },
- "seconds_norm": 36.0,
+ "seconds_norm": 38.0,
  "harmonisation": {
   "BSE": {
    "sigma_e_px": 1.383082460458643,
@@ -258,8 +258,8 @@
   },
   "Inlens": {
    "sigma_e_px": 1.2039086165068662,
-   "sigma_t_px": 1.2140094207959984,
-   "sigma_k_px": 0.15627833145372064,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.1582889018281863,
    "resolution_outlier": false,
    "sigma_e_after_px": 1.224506476873263,
    "noise_before": {
@@ -310,7 +310,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -334,5 +334,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 33.6
+ "seconds_harm": 35.5
 }

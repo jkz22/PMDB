@@ -227,7 +227,7 @@
   "Inlens": "data_heldout/Batch_heldout/img_3e122cbj_Inlens.tif",
   "SE_type": "data_heldout/Batch_heldout/img_3e122cbj_ETD.tif"
  },
- "seconds_norm": 36.4,
+ "seconds_norm": 38.9,
  "harmonisation": {
   "BSE": {
    "sigma_e_px": 1.3053586787848726,
@@ -256,12 +256,12 @@
   },
   "Inlens": {
    "sigma_e_px": 1.1095457434631424,
-   "sigma_t_px": 1.2140094207959984,
-   "sigma_k_px": 0.4926734384399652,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.4933148857517604,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.164983564027651,
+   "sigma_e_after_px": 1.1892827699206265,
    "noise_before": {
-    "alpha": 0.009201419674097822,
+    "alpha": 0.00914682813485413,
     "beta": 0.0
    },
    "noise_target": {
@@ -269,13 +269,13 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.014549949596971397,
+    "alpha": 0.014533603999352097,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.12062317189069187,
+   "noise_sigma_graphite_after": 0.12055539805148544,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.005201595421502359,
+   "d_alpha": 0.00525618696074605,
    "d_beta": 0.0,
    "added": true
   },
@@ -308,7 +308,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -332,5 +332,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 33.4
+ "seconds_harm": 36.0
 }

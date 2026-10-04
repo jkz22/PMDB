@@ -451,10 +451,9 @@ def correct_scan_bands(img_dq: np.ndarray, d: float, g_rows: np.ndarray) -> np.n
 # ----------------------------------------------------------------------------------------------
 # Field-of-view intrusions (3.2)
 # ----------------------------------------------------------------------------------------------
-def _edge_connected(flag: np.ndarray, top: bool, edge_row: int | None = None) -> np.ndarray:
+def _edge_connected(flag: np.ndarray, top: bool) -> np.ndarray:
     lab, _ = ndimage.label(flag)
-    if edge_row is None:
-        edge_row = 0 if top else flag.shape[0] - 1
+    edge_row = 0 if top else flag.shape[0] - 1
     ids = np.unique(lab[edge_row])
     ids = ids[ids > 0]
     return np.isin(lab, ids)
@@ -474,15 +473,16 @@ def detect_collector(bse_raw: np.ndarray, valid: np.ndarray, sat_dn: int = 250, 
                      col_frac: float = 0.5, dilate_px: int = DILATE_HALF_UM_PX) -> tuple[np.ndarray, dict]:
     """Copper current collector: a saturated BSE band connected to the top or bottom edge."""
     h, w = bse_raw.shape
-    sat = (bse_raw >= sat_dn) & valid
+    # connectivity is tested on the raw saturation up to the true image edge (row 0 / h-1): the border
+    # mask removes those rows from ``valid``, and connecting to the innermost valid row instead would
+    # accept an interior bright feature that merely starts there. Only fully-invalid columns (colour
+    # markers) are excluded.
+    sat = (bse_raw >= sat_dn) & valid.any(axis=0)[None, :]
     sat = ndimage.binary_opening(sat, structure=np.ones((3, 9)))
     out = np.zeros((h, w), dtype=bool)
     info: dict = {"found": False}
-    # the border mask removes the outermost rows from ``valid``: connect to the innermost valid row
-    vrows = np.flatnonzero(valid.mean(axis=1) > 0.5)
     for top in (True, False):
-        edge_row = None if vrows.size == 0 else int(vrows[0] if top else vrows[-1])
-        band = _edge_connected(sat, top, edge_row)
+        band = _edge_connected(sat, top)
         if band.sum() < min_rows * 0.05 * w:
             continue
         cols = band.any(axis=0)

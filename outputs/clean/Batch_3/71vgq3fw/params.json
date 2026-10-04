@@ -109,25 +109,25 @@
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.3800493379021281,
-   "edge_10_90_nm": 88.42717378592066,
-   "edge_n_kept": 1061,
+   "sigma_e_px": 1.380458814372433,
+   "edge_10_90_nm": 88.45341114280815,
+   "edge_n_kept": 1060,
    "noise_alpha": 0.04066544844228344,
    "noise_beta": 0.013781288547581818,
    "noise_sigma_graphite": 0.23333824587894986
   },
   "Inlens": {
-   "sigma_e_px": 1.3005298097854308,
-   "edge_10_90_nm": 83.33193049350419,
-   "edge_n_kept": 4184,
+   "sigma_e_px": 1.3005274736351498,
+   "edge_10_90_nm": 83.33178080380745,
+   "edge_n_kept": 4185,
    "noise_alpha": 0.013504284007700993,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.11620793435777521
   },
   "SE_type": {
-   "sigma_e_px": 1.3182316012757154,
-   "edge_10_90_nm": 84.46617935652893,
-   "edge_n_kept": 2006,
+   "sigma_e_px": 1.3185091246576204,
+   "edge_10_90_nm": 84.48396177027848,
+   "edge_n_kept": 2005,
    "noise_alpha": 0.011369244031013418,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.10662665722516775
@@ -226,43 +226,43 @@
  "batch": "Batch_3",
  "site": "71vgq3fw",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_3/img_71vgq3fw_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_3/img_71vgq3fw_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_3/img_71vgq3fw_ETD.tif"
+  "BSE": "data/Batch_3/img_71vgq3fw_BSE.tif",
+  "Inlens": "data/Batch_3/img_71vgq3fw_Inlens.tif",
+  "SE_type": "data/Batch_3/img_71vgq3fw_ETD.tif"
  },
- "seconds_norm": 37.9,
+ "seconds_norm": 37.5,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.3800493379021281,
+   "sigma_e_px": 1.380458814372433,
    "sigma_t_px": 1.3962085795872072,
-   "sigma_k_px": 0.2118070411219241,
+   "sigma_k_px": 0.20912163813049908,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.4415856513337602,
+   "sigma_e_after_px": 1.4415814079446032,
    "noise_before": {
-    "alpha": 0.04060258722628638,
-    "beta": 0.013852031127991951
+    "alpha": 0.040607363289937956,
+    "beta": 0.013913203699115856
    },
    "noise_target": {
     "alpha": 0.04507331353571918,
     "beta": 0.02134361435082474
    },
    "noise_after": {
-    "alpha": 0.04476633558284468,
-    "beta": 0.021510074698358663
+    "alpha": 0.04492024114216533,
+    "beta": 0.02113077727213845
    },
-   "noise_sigma_graphite_after": 0.25744205227818423,
+   "noise_sigma_graphite_after": 0.25700392684607715,
    "noise_sigma_graphite_target": 0.25771481891141595,
    "noise_within_10pct": true,
-   "d_alpha": 0.0044707263094328,
-   "d_beta": 0.00749158322283279,
+   "d_alpha": 0.004465950245781225,
+   "d_beta": 0.007430410651708885,
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.3005298097854308,
-   "sigma_t_px": 1.2140094207959984,
+   "sigma_e_px": 1.3005274736351498,
+   "sigma_t_px": 1.2142698766507591,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.3005298097854308,
+   "sigma_e_after_px": 1.3005274736351498,
    "noise_before": {
     "alpha": 0.013504284007700993,
     "beta": 0.0
@@ -283,11 +283,11 @@
    "added": false
   },
   "SE_type": {
-   "sigma_e_px": 1.3182316012757154,
+   "sigma_e_px": 1.3185091246576204,
    "sigma_t_px": 1.250251553827863,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.3182316012757154,
+   "sigma_e_after_px": 1.3185091246576204,
    "noise_before": {
     "alpha": 0.011369244031013418,
     "beta": 0.0
@@ -311,7 +311,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -335,5 +335,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 26.3
+ "seconds_harm": 26.5
 }

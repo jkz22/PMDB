@@ -223,11 +223,11 @@
  "batch": "Batch_1",
  "site": "4ih2ggld",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_1/img_4ih2ggld_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_1/img_4ih2ggld_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_1/img_4ih2ggld_ETD.tif"
+  "BSE": "data/Batch_1/img_4ih2ggld_BSE.tif",
+  "Inlens": "data/Batch_1/img_4ih2ggld_Inlens.tif",
+  "SE_type": "data/Batch_1/img_4ih2ggld_ETD.tif"
  },
- "seconds_norm": 37.4,
+ "seconds_norm": 43.6,
  "harmonisation": {
   "BSE": {
    "sigma_e_px": 1.2886436981696177,
@@ -256,12 +256,12 @@
   },
   "Inlens": {
    "sigma_e_px": 1.1550026647318685,
-   "sigma_t_px": 1.2140094207959984,
-   "sigma_k_px": 0.3738819576333129,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.37472680422373394,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.1524211050911697,
+   "sigma_e_after_px": 1.1507184545051765,
    "noise_before": {
-    "alpha": 0.014022272514557586,
+    "alpha": 0.014048804310569204,
     "beta": 0.0
    },
    "noise_target": {
@@ -269,13 +269,13 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.014022272514557586,
+    "alpha": 0.014048804310569204,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.1184156768107905,
+   "noise_sigma_graphite_after": 0.1185276520925358,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.00038074258104259413,
+   "d_alpha": 0.0003542107850309766,
    "d_beta": 0.0,
    "added": false
   },
@@ -308,7 +308,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -332,5 +332,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 66.5
+ "seconds_harm": 36.0
 }

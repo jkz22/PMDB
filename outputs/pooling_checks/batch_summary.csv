@@ -1,0 +1,8 @@
+variant,batch,n_sites,n_correct_0,n_correct_1,n_correct_2,n_correct_3,n_correct_4,median_frac_correct,diffuse_correct,witness,mixed,miss,fa_rate,verdict
+multiclass,Batch_1,7,3,2,0,0,2,0.25,2,0,2,3,,
+multiclass,Batch_2,7,1,2,4,0,0,0.5,0,1,5,1,,
+multiclass,Batch_3,17,2,1,4,7,3,0.75,10,4,1,2,,
+B1_vs_B3,Batch_1,7,1,1,1,2,2,0.75,4,0,2,1,0.29411764705882354,diffuse
+B1_vs_B3,Batch_3,17,1,0,2,10,4,0.75,14,1,1,1,,
+B2_vs_B3,Batch_2,7,0,1,2,3,1,0.75,4,2,1,0,0.4117647058823529,diffuse
+B2_vs_B3,Batch_3,17,2,2,5,2,6,0.5,8,5,2,2,,

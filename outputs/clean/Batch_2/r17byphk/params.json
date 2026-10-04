@@ -138,17 +138,17 @@
    "noise_sigma_graphite": 0.21073249782696502
   },
   "Inlens": {
-   "sigma_e_px": 1.173427525953009,
-   "edge_10_90_nm": 75.18804127358777,
-   "edge_n_kept": 3056,
+   "sigma_e_px": 1.1737084701713805,
+   "edge_10_90_nm": 75.20604293540266,
+   "edge_n_kept": 3055,
    "noise_alpha": 0.01270806978652844,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.1127300748980876
   },
   "SE_type": {
-   "sigma_e_px": 1.1814231635820265,
-   "edge_10_90_nm": 75.70036633735425,
-   "edge_n_kept": 3538,
+   "sigma_e_px": 1.1815471831951165,
+   "edge_10_90_nm": 75.70831296514464,
+   "edge_n_kept": 3537,
    "noise_alpha": 0.009876280532718211,
    "noise_beta": 0.0,
    "noise_sigma_graphite": 0.09937947742224353
@@ -247,11 +247,11 @@
  "batch": "Batch_2",
  "site": "r17byphk",
  "paths": {
-  "BSE": "/home/ubuntu/repos/PMDB/data/Batch_2/img_r17byphk_BSE.tif",
-  "Inlens": "/home/ubuntu/repos/PMDB/data/Batch_2/img_r17byphk_Inlens.tif",
-  "SE_type": "/home/ubuntu/repos/PMDB/data/Batch_2/img_r17byphk_ETD.tif"
+  "BSE": "data/Batch_2/img_r17byphk_BSE.tif",
+  "Inlens": "data/Batch_2/img_r17byphk_Inlens.tif",
+  "SE_type": "data/Batch_2/img_r17byphk_ETD.tif"
  },
- "seconds_norm": 36.5,
+ "seconds_norm": 47.8,
  "harmonisation": {
   "BSE": {
    "sigma_e_px": 1.3799965021792922,
@@ -279,13 +279,13 @@
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.173427525953009,
-   "sigma_t_px": 1.2140094207959984,
-   "sigma_k_px": 0.3112663089979963,
+   "sigma_e_px": 1.1737084701713805,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.31122300748724774,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.1942237960084365,
+   "sigma_e_after_px": 1.1942166012132545,
    "noise_before": {
-    "alpha": 0.012171465025839589,
+    "alpha": 0.012169784358452266,
     "beta": 0.0
    },
    "noise_target": {
@@ -293,24 +293,24 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.014919949711273788,
+    "alpha": 0.014920936302009625,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.12214724602410726,
+   "noise_sigma_graphite_after": 0.12215128448775979,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.002231550069760592,
+   "d_alpha": 0.002233230737147915,
    "d_beta": 0.0,
    "added": true
   },
   "SE_type": {
-   "sigma_e_px": 1.1814231635820265,
+   "sigma_e_px": 1.1815471831951165,
    "sigma_t_px": 1.250251553827863,
-   "sigma_k_px": 0.4091066565100376,
+   "sigma_k_px": 0.4087483354494197,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.2077054901510453,
+   "sigma_e_after_px": 1.1809795060418504,
    "noise_before": {
-    "alpha": 0.006916179403574414,
+    "alpha": 0.006932266167137784,
     "beta": 0.0
    },
    "noise_target": {
@@ -318,13 +318,13 @@
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.012502438439651545,
+    "alpha": 0.012505420882336839,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.1118143033768558,
+   "noise_sigma_graphite_after": 0.11182763917000502,
    "noise_sigma_graphite_target": 0.11160957870712367,
    "noise_within_10pct": true,
-   "d_alpha": 0.00554051865560722,
+   "d_alpha": 0.00552443189204385,
    "d_beta": 0.0,
    "added": true
   }
@@ -332,7 +332,7 @@
  "targets": {
   "sigma_t": {
    "BSE": 1.3962085795872072,
-   "Inlens": 1.2140094207959984,
+   "Inlens": 1.2142698766507591,
    "SE_type": 1.250251553827863
   },
   "noise": {
@@ -356,5 +356,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 35.6
+ "seconds_harm": 38.2
 }
