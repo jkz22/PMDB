@@ -37,12 +37,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from pmdb import segment as segment_mod  # noqa: E402
-from pmdb.io import load_site  # noqa: E402
+from pmdb.io import get_cache_root, load_site  # noqa: E402
 from pmdb.kpis import (N_TILES, catalogue_columns, check_registry, common, compute_site_kpis,  # noqa: E402
                        compute_tile_kpis, crossphase, diagnostic, fields, objects, pointpattern)
 from pmdb.overlay import render_overlay  # noqa: E402
 
-MANIFEST = ROOT / "cache" / "half" / "manifest.csv"
+MANIFEST = get_cache_root() / "half" / "manifest.csv"
 PACKAGES = ("numpy", "scipy", "scikit-image", "pandas", "Pillow", "matplotlib", "torch")
 
 

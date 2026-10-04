@@ -8,6 +8,7 @@ numpy<2
 pandas
 scipy
 scikit-learn
+xgboost
 
 # Plotting
 matplotlib
@@ -23,6 +24,11 @@ tqdm
 tifffile
 imagecodecs
 scikit-image
+
+# Imported harmonisation pipelines (pmdb/harmonise_ext.py): N4ITK, Nyul-Udupa, BaSiC
+SimpleITK
+intensity-normalization
+basicpy
 
 # Materials-KPI pipeline (src/) and its converter
 pyarrow==25.0.1

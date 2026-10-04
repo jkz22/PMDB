@@ -1,0 +1,159 @@
+# Acceptance numbers
+
+- n_sites: 31
+- code_version: clean-v1
+- **known_cases**
+  - ufdvpb81_marker_cols_masked: True
+  - strong_sites_BSE_D_ge_15: True
+  - strong_sites_no_zero_clipping: True
+  - hzumfsms_crack_flagged_not_patched: True
+  - reference_sites_unflagged: True
+  - masked_beyond_border_median_lt_2pct: True
+- **normalisation**
+  - pore_median_z_max_abs: 0.0312
+  - pore_median_z_sd_across_sites: 0.009103
+  - graphite_hsm_z_max_abs_dev: 0.1101
+  - graphite_hsm_z_sd_across_sites: 0.03196
+  - dark_level_rel_sd_before: 0.3344
+  - strong_minus_clean_pore_z_after: -0.00711
+  - strong_minus_clean_dark_rel_before: 0.9587
+  - **gmm_mu_sd_across_sites**
+    - mu0: 0.2162
+    - mu1: 0.05466
+    - mu2: 0.1968
+  - pass_pore_within_0p05: True
+  - pass_graphite_within_0p02: False
+- **flatness**
+  - block_rel_sd_max: 0.1301
+  - block_rel_sd_median: 0.08854
+  - G_ptp_rel_max: 0.4899
+  - pass_block_rel_sd_lt_0p03: False
+- **fingerprint**
+  - **before_acquisition_and_percentiles**
+    - accuracy: 0.6129
+    - null_mean: 0.3932
+    - null_p95: 0.5484
+    - p_value: 0.03483
+    - chance: 0.5484
+  - **before_intensity_percentiles**
+    - accuracy: 0.7097
+    - null_mean: 0.4229
+    - null_p95: 0.5484
+    - p_value: 0.004975
+    - chance: 0.5484
+  - **after_acquisition_only**
+    - accuracy: 0.4194
+    - null_mean: 0.4434
+    - null_p95: 0.5484
+    - p_value: 0.6965
+    - chance: 0.5484
+  - **after_intensity_percentiles**
+    - accuracy: 0.7097
+    - null_mean: 0.4244
+    - null_p95: 0.55
+    - p_value: 0.004975
+    - chance: 0.5484
+  - **after_all**
+    - accuracy: 0.6452
+    - null_mean: 0.4065
+    - null_p95: 0.5484
+    - p_value: 0.00995
+    - chance: 0.5484
+  - **strong_vs_rest_before**
+    - accuracy: 1
+    - null_mean: 0.8192
+    - null_p95: 0.871
+    - p_value: 0.004975
+    - chance: 0.871
+  - **strong_vs_rest_after**
+    - accuracy: 0.9355
+    - null_mean: 0.8203
+    - null_p95: 0.871
+    - p_value: 0.01493
+    - chance: 0.871
+- **material**
+  - porosity_otsu_vs_fixed_corr: 0.9723
+  - porosity_otsu_vs_fixed_mean_abs_diff: 0.04427
+  - si_otsu_vs_fixed_corr: 0.4394
+  - si_otsu_vs_fixed_mean_abs_diff: 0.08722
+  - **si_graphite_ratio_by_group**
+    - clean: 2.239
+    - mild: 2.045
+    - reference: 2.574
+    - strong: 2.57
+  - si_graphite_ratio_sd_across_sites: 0.2623
+  - flagged_crack_sites: ['hzumfsms']
+  - flagged_pore_band_sites: ['0grcilhi', 'ufdvpb81']
+  - porosity_norm_vs_harm_max_abs_diff: 0.02603
+  - si_norm_vs_harm_max_abs_diff: 0.02635
+- **patching**
+  - sites_with_band_events: 22
+  - bands_corrected_total: 33
+  - bands_masked_total: 1
+  - band_rows_corrected_frac_median: 0
+  - sites_with_local_charging: 11
+  - sites_with_broad_charging: 5
+  - sites_with_collector: 0
+  - sites_with_free_surface: 0
+  - **masked_beyond_border_max**
+    - BSE: 0
+    - Inlens: 0.02661
+    - SE_type: 0.005399
+  - **clip_high_frac_max**
+    - BSE: 0.001114
+    - Inlens: 0.06749
+    - SE_type: 0.001862
+  - **clip_low_frac_max**
+    - BSE: 0.02723
+    - Inlens: 0.02739
+    - SE_type: 0.05467
+- **harmonisation**
+  - **BSE**
+    - sigma_t: 1.396
+    - n_blurred: 16
+    - sigma_e_after_max_abs_dev: 0.225
+    - resolution_outliers: ['mgxahqnk']
+    - n_noise_added: 29
+    - noise_within_10pct_all: True
+    - noise_sigma_g_after_cv: 0.007365
+    - noise_sigma_g_before_cv: 0.09537
+    - sigma_e_before_cv: 0.05313
+    - sigma_e_after_cv: 0.04933
+  - **Inlens**
+    - sigma_t: 1.214
+    - n_blurred: 13
+    - sigma_e_after_max_abs_dev: 0.07469
+    - resolution_outliers: ['f1vzngrs', '3806gxp0', 'avn74qx1', 'b3esycq1', '0grcilhi', 'hawkfj64', 'mgxahqnk']
+    - n_noise_added: 27
+    - noise_within_10pct_all: True
+    - noise_sigma_g_after_cv: 0.01395
+    - noise_sigma_g_before_cv: 0.1638
+    - sigma_e_before_cv: 0.1151
+    - sigma_e_after_cv: 0.1069
+  - **SE_type**
+    - sigma_t: 1.25
+    - n_blurred: 11
+    - sigma_e_after_max_abs_dev: 0.0917
+    - resolution_outliers: ['5n1q8atc', 'f1vzngrs', 'iv6g2oq0', '3806gxp0', 'avn74qx1', 'i9jiqjwl', '0grcilhi', 'hawkfj64', 'mgxahqnk', 'pl8uabbv']
+    - n_noise_added: 28
+    - noise_within_10pct_all: True
+    - noise_sigma_g_after_cv: 0.01044
+    - noise_sigma_g_before_cv: 0.09511
+    - sigma_e_before_cv: 0.1144
+    - sigma_e_after_cv: 0.1075
+- **heldout**
+  - n_sites: 3
+  - sites: ['3e122cbj', 'fn0mhxef', 'xrv9xvzb']
+  - **BSE_D**
+    - 3e122cbj: 2.214
+    - fn0mhxef: 0.8418
+    - xrv9xvzb: 18.49
+  - **BSE_G**
+    - 3e122cbj: 53.92
+    - fn0mhxef: 54.57
+    - xrv9xvzb: 44.37
+  - **sigma_k_BSE**
+    - 3e122cbj: 0.4954
+    - fn0mhxef: 0
+    - xrv9xvzb: 0
+  - fit_on_heldout: no — targets.json and material thresholds come from the labelled run

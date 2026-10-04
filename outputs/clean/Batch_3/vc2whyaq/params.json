@@ -1,0 +1,386 @@
+{
+ "code_version": "clean-v1",
+ "seed": 20261003,
+ "shape": [
+  2068,
+  7000
+ ],
+ "nm_per_px": 24.999201600301646,
+ "marker_cols": [
+  0
+ ],
+ "fov": {
+  "collector": {
+   "found": false
+  },
+  "free_surface": {
+   "found": false,
+   "strips": []
+  }
+ },
+ "bands": {
+  "events": [
+   {
+    "detector": "Inlens",
+    "start": 141,
+    "end": 147,
+    "shared": false,
+    "peak_z": 7.281737804412842,
+    "actionable": true
+   },
+   {
+    "detector": "Inlens",
+    "start": 419,
+    "end": 455,
+    "shared": false,
+    "peak_z": 10.609538078308105,
+    "actionable": false
+   },
+   {
+    "detector": "Inlens",
+    "start": 1195,
+    "end": 1201,
+    "shared": false,
+    "peak_z": 6.037829399108887,
+    "actionable": true
+   }
+  ],
+  "corrected": [
+   {
+    "detector": "Inlens",
+    "start": 141,
+    "end": 147,
+    "gain": 1.0972063541412354
+   },
+   {
+    "detector": "Inlens",
+    "start": 1195,
+    "end": 1201,
+    "gain": 1.0885549783706665
+   }
+  ],
+  "masked": []
+ },
+ "charging": {
+  "local": [
+   {
+    "y0": 311,
+    "x0": 6224,
+    "y1": 381,
+    "x1": 6283,
+    "area_um2": 1.068125,
+    "solidity": 0.6183068017366136,
+    "bse_z": 1.2757112979888916
+   }
+  ],
+  "broad": {
+   "found": false,
+   "frac_blocks": 0.007167431192660551,
+   "floor_ref": 0.8913816273212433
+  }
+ },
+ "anchors": {
+  "BSE": {
+   "D": 12.972475524966912,
+   "D_se": 0.019470910966762987,
+   "D_method": "tobit",
+   "D_n": 803657,
+   "D_frac_zero": 0.14138992132215608,
+   "D_mode": 0.0,
+   "D_median": 12.843558311462402,
+   "G_level": 42.37818781534831,
+   "G_coef": [
+    40.827812912921566,
+    -0.7907057175965373,
+    6.190016229554652,
+    -1.0577151152270687,
+    1.5012059625305225,
+    -2.5134777795779812
+   ],
+   "G_blocks": 3218,
+   "G_ptp_rel": 0.13212072849273682,
+   "si_graphite_ratio": 2.440000295639038,
+   "grey_levels_used": 173,
+   "grey_step": 1
+  },
+  "Inlens": {
+   "D": 0.0,
+   "D_se": null,
+   "D_method": "quantile-clipped",
+   "D_n": 803657,
+   "D_frac_zero": 0.033770626025779654,
+   "D_mode": 47.45688056945801,
+   "D_median": 56.71090316772461,
+   "G_level": 112.9959487915039,
+   "G_coef": [
+    68.64012047784529,
+    29.29702745991957,
+    109.69395711747393,
+    -59.614161807433305,
+    22.10128283237262,
+    -67.27921045685753
+   ],
+   "G_blocks": 3216,
+   "G_ptp_rel": 0.8356969952583313,
+   "si_graphite_ratio": 1.9501912593841553,
+   "grey_levels_used": 211,
+   "grey_step": 2
+  },
+  "SE_type": {
+   "D": 5.917245358918517,
+   "D_se": 0.015816605836463833,
+   "D_method": "tobit",
+   "D_n": 803657,
+   "D_frac_zero": 0.21668696968980547,
+   "D_mode": 0.0,
+   "D_median": 4.19509744644165,
+   "G_level": 69.76354598999023,
+   "G_coef": [
+    66.34717933470188,
+    2.4026894731463555,
+    9.582984252103994,
+    -6.490903377265978,
+    3.6465669015474997,
+    -4.629891762948315
+   ],
+   "G_blocks": 3216,
+   "G_ptp_rel": 0.1502409428358078,
+   "si_graphite_ratio": 1.7757909297943115,
+   "grey_levels_used": 215,
+   "grey_step": 1
+  }
+ },
+ "phase_thresholds_bse": [
+  0.641401469707489,
+  1.6946501731872559
+ ],
+ "fingerprint": {
+  "BSE": {
+   "sigma_e_px": 1.4221880352293277,
+   "edge_10_90_nm": 91.12378813617995,
+   "edge_n_kept": 1109,
+   "noise_alpha": 0.03899134311994569,
+   "noise_beta": 0.013922272457030732,
+   "noise_sigma_graphite": 0.2300295971760513
+  },
+  "Inlens": {
+   "sigma_e_px": 1.0528619030648785,
+   "edge_10_90_nm": 67.45997196922613,
+   "edge_n_kept": 3160,
+   "noise_alpha": 0.008486593835678945,
+   "noise_beta": 0.0,
+   "noise_sigma_graphite": 0.09212271074864735
+  },
+  "SE_type": {
+   "sigma_e_px": 1.1941828491656814,
+   "edge_10_90_nm": 76.51482240580539,
+   "edge_n_kept": 2650,
+   "noise_alpha": 0.009971614193981909,
+   "noise_beta": 0.0,
+   "noise_sigma_graphite": 0.09985797010745767
+  }
+ },
+ "material": {
+  "pore_networks": [
+   {
+    "area_um2": 58.215625,
+    "span_um": 23.225,
+    "bbox": [
+     322,
+     4241,
+     1035,
+     5170
+    ],
+    "label": 189
+   },
+   {
+    "area_um2": 33.376875,
+    "span_um": 25.0,
+    "bbox": [
+     730,
+     575,
+     1310,
+     1575
+    ],
+    "label": 469
+   },
+   {
+    "area_um2": 16.459375,
+    "span_um": 16.9,
+    "bbox": [
+     1746,
+     4106,
+     2056,
+     4782
+    ],
+    "label": 1201
+   }
+  ],
+  "eighth_porosity": {
+   "top": 0.03678579610538373,
+   "bottom": 0.07260538373424971,
+   "all": 0.060974513731190644
+  },
+  "porosity": 0.060974513731190644,
+  "si_fraction": 0.04711130314012089
+ },
+ "mask_fractions": {
+  "BSE": {
+   "border": 0.010004973749654601,
+   "collector": 0.0,
+   "free_surface": 0.0,
+   "band_corrected": 0.0,
+   "band_bad": 0.0,
+   "charge_local": 0.0,
+   "charge_broad": 0.0,
+   "clip_high": 0.0,
+   "clip_low": 0.0,
+   "crack": 0.0,
+   "pore_band": 0.0
+  },
+  "Inlens": {
+   "border": 0.010004973749654601,
+   "collector": 0.0,
+   "free_surface": 0.0,
+   "band_corrected": 0.010638297872340425,
+   "band_bad": 0.0,
+   "charge_local": 0.0005429676706272451,
+   "charge_broad": 0.0,
+   "clip_high": 0.04045268029842498,
+   "clip_low": 0.002103896103896104,
+   "crack": 0.0,
+   "pore_band": 0.0
+  },
+  "SE_type": {
+   "border": 0.010004973749654601,
+   "collector": 0.0,
+   "free_surface": 0.0,
+   "band_corrected": 0.0,
+   "band_bad": 0.0,
+   "charge_local": 0.0005429676706272451,
+   "charge_broad": 0.0,
+   "clip_high": 0.00026547388781431334,
+   "clip_low": 0.0,
+   "crack": 0.0,
+   "pore_band": 0.0
+  }
+ },
+ "masked_beyond_border": {
+  "BSE": 0.0,
+  "Inlens": 0.0005429676706272451,
+  "SE_type": 0.0005429676706272451
+ },
+ "batch": "Batch_3",
+ "site": "vc2whyaq",
+ "paths": {
+  "BSE": "data/Batch_3/img_vc2whyaq_BSE.tif",
+  "Inlens": "data/Batch_3/img_vc2whyaq_Inlens.tif",
+  "SE_type": "data/Batch_3/img_vc2whyaq_SE.tif"
+ },
+ "seconds_norm": 47.9,
+ "harmonisation": {
+  "BSE": {
+   "sigma_e_px": 1.4221880352293277,
+   "sigma_t_px": 1.3962085795872072,
+   "sigma_k_px": 0.0,
+   "resolution_outlier": false,
+   "sigma_e_after_px": 1.4221880352293277,
+   "noise_before": {
+    "alpha": 0.03899134311994569,
+    "beta": 0.013922272457030732
+   },
+   "noise_target": {
+    "alpha": 0.04507331353571918,
+    "beta": 0.02134361435082474
+   },
+   "noise_after": {
+    "alpha": 0.04475885474426376,
+    "beta": 0.021292332987028404
+   },
+   "noise_sigma_graphite_after": 0.2570042562513161,
+   "noise_sigma_graphite_target": 0.25771481891141595,
+   "noise_within_10pct": true,
+   "d_alpha": 0.006081970415773491,
+   "d_beta": 0.007421341893794009,
+   "added": true
+  },
+  "Inlens": {
+   "sigma_e_px": 1.0528619030648785,
+   "sigma_t_px": 1.2142698766507591,
+   "sigma_k_px": 0.6049240831840408,
+   "resolution_outlier": false,
+   "sigma_e_after_px": 1.1783063466949495,
+   "noise_before": {
+    "alpha": 0.0028121839867478507,
+    "beta": 0.0
+   },
+   "noise_target": {
+    "alpha": 0.01440301509560018,
+    "beta": 0.0
+   },
+   "noise_after": {
+    "alpha": 0.014736813905758745,
+    "beta": 0.0
+   },
+   "noise_sigma_graphite_after": 0.12139527958598204,
+   "noise_sigma_graphite_target": 0.12001256224079286,
+   "noise_within_10pct": true,
+   "d_alpha": 0.01159083110885233,
+   "d_beta": 0.0,
+   "added": true
+  },
+  "SE_type": {
+   "sigma_e_px": 1.1941828491656814,
+   "sigma_t_px": 1.250251553827863,
+   "sigma_k_px": 0.3702111162668146,
+   "resolution_outlier": false,
+   "sigma_e_after_px": 1.1715857588562422,
+   "noise_before": {
+    "alpha": 0.008217488242962723,
+    "beta": 0.0
+   },
+   "noise_target": {
+    "alpha": 0.012456698059181634,
+    "beta": 0.0
+   },
+   "noise_after": {
+    "alpha": 0.01238170113549301,
+    "beta": 0.0
+   },
+   "noise_sigma_graphite_after": 0.11127309259427011,
+   "noise_sigma_graphite_target": 0.11160957870712367,
+   "noise_within_10pct": true,
+   "d_alpha": 0.004239209816218911,
+   "d_beta": 0.0,
+   "added": true
+  }
+ },
+ "targets": {
+  "sigma_t": {
+   "BSE": 1.3962085795872072,
+   "Inlens": 1.2142698766507591,
+   "SE_type": 1.250251553827863
+  },
+  "noise": {
+   "BSE": {
+    "alpha": 0.04507331353571918,
+    "beta": 0.02134361435082474
+   },
+   "Inlens": {
+    "alpha": 0.01440301509560018,
+    "beta": 0.0
+   },
+   "SE_type": {
+    "alpha": 0.012456698059181634,
+    "beta": 0.0
+   }
+  },
+  "reference_sites": [
+   "ptg8lmto",
+   "utfgcjfa",
+   "vc2whyaq",
+   "xgj4xftb"
+  ]
+ },
+ "seconds_harm": 30.9
+}

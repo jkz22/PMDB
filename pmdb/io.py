@@ -475,3 +475,97 @@ def load_site(
         harmonise=harmonise,
         harmonised_stats=harmonised_stats,
     )
+
+
+# ----------------------------------------------------------------------------------------------
+# Physically cleaned / harmonised arrays (pmdb.clean, scripts/build_clean.py)
+# ----------------------------------------------------------------------------------------------
+DEFAULT_CLEAN_ROOT = REPO_ROOT / "outputs" / "clean"
+DEFAULT_CLEAN_HELDOUT_ROOT = REPO_ROOT / "outputs" / "clean_heldout"
+
+
+def get_clean_root(clean_root: str | Path | None = None, heldout: bool = False) -> Path:
+    """Root of the physical-clean outputs: argument, ``PMDB_CLEAN_ROOT`` env var, or the repo default."""
+    if clean_root is not None:
+        return Path(clean_root)
+    env = os.environ.get("PMDB_CLEAN_HELDOUT_ROOT" if heldout else "PMDB_CLEAN_ROOT")
+    if env:
+        return Path(env)
+    return DEFAULT_CLEAN_HELDOUT_ROOT if heldout else DEFAULT_CLEAN_ROOT
+
+
+def downsample_clean(z: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """2×2 mask-aware mean of a cleaned array (even H/W crop, as :func:`downsample_to_half`).
+
+    Only pixels valid for KPIs enter the mean; a half-resolution pixel keeps the OR of the four
+    mask words so no flag is lost (KPI-invalid bits are cleared when any parent is valid), and is NaN-free (a fully-masked block keeps the plain mean of
+    its four values, flagged invalid by its mask).
+    """
+    from pmdb import clean as _clean
+
+    H, W = z.shape
+    He, We = H - (H % 2), W - (W % 2)
+    zz = z[:He, :We].astype(np.float32)
+    mm = mask[:He, :We]
+    ok = _clean.valid_for_kpis(mm).astype(np.float32)
+    s = zz.reshape(He // 2, 2, We // 2, 2)
+    o = ok.reshape(He // 2, 2, We // 2, 2)
+    n_ok = o.sum(axis=(1, 3))
+    mean_ok = (s * o).sum(axis=(1, 3)) / np.maximum(n_ok, 1)
+    mean_all = s.mean(axis=(1, 3))
+    out = np.where(n_ok > 0, mean_ok, mean_all).astype(np.float32)
+    m4 = mm.reshape(He // 2, 2, We // 2, 2)
+    m_all = m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1]
+    # the mask word comes from the parents that contributed to the mean: a block with at least one valid
+    # parent is valid, and only carries clipping/crack/band bits of those parents (a clipped parent that
+    # was excluded must not make the clean mean invalid for statistics). A fully masked block keeps the
+    # OR of all four words.
+    m_ok = np.bitwise_or.reduce(np.where(o.astype(bool), m4, 0), axis=(1, 3))
+    mask_half = np.where(n_ok > 0, m_ok, m_all).astype(np.uint16)
+    return out, mask_half
+
+
+def load_clean(
+    batch: str,
+    site: str,
+    detector: Literal["BSE", "Inlens", "SE_type"] = "BSE",
+    kind: Literal["norm", "harm"] = "norm",
+    resolution: Literal["full", "half"] = "full",
+    clean_root: str | Path | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Load a physically normalised (``kind='norm'``) or harmonised (``'harm'``) detector image.
+
+    Returns ``(z, mask)``: ``z`` is float32 with pores ≈ 0 and graphite = 1 (``(I − D) / G(x, y)``,
+    see :mod:`pmdb.clean`), ``mask`` is the uint16 bit field of :mod:`pmdb.clean`
+    (``clean.valid_for_kpis(mask)`` / ``clean.valid_for_stats(mask)`` give boolean validity).
+    Masked pixels hold real, unfilled values and must not enter statistics, fits or KPIs.
+    ``resolution='half'`` is a mask-aware 2×2 mean computed on the fly (50 nm/px).
+    """
+    if detector not in ("BSE", "Inlens", "SE_type"):
+        raise ValueError(f"Invalid detector '{detector}'.")
+    if kind not in ("norm", "harm"):
+        raise ValueError(f"Invalid kind '{kind}'. Must be 'norm' or 'harm'.")
+    if resolution not in ("full", "half"):
+        raise ValueError(f"Invalid resolution '{resolution}'. Must be 'full' or 'half'.")
+    from pmdb import clean as _clean
+
+    root = get_clean_root(clean_root, heldout=batch.lower().startswith("batch_heldout"))
+    site_dir = root / batch / site
+    if not (site_dir / f"{detector}_{kind}.tif").exists():
+        raise FileNotFoundError(
+            f"No cleaned {kind} array for {batch}/{site}/{detector} under {root}; "
+            "run `python scripts/build_clean.py` (see docs/clean.md)."
+        )
+    z, mask = _clean.read_site(site_dir, detector, kind)
+    if resolution == "half":
+        z, mask = downsample_clean(z, mask)
+    return z, mask
+
+
+def list_clean_sites(clean_root: str | Path | None = None, heldout: bool = False) -> pd.DataFrame:
+    """The ``summary.csv`` of a physical-clean build (one row per site with all QC parameters)."""
+    root = get_clean_root(clean_root, heldout=heldout)
+    path = root / "summary.csv"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} not found; run scripts/build_clean.py first.")
+    return pd.read_csv(path)
