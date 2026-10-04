@@ -30,8 +30,10 @@ OUT = ROOT / "outputs/stitching/parents_annotated.png"
 UM_PER_PX = 0.05 * 4          # half-res (50 nm/px) further downsampled 4x for display
 CHAIN_GAP_UM = 25.0
 # Categorical slots 1-4 of the dataviz reference palette (validated: CVD dE 9.1, normal 22.9)
-COLORS = {"Batch_1": "#2a78d6", "Batch_2": "#eb6834", "Batch_3": "#1baf7a", "Batch_heldout": "#eda100"}
-LABELS = {"Batch_1": "Batch 1", "Batch_2": "Batch 2", "Batch_3": "Batch 3", "Batch_heldout": "held-out"}
+COLORS = {"Batch_1": "#2a78d6", "Batch_2": "#eb6834", "Batch_3": "#1baf7a"}
+LABELS = {"Batch_1": "Batch 1", "Batch_2": "Batch 2", "Batch_3": "Batch 3"}
+# Organiser-released ground truth for the held-out sites (2026-10-04); drawn dashed in the true colour.
+HELDOUT_TRUTH = {"3e122cbj": "Batch_2", "fn0mhxef": "Batch_1", "xrv9xvzb": "Batch_3"}
 # Held-out parents first, then parents split across batches, then single-batch parents.
 ORDER = ["G2316", "G2088", "G2048", "G2080", "G2068SE", "G2148", "G2156", "G2272",
          "G2060", "G1904", "G1612", "G1780", "G1880"]
@@ -86,10 +88,14 @@ def main() -> None:
         for s, b, x0, w, hh, img in items:
             ax.imshow(img, cmap="gray", vmin=0, vmax=1, extent=(x0, x0 + w, hh, 0),
                       interpolation="bilinear")
+            held = b == "Batch_heldout"
+            true_b = HELDOUT_TRUTH[s] if held else b
+            label = f"{s} · held-out, true {LABELS[true_b]}" if held else f"{s} · {LABELS[b]}"
             ax.add_patch(Rectangle((x0 + 0.6, 0.6), w - 1.2, hh - 1.2, fill=False,
-                                   ec=COLORS[b], lw=3.0, ls="--" if b == "Batch_heldout" else "-"))
-            ax.text(x0 + 3, 3, f"{s} · {LABELS[b]}", va="top", ha="left", fontsize=10,
-                    color="#1a1a19", bbox=dict(fc="white", ec=COLORS[b], lw=2.0, pad=2.5))
+                                   ec=COLORS[true_b], lw=3.0, ls="--" if held else "-"))
+            ax.text(x0 + 3, 3, label, va="top", ha="left", fontsize=10, color="#1a1a19",
+                    fontweight="bold" if held else "normal",
+                    bbox=dict(fc="white", ec=COLORS[true_b], lw=2.0, pad=2.5, ls="--" if held else "-"))
         for g0, g1 in gaps:
             ax.text((g0 + g1) / 2, h / 2, "gap\nunknown", ha="center", va="center",
                     fontsize=8, color="#555555")
@@ -98,11 +104,11 @@ def main() -> None:
         fig.text(0.002, (y_top + ax_h + 0.08) / fig_h, f"{p}  ({n} crop{'s' if n != 1 else ''}, {seam_txt})",
                  fontsize=11, fontweight="bold", color="#1a1a19", va="bottom")
 
-    handles = [Patch(fc="white", ec=COLORS[b], lw=3, ls="--" if b == "Batch_heldout" else "-",
-                     label=LABELS[b]) for b in COLORS]
+    handles = [Patch(fc="white", ec=COLORS[b], lw=3, label=LABELS[b]) for b in COLORS]
+    handles.append(Patch(fc="white", ec="#555555", lw=3, ls="--", label="held-out (dashed, true batch colour)"))
     fig.legend(handles=handles, loc="upper right", ncol=4, frameon=False, fontsize=12)
     fig.text(0.002, 1 - 0.35 / fig_h,
-             "Rebuilt parent images (BSE, left to right); each outlined crop is one site",
+             "Parent images (BSE, left to right), all 13 groups incl. single crops and non-adjacent pieces; each outlined crop is one site",
              fontsize=14, fontweight="bold", color="#1a1a19", va="top")
     fig.savefig(OUT, dpi=110, facecolor="white")
     print(f"wrote {OUT}")
