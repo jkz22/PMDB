@@ -517,7 +517,8 @@ R.embeddings = (root) => {
     const p = +s[`p_${s.call}`], ex = +s.explained_share;
     const bars = h('div', { class: 'pbar' }, ...['Batch_1', 'Batch_2', 'Batch_3'].map((b) =>
       h('span', { style: `width:${(+s[`p_${b}`] * 100).toFixed(1)}%;background:${BATCH_COLOR[b]}`, title: `${short(b)} ${(+s[`p_${b}`]).toFixed(2)}` })));
-    const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
+    const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => b[1] - a[1]);
+    const nmax = Math.max(0.05, ...nets.map(([, v]) => Math.abs(v)));
     return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', role: 'button', title: 'Click to expand', 'data-site': s.site,
       onclick: (e) => { if (e.target.closest('a')) return; openCard(e.currentTarget); },
       onkeydown: (e) => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(e.currentTarget); } } },
@@ -533,7 +534,12 @@ R.embeddings = (root) => {
       h('div', { class: 'src' }, 'red zones support the call · blue argue against · yellow = 3 strongest'),
       h('p', {}, SITE_STORY[s.site].text),
       ...(storyIsStale(SITE_STORY[s.site], s.call) ? [h('p', { class: 'src' }, `Explanation written when this site was called ${short(SITE_STORY[s.site].call)}; the loaded call is ${short(s.call)}, so the text may be out of date. Chips and bars are from the loaded data.`)] : []),
-      h('div', { class: 'chips' }, ...nets.map(([k, v]) => h('span', { class: 'chip' }, `${v >= 0 ? '▲' : '▼'} ${KPI_NAME[k]}`))),
+      h('div', { class: 'ev' },
+        h('div', { class: 'ev-head' }, h('span', {}, `against ${short(s.call)}`), h('span', {}, `supports ${short(s.call)}`)),
+        ...nets.map(([k, v]) => h('div', { class: 'ev-row', title: `${KPI_NAME[k]}: ${v >= 0 ? 'supports' : 'argues against'} ${short(s.call)} over ${short(s.runner_up)} (${v.toFixed(2)})` },
+          h('span', { class: 'ev-l' }, v < 0 ? h('i', { style: `width:${Math.abs(v) / nmax * 100}%` }) : null),
+          h('span', { class: 'ev-name' }, KPI_NAME[k]),
+          h('span', { class: 'ev-r' }, v >= 0 ? h('i', { style: `width:${v / nmax * 100}%` }) : null)))),
       h('div', { class: 'split' }, h('span', { style: `width:${ex * 100}%`, class: 'meas' }), h('span', { style: `width:${(1 - ex) * 100}%`, class: 'tex' })),
       h('div', { class: 'src' }, `${Math.round(ex * 100)}% measured microstructure · ${Math.round((1 - ex) * 100)}% fine texture`));
   })));
