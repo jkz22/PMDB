@@ -154,6 +154,22 @@ def test_figures_only_without_summary_fails_clearly(tmp_path):
         _eval_script().resolve_methods(None, True, tmp_path)
 
 
+def test_figures_only_with_methods_recomputes_missing_summary(tmp_path, monkeypatch):
+    import sys
+
+    import pandas as pd
+
+    mod = _eval_script()
+    pd.DataFrame({"method": ["none"], "site": ["a"]}).to_csv(tmp_path / "site_metrics.csv", index=False)
+    seen = {}
+    monkeypatch.setattr(mod, "_summarise", lambda df: pd.DataFrame({"method": ["none"]}))
+    monkeypatch.setattr(mod, "list_clean_sites", lambda heldout=False: {"batch": ["B"], "site": ["a"]})
+    monkeypatch.setattr(mod, "_figures", lambda out, methods, sites, hs, hrows, loader, sdf, summ: seen.update(m=methods, s=summ))
+    monkeypatch.setattr(sys, "argv", ["x", "--out", str(tmp_path), "--figures-only", "--methods", "none"])
+    mod.main()
+    assert seen["m"] == ["none"] and list(seen["s"]["method"]) == ["none"]
+
+
 def test_hybrid_spectrum_is_a_spectrum_model_and_lists_as_a_method(tmp_path):
     assert "hybrid_spectrum" in S.METHODS and "hybrid_spectrum" in S.SPECTRUM_METHODS
     rng = np.random.default_rng(0)
