@@ -20,7 +20,7 @@ def test_config_gate():
 
 def test_config_keys():
     assert set(load_params()) == {"version", "mesh", "soc", "si", "graphite", "binder", "pore",
-                                  "solver", "remediation", "features", "gif", "gates"}
+                                  "solver", "remediation", "features", "gif", "gates", "mechanics"}
 
 
 def test_config_hash():

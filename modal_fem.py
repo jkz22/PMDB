@@ -247,7 +247,7 @@ def run_cases(cases: list[dict], tag: str, cpu: float, memory: int, timeout: int
     return {"first": recs1, "retry": recs2}
 
 
-@app.function(cpu=4.0, memory=16384, timeout=3000, retries=0, volumes={"/data": data_vol})
+@app.function(cpu=4.0, memory=16384, timeout=10000, retries=0, volumes={"/data": data_vol})
 def diag(runs: list[dict]) -> list[dict]:
     """Debug probe on the Stage-3 window: each run = {frames, orientation, overrides}."""
     os.environ["OMP_NUM_THREADS"] = "4"
@@ -269,11 +269,22 @@ def diag(runs: list[dict]) -> list[dict]:
     for run in runs:
         pp = load_params()
         pp["solver"].update(run.get("overrides") or {})
+        for kk in ("compaction_Jc", "compaction_kappa_MPa"):
+            if run.get(kk) is not None:
+                pp["pore"][kk] = run[kk]
         if run.get("pore_E"):
             pp["pore"]["E_rel_binder"] = run["pore_E"]
         fr = np.array(run["frames"], dtype=float)
+        from petsc4py import PETSc
+        for kopt in ("snes_monitor", "snes_linesearch_monitor"):
+            if run.get("monitor"):
+                PETSc.Options().setValue(f"fem_{kopt}", "")
+            else:
+                PETSc.Options().delValue(f"fem_{kopt}")
         r = simulate(lab, 0.1, lambda x: phase_properties(x, pp), BCSpec(run.get("orientation", "bottom")),
-                     pp["solver"], fr, extra_targets=())
+                     pp["solver"], fr, extra_targets=(),
+                     compaction=(pp["pore"]["compaction_Jc"], pp["pore"]["compaction_kappa_MPa"]),
+                     mechanics=pp.get("mechanics", "finite"))
         info = {"run": run, "failed_at_s": r.failed_at_s, "wall_s": r.wall_s,
                 "substeps": [(x["s"], x["ds"], x["its"], x["reason"], x["fnorm"], x["error"], round(x["wall_s"], 1))
                              for x in r.substeps]}
@@ -283,6 +294,11 @@ def diag(runs: list[dict]) -> list[dict]:
                 info[f"J_{f}"] = {n: [float(np.nanmin(J[lab == k])), float(np.nanmean(J[lab == k]))]
                                   for n, k in (("binder", 0), ("si", 1), ("gr", 2), ("pore", 3))
                                   if (lab == k).any()}
+                if (lab == 3).any():
+                    jp = J[lab == 3]
+                    info[f"Jpore_{f}"] = {"n": int(jp.size), "lt0.5": int((jp < 0.5).sum()),
+                                          "lt0.1": int((jp < 0.1).sum()),
+                                          "q": [float(v) for v in np.quantile(jp, [0, .01, .05, .5])]}
         out.append(info)
     return out
 
@@ -502,7 +518,7 @@ def main(mode: str, k: str = "", orientation: str = "both", sites: str = "", cro
             print("DIAG", json.dumps(r))
         w = time.time() - t0
         append_ledger([dict(utc=_utc(), mode="diag", tag="diag", attempt=1, cpu=4.0, memory_mb=16384,
-                            timeout_s=3000, wall_s=round(w, 1), cost_usd=round(cost_usd(w, 4.0, 16384), 4),
+                            timeout_s=10000, wall_s=round(w, 1), cost_usd=round(cost_usd(w, 4.0, 16384), 4),
                             status="ok")])
         code = 0
     elif mode == "sync":

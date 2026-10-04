@@ -53,7 +53,9 @@ def run_case(batch: str, site: str, orientation: Literal["bottom", "top"], *,
 
     r = simulate(labels, px_um, lambda s: phase_properties(s, p), BCSpec(orientation), p["solver"],
                  np.linspace(0.0, 1.0, p["soc"]["frames"]), extra_targets=(p["soc"]["s_star"],),
-                 log=lambda rec: log(f"  substep {rec}"))
+                 log=lambda rec: log(f"  substep {rec}"),
+                 compaction=(p["pore"]["compaction_Jc"], p["pore"]["compaction_kappa_MPa"]),
+                 mechanics=p.get("mechanics", "finite"))
     if fields_path:
         save_npz(r, Path(fields_path))
     site_rows, tile_rows = run_curves(r, orientation, p, window=crop_um is not None)

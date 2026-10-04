@@ -175,7 +175,8 @@ def test_t6_soft_pores():
     p = load_params()
     frames = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
     r = simulate(lab, 0.1, lambda s: phase_properties(s, p), BCSpec("bottom", "both"), load_params()["solver"],
-                 frames, extra_targets=(p["soc"]["s_star"],))
+                 frames, extra_targets=(p["soc"]["s_star"],),
+                 compaction=(p["pore"]["compaction_Jc"], p["pore"]["compaction_kappa_MPa"]))
     pore = lab == PORE
     minj = [float(np.nanmin(r.fields["J"][i][pore])) if r.converged[i] else float("nan")
             for i in range(len(frames))]
@@ -183,3 +184,51 @@ def test_t6_soft_pores():
                                      "min_pore_J": minj, "n_substeps": len(r.substeps)}))
     assert r.converged[1]
     assert minj[1] < 0.9
+
+
+def test_p30_compaction_barrier():
+    """1-cell uniaxial compression: ln(J/Jc)^2 barrier is zero for J >= Jc, finite and increasing below."""
+    from dolfinx import fem, mesh
+    from mpi4py import MPI
+    import ufl
+    from pmdb.fem.solver import compaction_energy
+
+    msh = mesh.create_unit_square(MPI.COMM_WORLD, 1, 1, mesh.CellType.quadrilateral)
+    V = fem.functionspace(msh, ("Lagrange", 1, (2,)))
+    u = fem.Function(V)
+    Jc, kappa = 0.3, 500.0
+    form = fem.form(compaction_energy(ufl.det(ufl.Identity(2) + ufl.grad(u)), Jc, kappa) * ufl.dx)
+    vals = []
+    for J in (1.0, 0.5, 0.3, 0.2, 0.1, 0.01, 1e-4):
+        u.interpolate(lambda x, J=J: np.vstack([0 * x[0], (J - 1.0) * x[1]]))
+        vals.append(fem.assemble_scalar(form))
+        exp = 0.5 * kappa * np.log(J / Jc) ** 2 if J < Jc else 0.0
+        assert vals[-1] == pytest.approx(exp, rel=1e-9, abs=1e-12)
+    assert max(abs(v) for v in vals[:3]) < 1e-20
+    assert all(np.isfinite(vals)) and all(b > a for a, b in zip(vals[2:], vals[3:]))
+
+
+def test_linear_t1a_free_eigenstretch():
+    lab = np.full((4, 6), SI, dtype=np.uint8)
+    E = 1000.0
+    fn = _uniform(lambda s: PhaseProps(E, 0.3, (1 + 0.2 * s, 1 + 0.1 * s, 1.0)))
+    r = simulate(lab, 1.0, fn, BCSpec("bottom", "left"), _opts(), np.array([0.0, 1.0]), mechanics="linear")
+    assert r.converged.all()
+    assert np.allclose(r.fields["J"][1], 1 + np.log(1.2) + np.log(1.1), rtol=1e-6, atol=0)
+    smax = max(np.abs(r.fields[k][1]).max() for k in ("sxx", "szz", "sxz", "syy"))
+    assert smax < 1e-8 * E
+
+
+def test_linear_clamped_column_closed_form():
+    lab = np.full((4, 6), SI, dtype=np.uint8)
+    E, nu = 1000.0, 0.3
+    lx, lz, ly = 1.2, 1.1, 1.05
+    fn = _uniform(lambda s: PhaseProps(E, nu, (1 + (lx - 1) * s, 1 + (lz - 1) * s, 1 + (ly - 1) * s)))
+    r = simulate(lab, 1.0, fn, BCSpec("bottom", "both"), _opts(), np.array([0.0, 1.0]), mechanics="linear")
+    mu, lam = E / (2 * (1 + nu)), E * nu / ((1 + nu) * (1 - 2 * nu))
+    ezz_e = lam * (np.log(lx) + np.log(ly)) / (lam + 2 * mu)
+    assert np.allclose(r.fields["J"][1], 1 + np.log(lz) + ezz_e, rtol=1e-6, atol=0)
+    assert np.allclose(r.fields["szz"][1], 0.0, atol=1e-8 * E)
+    tr = -np.log(lx) + ezz_e - np.log(ly)
+    assert np.allclose(r.fields["sxx"][1], lam * tr + 2 * mu * (-np.log(lx)), rtol=1e-7)
+    assert np.allclose(r.fields["syy"][1], lam * tr + 2 * mu * (-np.log(ly)), rtol=1e-7)

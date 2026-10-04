@@ -12,7 +12,7 @@ from typing import Callable, Literal, Sequence
 import numpy as np
 import ufl
 from dolfinx import fem, mesh
-from dolfinx.fem.petsc import NonlinearProblem
+from dolfinx.fem.petsc import LinearProblem, NonlinearProblem
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -28,6 +28,11 @@ class BCSpec:
     lateral: Literal["both", "left"] = "both"  # "left" = test-only roller support
 
 
+def compaction_energy(J, Jc: float, kappa: float):
+    """P30 pore compaction barrier per unit volume: (kappa/2) ln(J/Jc)^2 for J < Jc, else 0 (C1 at Jc)."""
+    return ufl.conditional(ufl.lt(J, Jc), 0.5 * kappa * ufl.ln(J / Jc) ** 2, 0.0)
+
+
 def _interp_points(V0):
     ip = V0.element.interpolation_points
     return ip() if callable(ip) else ip
@@ -35,8 +40,13 @@ def _interp_points(V0):
 
 def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[int, PhaseProps]],
              bc: BCSpec, solver_opts: dict, frames: np.ndarray, extra_targets: Sequence[float] = (),
-             log: Callable[[dict], None] | None = None) -> SimResult:
+             log: Callable[[dict], None] | None = None,
+             compaction: tuple[float, float] | None = None, mechanics: str = "finite") -> SimResult:
+    """compaction = (J_c, kappa_MPa) adds the P30 barrier to PORE cells only (stress post-processing excludes it)."""
     assert MPI.COMM_WORLD.size == 1, "the FEM run is serial"
+    if mechanics == "linear":
+        return _simulate_linear(labels, px_um, props_fn, bc, frames)
+    assert mechanics == "finite", mechanics
     t_start = time.time()
     labels = np.asarray(labels, dtype=np.uint8)
     H, W = labels.shape
@@ -63,6 +73,9 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
     label_by_dof = np.empty(ncell, dtype=np.uint8)
     label_by_dof[cell_dofs] = labels.ravel()[pix]
 
+    pore_f = fem.Function(V0)
+    pore_f.x.array[:] = (label_by_dof == PORE).astype(float)
+
     def set_coeffs(s: float) -> None:
         props = props_fn(s)
         tab = np.zeros((5, 5))
@@ -83,6 +96,8 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
     lnJe = ufl.ln(Je)
     trCe = ufl.tr(Fe2.T * Fe2) + 1.0 / ly_f**2
     psi = Jlam * (mu_f / 2 * (trCe - 3) - mu_f * lnJe + lam_f / 2 * lnJe**2)
+    if compaction is not None:
+        psi = psi + pore_f * compaction_energy(ufl.det(F2), float(compaction[0]), float(compaction[1]))
     P = ufl.diff(psi, F2)
     dx = ufl.Measure("dx", domain=msh, metadata={"quadrature_degree": int(solver_opts["quadrature_degree"])})
     F_res = ufl.inner(P, ufl.grad(ufl.TestFunction(V))) * dx
@@ -256,3 +271,122 @@ def simulate(labels: np.ndarray, px_um: float, props_fn: Callable[[float], dict[
     return SimResult(labels=labels, px_um=h, s=frames, converged=converged, u_nodes=u_nodes,
                      fields=fields, failed_at_s=failed_at_s, substeps=substeps,
                      wall_s=time.time() - t_start)
+
+
+def _simulate_linear(labels, px_um, props_fn, bc: BCSpec, frames) -> SimResult:
+    """P31: small-strain plane-strain elasticity with logarithmic eigenstrain; one linear solve per frame."""
+    t_start = time.time()
+    labels = np.asarray(labels, dtype=np.uint8)
+    H, W = labels.shape
+    h = float(px_um)
+    frames = np.asarray(frames, dtype=float)
+    msh = mesh.create_rectangle(
+        MPI.COMM_WORLD, [np.array([0.0, 0.0]), np.array([W * h, H * h])], [W, H], mesh.CellType.quadrilateral)
+    tdim = msh.topology.dim
+    ncell = msh.topology.index_map(tdim).size_local
+    mid = mesh.compute_midpoints(msh, tdim, np.arange(ncell, dtype=np.int32))
+    col = np.floor(mid[:, 0] / h).astype(np.int64)
+    row = (H - 1 - np.floor(mid[:, 1] / h)).astype(np.int64)
+    pix = row * W + col
+    assert ncell == H * W and np.array_equal(np.sort(pix), np.arange(H * W)), "pixel map is not a permutation"
+    V = fem.functionspace(msh, ("Lagrange", 1, (2,)))
+    V0 = fem.functionspace(msh, ("DG", 0))
+    u = fem.Function(V, name="u")
+    mu_f, lam_f, ex_f, ez_f, ey_f = (fem.Function(V0) for _ in range(5))
+    cell_dofs = np.asarray(V0.dofmap.list)[:, 0]
+    label_by_dof = np.empty(ncell, dtype=np.uint8)
+    label_by_dof[cell_dofs] = labels.ravel()[pix]
+
+    def set_coeffs(s: float) -> None:
+        props = props_fn(s)
+        tab = np.zeros((5, 5))
+        for lab in LABELS:
+            pp = props[lab]
+            mu, lam = lame(pp.E, pp.nu)
+            tab[lab] = (mu, lam, np.log(pp.stretch[0]), np.log(pp.stretch[1]), np.log(pp.stretch[2]))
+        vals = tab[label_by_dof]
+        for k, f in enumerate((mu_f, lam_f, ex_f, ez_f, ey_f)):
+            f.x.array[:] = vals[:, k]
+
+    def sym(w):
+        return ufl.sym(ufl.grad(w))
+
+    v = ufl.TestFunction(V)
+    uu = ufl.TrialFunction(V)
+    I2 = ufl.Identity(2)
+    a = ufl.inner(lam_f * ufl.div(uu) * I2 + 2 * mu_f * sym(uu), sym(v)) * ufl.dx
+    eig = ufl.as_matrix([[ex_f, 0], [0, ez_f]])
+    L = ufl.inner(lam_f * (ex_f + ez_f + ey_f) * I2 + 2 * mu_f * eig, sym(v)) * ufl.dx
+
+    fdim = tdim - 1
+    bcs = []
+
+    def add_bc(sub: int, locator) -> None:
+        Vs, _ = V.sub(sub).collapse()
+        facets = mesh.locate_entities_boundary(msh, fdim, locator)
+        dofs = fem.locate_dofs_topological((V.sub(sub), Vs), fdim, facets)
+        z = fem.Function(Vs)
+        z.x.array[:] = 0.0
+        bcs.append(fem.dirichletbc(z, dofs, V.sub(sub)))
+
+    add_bc(0, lambda x: np.isclose(x[0], 0.0))
+    if bc.lateral == "both":
+        add_bc(0, lambda x: np.isclose(x[0], W * h))
+    add_bc(1, (lambda x: np.isclose(x[1], 0.0)) if bc.orientation == "bottom"
+           else (lambda x: np.isclose(x[1], H * h)))
+    problem = LinearProblem(a, L, u=u, bcs=bcs, petsc_options_prefix="lin_",
+                            petsc_options={"ksp_type": "preonly", "pc_type": "lu",
+                                           "pc_factor_mat_solver_type": "mumps"})
+
+    e = sym(u)
+    tr = e[0, 0] + e[1, 1] - (ex_f + ez_f + ey_f)
+    exx, ezz, exz, eyy = e[0, 0] - ex_f, e[1, 1] - ez_f, e[0, 1], -ey_f
+    expr = {
+        "J": 1.0 + e[0, 0] + e[1, 1],
+        "sxx": lam_f * tr + 2 * mu_f * exx,
+        "szz": lam_f * tr + 2 * mu_f * ezz,
+        "sxz": 2 * mu_f * exz,
+        "syy": lam_f * tr + 2 * mu_f * eyy,
+    }
+    ip = _interp_points(V0)
+    expr_c = {k: fem.Expression(x, ip) for k, x in expr.items()}
+    out_f = {k: fem.Function(V0) for k in expr}
+    X = V.tabulate_dof_coordinates()
+    ncol = np.rint(X[:, 0] / h).astype(np.int64)
+    nrow = H - np.rint(X[:, 1] / h).astype(np.int64)
+
+    nfr = len(frames)
+    u_nodes = np.full((nfr, H + 1, W + 1, 2), np.nan, dtype=np.float32)
+    fields = {k: np.full((nfr, H, W), np.nan, dtype=np.float32) for k in FIELD_KEYS}
+    converged = np.zeros(nfr, dtype=bool)
+    substeps: list[dict] = []
+    failed_at_s = float("nan")
+    for i, s_i in enumerate(frames):
+        t0 = time.time()
+        err = None
+        try:
+            set_coeffs(float(s_i))
+            problem.solve()
+            ok = bool(np.all(np.isfinite(u.x.array)))
+        except Exception as exc:  # noqa: BLE001
+            ok, err = False, repr(exc)[:500]
+        substeps.append({"s": float(s_i), "ds": 0.0, "its": 1, "reason": 1 if ok else -99, "ok": ok,
+                         "wall_s": time.time() - t0, "fnorm": float("nan"), "error": err})
+        if not ok:
+            failed_at_s = float(s_i)
+            break
+        uv = u.x.array.reshape(-1, 2)
+        u_nodes[i, nrow, ncol, :] = uv
+        fl = {}
+        for k, ec in expr_c.items():
+            out_f[k].interpolate(ec)
+            arr = np.empty(H * W)
+            arr[pix] = out_f[k].x.array[cell_dofs]
+            fl[k] = arr.reshape(H, W)
+        fl["vm"] = np.sqrt(0.5 * ((fl["sxx"] - fl["szz"]) ** 2 + (fl["szz"] - fl["syy"]) ** 2
+                                  + (fl["syy"] - fl["sxx"]) ** 2) + 3.0 * fl["sxz"] ** 2)
+        for k in FIELD_KEYS:
+            fields[k][i] = fl[k].astype(np.float32)
+        converged[i] = True
+    return SimResult(labels=labels, px_um=h, s=frames, converged=converged, u_nodes=u_nodes, fields=fields,
+                     failed_at_s=failed_at_s, substeps=substeps, wall_s=time.time() - t_start)
