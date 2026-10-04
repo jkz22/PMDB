@@ -49,6 +49,20 @@ def _site_weights(train, n_patches, site_batch):
     return w * len(w) / w.sum()
 
 
+def fit_full_probe(X_by_site, site_batch, seed=0):
+    """Final probe on all given sites, same config as one LOPO fold. Returns (scaler, pca, clf)."""
+    sites = list(X_by_site)
+    X = np.concatenate([X_by_site[s] for s in sites]).astype(np.float32)
+    sc = StandardScaler().fit(X)
+    pca = PCA(n_components=N_PCA, svd_solver="randomized", random_state=seed).fit(sc.transform(X))
+    Z = pca.transform(sc.transform(X))
+    y = np.concatenate([[site_batch[s]] * len(X_by_site[s]) for s in sites])
+    w = _site_weights(sites, [len(X_by_site[s]) for s in sites], site_batch)
+    clf = LogisticRegression(C=C, max_iter=3000).fit(Z, y, sample_weight=w)
+    assert list(clf.classes_) == BATCHES
+    return sc, pca, clf
+
+
 def _fit_predict(folds, site_batch, strict=True):
     rows = []
     for par, test, train, Z in folds:
