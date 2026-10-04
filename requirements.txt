@@ -30,6 +30,9 @@ SimpleITK
 intensity-normalization
 basicpy
 
+# Shift harmonisation (pmdb/harmonise_shift.py, scripts/run_combat_features.py); `modal` only for scripts/modal_cut.py
+neuroHarmonize
+
 # Materials-KPI pipeline (src/) and its converter
 pyarrow==25.0.1
 PyYAML==6.0.3

@@ -1,0 +1,40 @@
+[
+ {
+  "table": "fingerprint",
+  "n_features": 16,
+  "session_lopo_acc_before": 0.5161290322580645,
+  "strong_vs_rest_lopo_acc_before": 0.8064516129032258,
+  "batch_lopo_acc_logreg_before": 0.5161290322580645,
+  "fingerprint_loo_acc_before": 0.6774193548387096,
+  "session_lopo_acc_insample": 0.45161290322580644,
+  "strong_vs_rest_lopo_acc_insample": 0.7741935483870968,
+  "batch_lopo_acc_logreg_insample": 0.6129032258064516,
+  "fingerprint_loo_acc_insample": 0.5806451612903226,
+  "session_lopo_acc_nested": 0.5161290322580645,
+  "strong_vs_rest_lopo_acc_nested": 0.8064516129032258,
+  "batch_lopo_acc_logreg_nested": 0.45161290322580644,
+  "session_sizes": {
+   "clean": 22,
+   "mild": 5,
+   "strong": 4
+  }
+ },
+ {
+  "table": "kpis",
+  "n_features": 42,
+  "session_lopo_acc_before": 0.5161290322580645,
+  "strong_vs_rest_lopo_acc_before": 0.8064516129032258,
+  "batch_lopo_acc_logreg_before": 0.3870967741935484,
+  "session_lopo_acc_insample": 0.3870967741935484,
+  "strong_vs_rest_lopo_acc_insample": 0.6129032258064516,
+  "batch_lopo_acc_logreg_insample": 0.6451612903225806,
+  "session_lopo_acc_nested": 0.41935483870967744,
+  "strong_vs_rest_lopo_acc_nested": 0.7419354838709677,
+  "batch_lopo_acc_logreg_nested": 0.45161290322580644,
+  "session_sizes": {
+   "clean": 22,
+   "mild": 5,
+   "strong": 4
+  }
+ }
+]
