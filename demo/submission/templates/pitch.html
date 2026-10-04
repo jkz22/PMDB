@@ -132,16 +132,18 @@
   <h1>The obvious model learns the microscope, not the material.</h1>
   <div class="tiles fill">
     <div class="tile">
-      <div class="label">Intensity-only model</div>
+      <div class="label">A model that reads brightness</div>
       <div class="value bad">{{intensity_acc}}</div>
+      <div class="note">the best raw score in the room</div>
     </div>
     <div class="tile" style="flex:1.6">
-      <div class="label">Same electrode, slightly brighter image</div>
+      <div class="label">Then we turned the brightness knob &mdash; one click</div>
       <div class="flip">
-        <span class="chip">Batch 1 ✓</span>
-        <span class="arrow">→</span>
-        <span class="chip">Batch 3 ✗</span>
+        <span class="chip" style="color:#1a7f37;border-color:#1a7f37;font-size:min(5vh,2.6vw);font-weight:800;padding:1vh 1.2vw">Batch 1 &#10003;</span>
+        <span class="arrow" style="font-size:min(5vh,2.6vw)">&rarr;</span>
+        <span class="chip" style="color:#cf222e;border-color:#cf222e;font-size:min(5vh,2.6vw);font-weight:800;padding:1vh 1.2vw">Batch 3 &#10007;</span>
       </div>
+      <div class="note" style="font-size:min(2.8vh,1.5vw)">Same electrode. Same material. <b>Its answer flipped.</b></div>
     </div>
   </div>
   <div class="foot"><span>The best score in the room is a brightness knob away from nonsense. So we made a rule: nothing we build may read grey levels &mdash; only the microstructure itself.</span><span>scripts/demo_confound.py</span></div>
