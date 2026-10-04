@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs } from "../public/embed_logic.js";
+import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs, confidence } from "../public/embed_logic.js";
 
 const rows = [
   { site: "a", parent: "p1", pc: "PC10", explained: "False" },
@@ -53,4 +53,15 @@ test("reopenSite keeps the overlay only for a displayed site on the calls view",
   assert.equal(reopenSite("a", "embeddings", ["b"]), null);
   assert.equal(reopenSite("a", "proof", ["a"]), null);
   assert.equal(reopenSite(null, "embeddings", ["a"]), null);
+});
+
+test("confidence label follows the displayed 2-dp value", () => {
+  assert.equal(confidence(0.666).label, "MEDIUM"); // displays 0.67
+  assert.equal(confidence(0.664).label, "LOW");    // displays 0.66
+  assert.equal(confidence(0.796).label, "HIGH");   // displays 0.80
+  assert.equal(confidence(0.5).cls, "lo");
+  for (const p of [0.664, 0.665, 0.666, 0.669, 0.794, 0.795]) {
+    const c = confidence(p);
+    assert.equal(c.label === "LOW", c.shown < 0.67);
+  }
 });

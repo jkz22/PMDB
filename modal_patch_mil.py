@@ -481,7 +481,7 @@ def evidence_render(tag: str, labels: list[dict], targets: list[dict]) -> dict:
             hexc = lambda c: np.array([int(c[i:i + 2], 16) for i in (1, 3, 5)]) / 255.0
             cols = {True: (hexc("#e8603c"), hexc("#a01818")), False: (hexc("#5aa0e6"), hexc("#1a3f9e"))}
             for v, (_, _, y0, x0) in zip(vote, coords):
-                a = float(np.clip(abs(v) / scale, 0.15, 1.0)) * 0.75
+                a = float(np.clip(abs(v) / scale, 0.15, 1.0)) * 0.75 if v != 0 else 0.0
                 sl = (slice(y0, min(y0 + 224, h)), slice(x0, min(x0 + 224, w)))
                 for mask, c in zip((m.si[sl], m.pore[sl]), cols[bool(v > 0)]):
                     reg = rgb[sl]
