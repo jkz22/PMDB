@@ -445,6 +445,7 @@ def _probe(root: Path, n_perm: int = 200, centre: str = "none") -> None:
 def _menu_or_test(mode: str, root: Path) -> None:
     import pandas as pd
 
+    from pmdb import batch_menu as bm
     from pmdb.batch_menu import feature_table, labelled_sites
     from pmdb.parents import parent_groups, write_parent_groups
     from pmdb.within_parent import signal_sentence
@@ -467,7 +468,7 @@ def _menu_or_test(mode: str, root: Path) -> None:
         _atomic_write(out / "menu_predictions.csv", pd.DataFrame(res["menu_predictions"]).to_csv(index=False).encode())
         _atomic_write(sel_path, json.dumps({**sel, "selected_on": "LOPO, 34 labelled sites, r3 run"},
                                            indent=2).encode())
-        for o in ("fingerprint", "fingerprint_centred", "patch", "ensemble", "ensemble_centred"):
+        for o in bm.OPTIONS:
             r = summ[o]
             print(f"{o:20s} acc {r['accuracy']:.3f} bal {r['balanced_accuracy']:.3f} rubric {r['rubric']:.3f} "
                   f"(SE {r['rubric_se']:.3f}) all-high {r['rubric_all_high']:.3f} n_high {r['n_high']}")
@@ -498,11 +499,9 @@ def _menu_or_test(mode: str, root: Path) -> None:
     out = root / "outputs" / "test"
     _atomic_write(out / "menu_evaluation.json",
                   json.dumps({"summary": res["summary"], "selection": selection}, indent=2).encode())
-    _atomic_write(out / "final_predictions.csv", preds.to_csv(index=False).encode())
-    md = ["| site | batch | confidence | explanation |", "|---|---|---|---|"]
-    for r in preds.itertuples():
-        md.append(f"| {r.site} | Batch {r.assigned.split('_')[1]} | {r.confidence} | {r.explanation} |")
-    _atomic_write(out / "submission.md", ("\n".join(md) + "\n").encode())
+    # every menu option per site; the final call (selected model fem_a1) and submission.md come from
+    # scripts/score_test_all.py
+    _atomic_write(out / "menu_predictions.csv", preds.to_csv(index=False).encode())
     for r in preds.itertuples():
         print(f"{r.site} -> {r.assigned} ({r.confidence})")
     print(f"test: wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")

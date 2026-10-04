@@ -18,15 +18,15 @@ from pmdb import patch_mil as pm
 
 ROOT = Path(__file__).resolve().parents[1]
 BATCHES = pm.BATCHES
-OPTIONS = ("fingerprint", "fingerprint_centred", "patch", "ensemble", "ensemble_centred")
-N_COMPONENTS = {"fingerprint": 1, "fingerprint_centred": 1, "patch": 1, "ensemble": 2, "ensemble_centred": 2}
+# Ensembles (patch + fingerprint) removed from the menu on test day 2026-10-04. The selected model is fem_a1
+# (outputs/menu/selection.json), scored outside this module by scripts/score_test_all.py.
+OPTIONS = ("fingerprint", "fingerprint_centred", "patch")
+N_COMPONENTS = {"fingerprint": 1, "fingerprint_centred": 1, "patch": 1}
 # option -> (call column, correct column, flag column)
 OPTION_COLS = {
     "fingerprint": ("fp_call", "correct_fp", "flag_fingerprint"),
     "fingerprint_centred": ("fpc_call", "correct_fpc", "flag_fingerprint_centred"),
     "patch": ("patch_call", "correct_patch", "flag_patch"),
-    "ensemble": ("ens_call", "correct_ens", "flag_ensemble"),
-    "ensemble_centred": ("ensc_call", "correct_ensc", "flag_ensemble_centred"),
 }
 FP_TAU = pm.SOFTMAX_TAU  # same temperature as the patch softmax_conf
 SINGLETON_RULE = ("A site that is the only member of its parent in the pool is excluded from centred-model "
@@ -304,25 +304,13 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
                 fpc_ood = bool(fpcf["fp_ood"].iloc[0])
             except (ValueError, AssertionError, KeyError, np.linalg.LinAlgError):
                 pfc, fcc = pf, fc
-        p_ens, p_ensc = plo.ensemble(p_patch, pf), plo.ensemble(p_patch, pfc)
         fp_ood = bool(fph["fp_ood"].iloc[0])
-        opt = selection["option"]
-        call, corr, _ = OPTION_COLS[opt]
-        if opt == "fingerprint":
-            prob, k = pf, fc
-            high = plo_global(menu_df[corr]) and not fp_ood
-        elif opt == "fingerprint_centred":
-            prob, k = pfc, fcc
-            high = plo_global(menu_df[corr]) and not fpc_ood
-        elif opt == "patch":
-            prob, k = p_patch, pc
-            high = plo_global(menu_df[corr])
-        elif opt == "ensemble":
-            prob, k = p_ens, int(np.argmax(p_ens))
-            high = plo.heldout_flag(menu_df[corr], menu_df["agree"], pc == fc) and not fp_ood
-        else:
-            prob, k = p_ensc, int(np.argmax(p_ensc))
-            high = plo.heldout_flag(menu_df[corr], menu_df["agree_fpc"], pc == fcc) and not fpc_ood
+        per = {"fingerprint": (pf, fc, plo_global(menu_df["correct_fp"]) and not fp_ood),
+               "fingerprint_centred": (pfc, fcc, plo_global(menu_df["correct_fpc"]) and not fpc_ood),
+               "patch": (p_patch, pc, plo_global(menu_df["correct_patch"]))}
+        # the selected model may live outside the menu (fem_a1); the menu's own pick is then menu_option
+        opt = selection.get("menu_option", selection["option"])
+        prob, k, high = per[opt]
         if selection["confidence_mode"] == "all_low":
             high = False
         sel = patch_site_h == h
@@ -334,6 +322,8 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
             "site": site, "assigned": BATCHES[k], "confidence": "high" if high else "low", "option": opt,
             **{f"p_{b}": float(prob[j]) for j, b in enumerate(BATCHES)},
             "patch_call": BATCHES[pc], "fingerprint_call": BATCHES[fc], "fingerprint_centred_call": BATCHES[fcc],
+            **{f"p_{o}_{b}": float(per[o][0][j]) for o in OPTIONS for j, b in enumerate(BATCHES)},
+            **{f"{o}_confidence": "high" if per[o][2] else "low" for o in OPTIONS},
             "n_evidence_for_call": int(n_for),
             "parent_id": test_parent_ids[h] if test_parent_ids is not None else "",
             "explanation": text})

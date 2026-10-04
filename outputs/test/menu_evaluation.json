@@ -1,0 +1,180 @@
+{
+  "summary": {
+    "fingerprint": {
+      "accuracy": 0.47058823529411764,
+      "balanced_accuracy": 0.41203703703703703,
+      "metrics": {
+        "n": 34,
+        "accuracy": 0.47058823529411764,
+        "balanced_accuracy": 0.41203703703703703,
+        "macro_f1": 0.41322055137844615,
+        "recall": {
+          "Batch_1": 0.375,
+          "Batch_2": 0.25,
+          "Batch_3": 0.6111111111111112
+        },
+        "f1": {
+          "Batch_1": 0.375,
+          "Batch_2": 0.28571428571428575,
+          "Batch_3": 0.5789473684210527
+        },
+        "confusion": {
+          "Batch_1": {
+            "Batch_1": 3,
+            "Batch_2": 1,
+            "Batch_3": 4
+          },
+          "Batch_2": {
+            "Batch_1": 1,
+            "Batch_2": 2,
+            "Batch_3": 5
+          },
+          "Batch_3": {
+            "Batch_1": 4,
+            "Batch_2": 3,
+            "Batch_3": 11
+          }
+        }
+      },
+      "rubric": 0.9117647058823529,
+      "rubric_all_high": 0.9411764705882353,
+      "rubric_se": 0.04937482703908926,
+      "n_high": 3,
+      "accuracy_when_high": 0.0,
+      "n_components": 1
+    },
+    "fingerprint_centred": {
+      "accuracy": 0.5294117647058824,
+      "balanced_accuracy": 0.5416666666666666,
+      "metrics": {
+        "n": 34,
+        "accuracy": 0.5294117647058824,
+        "balanced_accuracy": 0.5416666666666666,
+        "macro_f1": 0.5239293085655315,
+        "recall": {
+          "Batch_1": 0.5,
+          "Batch_2": 0.625,
+          "Batch_3": 0.5
+        },
+        "f1": {
+          "Batch_1": 0.4210526315789474,
+          "Batch_2": 0.5882352941176471,
+          "Batch_3": 0.5625000000000001
+        },
+        "confusion": {
+          "Batch_1": {
+            "Batch_1": 4,
+            "Batch_2": 1,
+            "Batch_3": 3
+          },
+          "Batch_2": {
+            "Batch_1": 1,
+            "Batch_2": 5,
+            "Batch_3": 2
+          },
+          "Batch_3": {
+            "Batch_1": 6,
+            "Batch_2": 3,
+            "Batch_3": 9
+          }
+        }
+      },
+      "rubric": 0.8235294117647058,
+      "rubric_all_high": 1.0588235294117647,
+      "rubric_se": 0.14299189258952874,
+      "n_high": 24,
+      "accuracy_when_high": 0.375,
+      "n_components": 1
+    },
+    "patch": {
+      "accuracy": 0.5294117647058824,
+      "balanced_accuracy": 0.4953703703703704,
+      "metrics": {
+        "n": 34,
+        "accuracy": 0.5294117647058824,
+        "balanced_accuracy": 0.4953703703703704,
+        "macro_f1": 0.47630147630147635,
+        "recall": {
+          "Batch_1": 0.25,
+          "Batch_2": 0.625,
+          "Batch_3": 0.6111111111111112
+        },
+        "f1": {
+          "Batch_1": 0.3076923076923077,
+          "Batch_2": 0.45454545454545453,
+          "Batch_3": 0.6666666666666666
+        },
+        "confusion": {
+          "Batch_1": {
+            "Batch_1": 2,
+            "Batch_2": 4,
+            "Batch_3": 2
+          },
+          "Batch_2": {
+            "Batch_1": 1,
+            "Batch_2": 5,
+            "Batch_3": 2
+          },
+          "Batch_3": {
+            "Batch_1": 2,
+            "Batch_2": 5,
+            "Batch_3": 11
+          }
+        }
+      },
+      "rubric": 0.7941176470588235,
+      "rubric_all_high": 1.0588235294117647,
+      "rubric_se": 0.14490399898223771,
+      "n_high": 25,
+      "accuracy_when_high": 0.36,
+      "n_components": 1
+    },
+    "all_low": 1.0,
+    "n_fpc_fallback": 0,
+    "caveat": "Selection is the maximum of 5 LOPO rubric estimates on 34 sites from 13 parent images; the winning estimate is optimistically biased (winner's curse). Differences smaller than about one SE are not meaningful. The 3 held-out sites enter LOPO as ordinary labelled sites; nothing was tuned on them.",
+    "singleton_rule": "A site that is the only member of its parent in the pool is excluded from centred-model training and predicted with the uncentred fingerprint (its centred row is identically zero and carries no information)."
+  },
+  "selection": {
+    "option": "fem_a1",
+    "confidence_mode": "rule",
+    "rule": "fem_a1 promoted by the team on test day 2026-10-04; ensembles removed from the menu. Confidence high iff the site is not out-of-distribution for the fem_a1 fingerprint model and its call agrees with at least 2 of the 3 menu options (fingerprint, fingerprint_centred, patch).",
+    "menu_option": "fingerprint_centred",
+    "menu_option_rule": "max LOPO expected rubric among the 3 remaining menu options (fingerprint_centred 1.000, fingerprint 0.912, patch 0.794; outputs/menu/menu_evaluation.json)",
+    "previous_selection": {
+      "option": "ensemble",
+      "confidence_mode": "rule",
+      "rubric": 1.2058823529411764,
+      "rule": "max LOPO expected rubric with the option's flag rule (ties: fewer components, then menu order)",
+      "selected_on": "LOPO, 34 labelled sites, r3 run"
+    },
+    "registry": {
+      "fem_a1": {
+        "description": "Leo 16 fingerprint features + swell_resid + si_stress_spread from free-lateral FEM (right edge free)",
+        "fem_site_curves": "outputs/fem/free_lateral/site_curves.csv",
+        "cv": "leave-one-parent-out (parent_id from pmdb.parents.parent_groups), 34 labelled sites incl. the 3 held-out sites with organiser truths; same protocol as the other menu options",
+        "lopo_correct": 21,
+        "lopo_n": 34,
+        "lopo_accuracy": 0.618,
+        "lopo_balanced_accuracy": 0.574,
+        "lopo_a0_correct_check": "16/34, identical to the menu 'fingerprint' option (0.471), so the A1 number is protocol-comparable",
+        "lopo_metrics": "outputs/fem_fingerprint/lopo/metrics.json",
+        "rubric": "not computed: A1 has no confidence-flag rule in the menu, so it is not ranked by rubric",
+        "superseded_site_loo": "24/31 leave-one-site-out (balanced acc 0.695, perm p 0.001) had sibling crops of the same parent in training; do not compare with menu numbers",
+        "heldout_correct": 0,
+        "heldout_n": 3,
+        "heldout_calls": {
+          "3e122cbj": "Batch_1",
+          "fn0mhxef": "Batch_3",
+          "xrv9xvzb": "Batch_2"
+        },
+        "predictions": {
+          "loo": "outputs/fem_fingerprint/main/loo_predictions.csv (arm A1)",
+          "heldout": "outputs/fem_fingerprint/main/heldout_predictions.csv (arm A1)"
+        },
+        "produced_by": "python scripts/fem_a1_lopo.py (LOPO); python scripts/fem_fingerprint_eval.py --fem-site-curves outputs/fem/free_lateral/site_curves.csv --tag main (site-LOO, superseded)",
+        "status": "selected (promoted 2026-10-04, test day)",
+        "test_predictions": "outputs/test/all_models_predictions.csv (model fem_a1)"
+      }
+    }
+  }
+}

@@ -47,14 +47,21 @@ LEO_N_CORRECT = 21
 # Data
 # ---------------------------------------------------------------------------
 
-def load_inputs(fem_path):
+def load_inputs(fem_path, test=None):
+    """Labelled (train) and held-out (test) packs. `test` = (features csv, site_kpis csv, FEM site_curves csv)
+    replaces the held-out sites, e.g. the test-day sites (scripts/score_test_all.py)."""
     rd = dict(dtype={"batch": str, "site": str})
     leo = pd.read_csv(ROOT / "outputs/fingerprint/features.csv", **rd).set_index(["batch", "site"])
-    leo_h = pd.read_csv(ROOT / "outputs/fingerprint/heldout_features.csv", **rd).set_index(["batch", "site"])
     k = pd.read_csv(ROOT / "outputs/kpis/site_kpis.csv", dtype={"site": str}).set_index("site")["K01_si_frac_adm"]
-    kh = pd.read_csv(ROOT / "outputs/heldout/kpis/site_kpis.csv", dtype={"site": str}).set_index("site")["K01_si_frac_adm"]
     fem = load_fem(fem_path, False)
-    fem_h = load_fem(fem_path, True)
+    if test is None:
+        leo_h = pd.read_csv(ROOT / "outputs/fingerprint/heldout_features.csv", **rd).set_index(["batch", "site"])
+        kh = pd.read_csv(ROOT / "outputs/heldout/kpis/site_kpis.csv", dtype={"site": str}).set_index("site")["K01_si_frac_adm"]
+        fem_h = load_fem(fem_path, True)
+    else:
+        leo_h = pd.read_csv(test[0], **rd).set_index(["batch", "site"])
+        kh = pd.read_csv(test[1], dtype={"site": str}).set_index("site")["K01_si_frac_adm"]
+        fem_h = load_fem(test[2], False)  # test rows carry heldout=False (fem_collect)
 
     def pack(L, F, K):
         sites = L.index.get_level_values("site")

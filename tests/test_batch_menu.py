@@ -106,11 +106,11 @@ def _summ(rub, acc):
 
 
 def test_select_option():
-    a = bm.select_option(_summ([1.2, 1.3, 1.1, 1.3, 1.0], [.5] * 5))
+    a = bm.select_option(_summ([1.2, 1.3, 1.1], [.5] * 3))
     assert a["option"] == "fingerprint_centred" and a["confidence_mode"] == "rule"
-    b = bm.select_option(_summ([1.0, 0.9, 1.0, 1.0, 0.8], [.5, .45, .5, .55, .4]))
-    assert b["option"] == "ensemble" and b["confidence_mode"] == "all_low" and b["rubric"] == 1.0
-    c = bm.select_option(_summ([1.3, 1.3, 1.0, 1.0, 1.0], [.5] * 5))
+    b = bm.select_option(_summ([1.0, 0.9, 1.0], [.5, .45, .55]))
+    assert b["option"] == "patch" and b["confidence_mode"] == "all_low" and b["rubric"] == 1.0
+    c = bm.select_option(_summ([1.3, 1.3, 1.0], [.5] * 3))
     assert c["option"] == "fingerprint"
 
 
@@ -149,7 +149,10 @@ def test_predict_test_synthetic():
                             coords_h, sel, ["pa", "pb"])
         assert list(f.columns) == ["site", "assigned", "confidence", "option", "p_Batch_1", "p_Batch_2",
                                    "p_Batch_3", "patch_call", "fingerprint_call", "fingerprint_centred_call",
+                                   *[f"p_{o}_{b}" for o in bm.OPTIONS for b in plo.BATCHES],
+                                   *[f"{o}_confidence" for o in bm.OPTIONS],
                                    "n_evidence_for_call", "parent_id", "explanation"]
+        assert f["option"].eq(opt).all()
         assert set(f["confidence"]) <= {"high", "low"}
         assert np.allclose(f[["p_Batch_1", "p_Batch_2", "p_Batch_3"]].sum(axis=1), 1.0)
         for ex in f["explanation"]:
@@ -157,5 +160,10 @@ def test_predict_test_synthetic():
                 assert w not in ex.lower(), (w, ex)
     f = bm.predict_test(D, ps, labels, groups, X, Xc, y, singleton, menu_df, sc, Dh, psh,
                         [("Batch_test", "t0"), ("Batch_test", "t1")], test_codes, H, Hc, singleton_h,
-                        coords_h, {"option": "ensemble", "confidence_mode": "all_low"})
+                        coords_h, {"option": "patch", "confidence_mode": "all_low"})
     assert (f["confidence"] == "low").all()
+    # selected model outside the menu (fem_a1): the menu's own pick comes from menu_option
+    f = bm.predict_test(D, ps, labels, groups, X, Xc, y, singleton, menu_df, sc, Dh, psh,
+                        [("Batch_test", "t0"), ("Batch_test", "t1")], test_codes, H, Hc, singleton_h,
+                        coords_h, {"option": "fem_a1", "menu_option": "fingerprint", "confidence_mode": "rule"})
+    assert f["option"].eq("fingerprint").all() and (f["assigned"] == f["fingerprint_call"]).all()

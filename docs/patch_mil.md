@@ -189,6 +189,19 @@ bash scripts/score_test_sites.sh
 
 which runs `modal run modal_test_prep.py::main` (uploads only those TIFFs to `pmdb-data:/test/raw`; on Modal: half cache, affine2 LUTs against the shipped labelled reference, clean, KPIs, fingerprint features; pulls back small CSV/JSON to `cache_test/`, `outputs/clean_test/`, `outputs/test/`) and `modal run modal_patch_mil.py --mode test` (GPU embedding, 34-site distances, frozen-selection prediction). Everything runs on Modal; the prep image pins the labelled KPI run's package versions. Storage on the volume: `/test/raw`, `/test/half`, `/test/harmonised`, `/test/clean`, `/test/kpis`, `/test/features.csv`. Outputs: `outputs/test/final_predictions.csv`, `outputs/test/submission.md`. The selection is frozen in `outputs/menu/selection.json`; do not re-run `--mode menu` after test images arrive.
 
+**Test day, 2026-10-04 (6 sites, run).** The menu was trimmed to the 3 single models (fingerprint, fingerprint_centred, patch); the two ensembles were removed and `fem_a1` was promoted to the selected model (`outputs/menu/selection.json`, `menu_option` = fingerprint_centred, the best remaining LOPO rubric). `--mode test` now writes every menu option per site to `outputs/test/menu_predictions.csv`. fem_a1 needs free-lateral FEM on the test sites: `modal run modal_fem.py --mode full --orientation {bottom,top} --sites Batch_test/<site>,... --tag full_free_test --solver-overrides '{"lateral":"left"}'`, then `python scripts/fem_collect.py --edge outputs/modal/fem/results/full_free_test <tmp>` and keep the Batch_test rows as `outputs/fem/free_lateral_test/{site,tile}_curves.csv` (12/12 cases ok, USD 0.29). `python scripts/score_test_all.py` builds fem_a1 as registered (34 labelled sites, menu fingerprint features, the test site's parent left out of training as for every menu option; asserts arm A0 reproduces the menu fingerprint call at every test site), combines it with the menu table and writes `outputs/test/{all_models_predictions,all_models_wide,final_predictions}.csv` and `submission.md`. Final confidence: high iff fem_a1 is not out-of-distribution and at least 2 of the 3 menu options agree with it.
+
+| site | parent (seam test) | fem_a1 (final) | fingerprint | fingerprint_centred | patch |
+|---|---|---|---|---|---|
+| 0eryguqq | G1612 (B3 xgj4xftb, ptg8lmto) | B2 low | B2 low | B1 high | B3 high |
+| 4hq27w4c | G2148 (B1 f1vzngrs, B2 epqdaau9) | B1 low | B1 low | B3 high | B2 high |
+| fhwrjtet | G1612 | B2 low | B3 low | B3 high | B3 high |
+| fspqbkxl | G2148 | B3 high | B3 low | B3 low | B2 high |
+| soo2ax3r | G2156 (abuts B2 b3esycq1) | B3 high | B3 low | B3 high | B2 high |
+| y59rxmxl | G1880 (B1 uhdslk0o, no seam) | B3 high | B3 low | B3 high | B1 high |
+
+Per-model probabilities (fem_a1: conformal p-values, credibility, conformal confidence) are in `outputs/test/all_models_predictions.csv`; the stitched parent figure with the test crops is `outputs/stitching/parents_annotated.png`.
+
 Rehearsal (the 3 held-out sites copied to `data_test/`, then removed): half cache exact, affine2 LUT exact, parent key equal for all 3; Modal-vs-old held-out feature differences are informational (max 0.45 labelled SD). Prep ~3.3 min wall incl. image build (clean 127 s, KPIs 22 s for 3 sites); `--mode test` ~3 min wall total with script. Expected for 4-6 sites: ~10 min prep, ~10 min test, well under USD 2.
 
 ## Supervised linear probe (LOPO, 34 sites)
