@@ -11,6 +11,7 @@ from pmdb.patch_probe import BATCHES
 
 R2_MIN = 0.2
 MAX_NAN_FRAC = 0.2
+AMBIGUOUS_FRAC = 0.5  # a KPI is stated only if |net| >= this fraction of its gross signed contributions
 KPI_COLS = ["si_frac", "si_density_per_1000um2", "si_mean_area_um2", "si_graphite_contact_frac",
             "porosity", "depth_frac"]  # graphite_frac is collinear (Si + graphite + pore = 1): cached, not regressed
 KPI_NAMES = dict(zip(KPI_COLS, [
@@ -83,13 +84,21 @@ def _kept(pc):
     return [c[2:] for c in pc.columns if c.startswith("B_")]
 
 
+def kpi_effects(w, B, explained, target_kpi_mean, train_kpi_mean, train_kpi_sd):
+    """Per-KPI logit effect of a target site: z_k * sum_j explained_j * w_j * B_jk, with z_k the target's mean KPI
+    standardised by the training patches. A KPI at its training mean gets zero credit.
+    w: (n_pc,) classifier weight (called minus runner-up); B: (n_pc, n_kpi) raw PC-on-z-KPI coefficients."""
+    z = (np.asarray(target_kpi_mean, float) - np.asarray(train_kpi_mean, float)) / np.asarray(train_kpi_sd, float)
+    return z * ((np.asarray(w) * np.asarray(explained, float)) @ np.asarray(B))
+
+
 def batch_directions(clf, pc_meanings):
     kept = _kept(pc_meanings)
     W = clf.coef_ - clf.coef_.mean(0)
     Bm = pc_meanings[[f"B_{k}" for k in kept]].to_numpy()
-    L = W @ Bm
     sd = pc_meanings["sd"].to_numpy()
     ex = pc_meanings["explained"].to_numpy(bool)
+    L = (W * ex) @ Bm  # unexplained PCs stay in the classifier but carry no named KPI direction
     rows = []
     for bi, b in enumerate(BATCHES):
         share = (np.abs(W[bi]) * sd * ex).sum() / (np.abs(W[bi]) * sd).sum()
@@ -98,6 +107,7 @@ def batch_directions(clf, pc_meanings):
         for rank, t in enumerate(order, 1):
             rows.append({"batch": b, "kpi": kept[t], "kpi_name": KPI_NAMES[kept[t]],
                          "logit_per_sd": float(L[bi, t]), "rank": rank, "explainable_share": float(share),
+                         "unexplained_share": float(1 - share),
                          "summary": summ})
     return pd.DataFrame(rows)
 
@@ -117,13 +127,21 @@ def explain_site(Z_site, clf, pc_meanings):
     share = np.abs(contrib[expl]).sum() / np.abs(contrib).sum()
     top = [j for j in np.argsort(-contrib)[:3] if contrib[j] > 0]
     phrases = []
+    net = np.zeros(len(kept))
+    gross = np.zeros(len(kept))
     for j in top:
         if expl[j]:
             b = pc_meanings.loc[j, [f"b_{k}" for k in kept]].to_numpy(float)
-            for t in np.argsort(-np.abs(b))[:2]:
-                phrases.append(("higher " if np.sign(zbar[j]) * np.sign(b[t]) > 0 else "lower ") + KPI_NAMES[kept[t]])
+            top_k = np.argsort(-np.abs(b))[:2]
+            for t in top_k:
+                d = contrib[j] * np.sign(zbar[j]) * b[t]
+                net[t] += d
+                gross[t] += abs(d)
         else:
             phrases.append("fine texture not captured by our measurements")
+    # one statement per KPI with its net direction; cancelling (ambiguous) KPIs are dropped
+    keep = [t for t in np.argsort(-np.abs(net)) if gross[t] > 0 and abs(net[t]) >= AMBIGUOUS_FRAC * gross[t]]
+    phrases = [("higher " if net[t] > 0 else "lower ") + KPI_NAMES[kept[t]] for t in keep[:2]] + phrases
     phrases = list(dict.fromkeys(phrases)) or ["no single dominant feature"]
     ph = phrases[0] if len(phrases) == 1 else ", ".join(phrases[:-1]) + " and " + phrases[-1]
 

@@ -15,6 +15,7 @@ Run:
     modal run modal_patch_mil.py --mode probe    # supervised linear probe, LOPO, 34 sites
     modal run modal_patch_mil.py --mode explain    # KPI-language explanation of the 34-site probe
     modal run modal_patch_mil.py --mode explain-test  # sibling-excluded probe + KPI explanation of the 6 test + 3 held-out sites
+    modal run modal_patch_mil.py --mode evidence  # per-patch evidence overlays for the 6 test sites
     modal run modal_patch_mil.py --mode test     # embed + score new organiser test sites with the frozen selection
 
 See docs/patch_mil.md.
@@ -418,13 +419,18 @@ def probe_explain_test_fit(tag: str, labels: list[dict], kpi_records: list[dict]
         pc, _ = pe.pc_kpi_regression(np.concatenate([Zs[s] for s in train]), pd.concat(parts, ignore_index=True), pe.KPI_COLS)
         kept = pe._kept(pc)
         expl = pc["explained"].to_numpy(bool)
-        Bz = pc[[f"b_{k}" for k in kept]].to_numpy()
+        BB = pc[[f"B_{k}" for k in kept]].to_numpy()
+        ok = K[kept].notna().all(axis=1) & K["site"].isin(train)
+        tr_mean, tr_sd = K.loc[ok, kept].mean().to_numpy(), K.loc[ok, kept].std(ddof=0).to_numpy()
         for t in [t for t in targets if t["parent"] == par]:
             feat = _load_emb(tag, t["batch"], t["site"])[0]
             Zt = pca.transform(sc.transform(feat))
             e = pe.explain_site(Zt, clf, pc)
             c = e.pop("contrib")
-            net = (c[expl, None] * Bz[expl]).sum(0)
+            kt = K[K["site"] == t["site"]][kept].dropna()
+            assert len(kt) > 0, f"no patch KPIs for {t['site']}"
+            ci, ri = pp.BATCHES.index(e["call"]), pp.BATCHES.index(e["runner_up"])
+            net = pe.kpi_effects(clf.coef_[ci] - clf.coef_[ri], BB, expl, kt.mean().to_numpy(), tr_mean, tr_sd)
             pred.append({"site": t["site"], "batch": t["batch"], "parent": par, "n_train_sites": len(train),
                          **{k: v for k, v in e.items() if k not in ("sentence", "top_pcs")},
                          **{f"net_{k}": float(v) for k, v in zip(kept, net)}})
@@ -434,6 +440,59 @@ def probe_explain_test_fit(tag: str, labels: list[dict], kpi_records: list[dict]
                                      "z": float(zbar[j]), "r2": float(pc.loc[j, "r2"]), "label": pc.loc[j, "label"],
                                      "explained": bool(expl[j])})
     return {"predictions": pred, "contributions": contrib_rows, "elapsed_s": round(time.time() - t0, 2)}
+
+
+@app.function(volumes={"/out": out_vol, "/data": data_vol}, cpu=4.0, memory=16384, timeout=3000)
+def evidence_render(tag: str, labels: list[dict], targets: list[dict]) -> dict:
+    """Sibling-excluded probe per parent; per-patch vote = log p(call) - log p(runner_up); render overlay PNG per site."""
+    import io
+
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.patches import Rectangle
+
+    from pmdb import patch_probe as pp
+    from pmdb.io import load_site
+
+    out_vol.reload()
+    Xall = {r["site"]: _load_emb(tag, r["batch"], r["site"])[0] for r in labels}
+    sb = {r["site"]: r["label"] for r in labels}
+    pngs, meta = {}, {}
+    for par in sorted({t["parent"] for t in targets}):
+        train = [r["site"] for r in labels if r["parent"] != par]
+        sc, pca, clf = pp.fit_full_probe({s: Xall[s] for s in train}, {s: sb[s] for s in train})
+        for t in [t for t in targets if t["parent"] == par]:
+            feat, coords, _ = _load_emb(tag, t["batch"], t["site"])
+            lp = clf.predict_log_proba(pca.transform(sc.transform(feat)))
+            ci, ri = list(clf.classes_).index(t["call"]), list(clf.classes_).index(t["runner_up"])
+            vote = lp[:, ci] - lp[:, ri]
+            s = load_site(t["batch"], t["site"], resolution="half", normalise="fixed", harmonise=HARMONISE,
+                          cache_root="/data/test")
+            bse = s.image[..., 0]
+            h, w = bse.shape
+            scale = np.percentile(np.abs(vote), 95) or 1.0
+            hdr = 0.6
+            fig = plt.figure(figsize=(16, 16 * h / w + hdr), dpi=100)
+            ax = fig.add_axes([0, 0, 1, 1 - hdr / (16 * h / w + hdr)])
+            ax.imshow(bse, cmap="gray", vmin=0, vmax=1)
+            for v, (_, _, y0, x0) in zip(vote, coords):
+                a = min(abs(v) / scale, 1.0) * 0.6
+                ax.add_patch(Rectangle((x0, y0), 224, 224, fc=(1, 0, 0) if v > 0 else (0, 0.3, 1), ec="none", alpha=a))
+            for i in np.argsort(-vote)[:3]:
+                ax.add_patch(Rectangle((coords[i][3], coords[i][2]), 224, 224, fc="none", ec="yellow", lw=3))
+            ax.axis("off")
+            fig.text(0.01, 0.99, f"{t['site']} \u2192 {t['call']} (p={t['p']:.3f})", va="top", fontsize=20)
+            fig.text(0.99, 0.99, "red = supports call   blue = against   yellow = top-3 supporting", va="top", ha="right", fontsize=13)
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png")
+            plt.close(fig)
+            pngs[t["site"]] = buf.getvalue()
+            meta[t["site"]] = {"width": int(w), "height": int(h), "call": t["call"], "runner_up": t["runner_up"],
+                               "patches": [{"y0": int(c[2]), "x0": int(c[3]), "size": 224, "vote": round(float(v), 4)}
+                                           for v, c in zip(vote, coords)]}
+    return {"pngs": pngs, "meta": meta}
 
 
 def _atomic_write(path: Path, data: bytes) -> None:
@@ -450,8 +509,8 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
     from pmdb.parents import write_parent_groups
     from pmdb.patch_mil import fingerprint_comparison
 
-    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain", "explain-test"):
-        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain | explain-test")
+    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain", "explain-test", "evidence"):
+        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain | explain-test | evidence")
     root = Path(__file__).resolve().parent
     if mode == "probe":
         _probe(root, n_perm, centre)
@@ -461,6 +520,9 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
         return
     if mode == "explain-test":
         _explain_test(root)
+        return
+    if mode == "evidence":
+        _evidence(root)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -556,6 +618,19 @@ def _probe(root: Path, n_perm: int = 200, centre: str = "none") -> None:
     print(f"perm {res['permutation']}; wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
 
 
+def _kpi_fingerprint(lab) -> str:
+    """Hash of the site list, patch geometry and KPI definitions the cached patch KPIs depend on."""
+    import hashlib
+    import inspect
+
+    from pmdb import probe_explain as pe
+    from pmdb.patch_mil import PATCH
+
+    src = {"sites": sorted(zip(lab["batch"], lab["site"])), "patch": PATCH, "kpi_cols": pe.KPI_COLS,
+           "kpi_code": inspect.getsource(pe.patch_kpis)}
+    return hashlib.sha256(json.dumps(src, sort_keys=True).encode()).hexdigest()
+
+
 def _explain(root: Path) -> None:
     import pandas as pd
 
@@ -565,12 +640,15 @@ def _explain(root: Path) -> None:
     t0 = time.time()
     lab = labelled_sites()
     out = root / "outputs" / "probe_explain"
-    if (out / "patch_kpis.csv").exists():
+    fp = _kpi_fingerprint(lab)
+    fp_path = out / "patch_kpis.source.json"
+    if (out / "patch_kpis.csv").exists() and fp_path.exists() and json.loads(fp_path.read_text()).get("fingerprint") == fp:
         K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
     else:
         args = [("full", b, s) for b, s in zip(lab["batch"], lab["site"])]
         K = pd.DataFrame([r for rows in patch_kpis_site.starmap(args) for r in rows])
         _atomic_write(out / "patch_kpis.csv", K.to_csv(index=False).encode())
+        _atomic_write(fp_path, json.dumps({"fingerprint": fp}).encode())
     print("NaN fraction per KPI:\n" + K[pe.KPI_COLS].isna().mean().to_string())
     res = probe_explain_fit.remote("full", lab.to_dict("records"), K.to_dict("records"))
     for name in ("pc_meanings", "kpi_r2", "batch_directions", "site_explanations"):
@@ -587,8 +665,8 @@ def _explain(root: Path) -> None:
     print(f"wall {time.time() - t0:.0f}s, remote fit {res['elapsed_s']}s")
 
 
-TEST_PARENTS = {"0eryguqq": "h1612_ETD_s1", "fhwrjtet": "h1612_ETD_s1", "4hq27w4c": "h2148_ETD_s1",
-                "fspqbkxl": "h2148_ETD_s1", "soo2ax3r": "h2156_ETD_s2", "y59rxmxl": "h1880_ETD_s1"}
+EXPECTED_TEST_PARENTS = {"0eryguqq": "h1612_ETD_s1", "fhwrjtet": "h1612_ETD_s1", "4hq27w4c": "h2148_ETD_s1",
+                         "fspqbkxl": "h2148_ETD_s1", "soo2ax3r": "h2156_ETD_s2", "y59rxmxl": "h1880_ETD_s1"}
 
 
 def _explain_test(root: Path) -> None:
@@ -603,8 +681,16 @@ def _explain_test(root: Path) -> None:
     assert lab["parent"].notna().all() and len(lab) == 34
     out = root / "outputs" / "probe_explain"
     K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
-    targets = [{"batch": "Batch_test", "site": s, "parent": p} for s, p in TEST_PARENTS.items()]
+    from pmdb.parents import parent_groups
+
+    g = parent_groups()
+    test_parents = dict(zip(g.loc[g["batch"] == "Batch_test", "site"], g.loc[g["batch"] == "Batch_test", "parent_id"]))
+    assert test_parents == EXPECTED_TEST_PARENTS, test_parents  # current cache; update if the test cache changes
+    targets = [{"batch": "Batch_test", "site": s, "parent": p} for s, p in test_parents.items()]
     targets += [{"batch": "Batch_heldout", "site": s, "parent": pg[s]} for s in ("3e122cbj", "fn0mhxef", "xrv9xvzb")]
+    # test sites have no cached patch KPIs: compute them (the target's own KPIs drive the net_* effects)
+    Kt = [r for t in targets if t["batch"] == "Batch_test" for r in patch_kpis_site.remote("full", t["batch"], t["site"])]
+    K = pd.concat([K, pd.DataFrame(Kt)], ignore_index=True)
     res = probe_explain_test_fit.remote("full", lab.to_dict("records"), K.to_dict("records"), targets)
     pr = pd.DataFrame(res["predictions"])
     cols = ["site", "parent", "call", "runner_up", "p_Batch_1", "p_Batch_2", "p_Batch_3", "margin", "intercept_term",
@@ -613,6 +699,25 @@ def _explain_test(root: Path) -> None:
     _atomic_write(out / "test_contributions.csv", pd.DataFrame(res["contributions"]).to_csv(index=False).encode())
     print(pr[cols].to_string())
     print(f"wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
+
+
+def _evidence(root: Path) -> None:
+    import pandas as pd
+
+    from pmdb.batch_menu import labelled_sites
+
+    lab = labelled_sites()
+    pg = pd.read_csv(root / "outputs" / "parent_groups.csv", dtype={"site": str}).set_index("site")["parent_id"]
+    lab["parent"] = lab["site"].map(pg)
+    pr = pd.read_csv(root / "outputs" / "probe_explain" / "test_final_predictions.csv", dtype={"site": str}).set_index("site")
+    targets = [{"batch": "Batch_test", "site": s, "parent": p, "call": pr.loc[s, "call"], "runner_up": pr.loc[s, "runner_up"],
+                "p": float(pr.loc[s, "p_" + pr.loc[s, "call"]])} for s, p in TEST_PARENTS.items()]
+    res = evidence_render.remote("full", lab.to_dict("records"), targets)
+    out = root / "demo" / "public" / "evidence"
+    for s, b in res["pngs"].items():
+        _atomic_write(out / f"{s}.png", b)
+    _atomic_write(out / "patches.json", json.dumps(res["meta"]).encode())
+    print("wrote", sorted(res["pngs"]))
 
 
 def _menu_or_test(mode: str, root: Path) -> None:
