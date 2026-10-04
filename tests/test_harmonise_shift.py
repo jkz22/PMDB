@@ -123,6 +123,6 @@ def test_corner_frequencies_do_not_enter_the_nyquist_bin():
     F = np.abs(np.fft.fft2(rng.normal(0, 1, (512, 512))))
     F2 = F.copy()
     F2[r > 0.5] *= 10  # change only the corners
-    prof = lambda a: np.bincount(bins.ravel(), a.ravel(), minlength=S.N_BINS + 1)[:S.N_BINS]  # noqa: E731
+    prof = lambda a: np.bincount(bins.ravel(), a.ravel(), minlength=S.N_BINS + 1)[:S.N_BINS]
     assert np.array_equal(prof(F), prof(F2))
     assert bins.max() == S.N_BINS and (bins == S.N_BINS).sum() > 0

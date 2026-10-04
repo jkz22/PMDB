@@ -37,7 +37,11 @@ import pandas as pd
 from scipy.ndimage import gaussian_filter
 
 from pmdb import clean as C
-from pmdb.harmonise_ext import HALF_NM_PER_PX, REPO_ROOT, load_half_raw  # noqa: F401 (re-exported)
+from pmdb.harmonise_ext import (  # noqa: F401 (re-exported)
+    HALF_NM_PER_PX,
+    REPO_ROOT,
+    load_half_raw,
+)
 
 METHODS: tuple[str, ...] = ("spectrum", "fda")
 DETECTORS = C.DETECTORS
@@ -131,7 +135,7 @@ class SpectrumModel:
                 "clamp": list(SPECTRUM_CLAMP), "smooth": SPECTRUM_SMOOTH}
 
     @classmethod
-    def from_json(cls, d: dict) -> "SpectrumModel":
+    def from_json(cls, d: dict) -> SpectrumModel:
         return cls(np.asarray(d["reference"], dtype=np.float64), d.get("sites", {}))
 
 
