@@ -94,6 +94,9 @@ analytical benchmarks give order-of-magnitude swelling and cycling estimates. Ne
 calibrated to this material; §6 tells them which fields and which batch to simulate first.
 
 ## 8. What would settle it
+*(Operational version: `docs/decision.md` — the pipeline, the XGBoost check that the model class is not
+the limit, and the three held-back cards.)*
+
 The chain is consistent — artefacts removed, composition equal, arrangement different, the
 difference material rather than textural, its functional consequence identified — but every link
 runs on 7 fields per batch. A plug-in power analysis (`outputs/functional/power.csv`) says the
