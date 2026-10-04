@@ -67,3 +67,4 @@ Outputs: `site_kpis.csv`, `physics.csv`/`physics.json`/`fig_physics.png` (physic
 Two 16:9 summary slides of the whole branch: `python3 pitch_slides.py [evolve video]` → `pitch/slide_1.png`, `pitch/slide_2.png`.
 After the answers were released: `python3 pitch_truth.py` → `pitch/slide_3.png` (scorecard, which evidence pointed to the truth, why 3e122cbj was missed).
 Visual reading of the released answers: `python3 pitch_visual.py` → `pitch/slide_4.png` (same-scale crops, intensity histograms, imaging-session map).
+Simulation of all 34 images (50 cycles, 1 run, ~40 min on 8 cores): `python3 simulate.py <all sites> <3 held-back tifs> --nm-per-px 25 --cycles 50 --seeds 1 --out sim_all`, then `python3 sim_compare.py sim_all` → `sim_all/sim_by_site.csv`, `pitch/slide_5.png`.
