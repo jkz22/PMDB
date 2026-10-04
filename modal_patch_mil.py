@@ -556,6 +556,19 @@ def _probe(root: Path, n_perm: int = 200, centre: str = "none") -> None:
     print(f"perm {res['permutation']}; wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
 
 
+def _kpi_fingerprint(lab) -> str:
+    """Hash of the site list, patch geometry and KPI definitions the cached patch KPIs depend on."""
+    import hashlib
+    import inspect
+
+    from pmdb import probe_explain as pe
+    from pmdb.patch_mil import PATCH
+
+    src = {"sites": sorted(zip(lab["batch"], lab["site"])), "patch": PATCH, "kpi_cols": pe.KPI_COLS,
+           "kpi_code": inspect.getsource(pe.patch_kpis)}
+    return hashlib.sha256(json.dumps(src, sort_keys=True).encode()).hexdigest()
+
+
 def _explain(root: Path) -> None:
     import pandas as pd
 
@@ -565,12 +578,15 @@ def _explain(root: Path) -> None:
     t0 = time.time()
     lab = labelled_sites()
     out = root / "outputs" / "probe_explain"
-    if (out / "patch_kpis.csv").exists():
+    fp = _kpi_fingerprint(lab)
+    fp_path = out / "patch_kpis.source.json"
+    if (out / "patch_kpis.csv").exists() and fp_path.exists() and json.loads(fp_path.read_text()).get("fingerprint") == fp:
         K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
     else:
         args = [("full", b, s) for b, s in zip(lab["batch"], lab["site"])]
         K = pd.DataFrame([r for rows in patch_kpis_site.starmap(args) for r in rows])
         _atomic_write(out / "patch_kpis.csv", K.to_csv(index=False).encode())
+        _atomic_write(fp_path, json.dumps({"fingerprint": fp}).encode())
     print("NaN fraction per KPI:\n" + K[pe.KPI_COLS].isna().mean().to_string())
     res = probe_explain_fit.remote("full", lab.to_dict("records"), K.to_dict("records"))
     for name in ("pc_meanings", "kpi_r2", "batch_directions", "site_explanations"):
