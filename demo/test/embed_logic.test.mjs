@@ -32,6 +32,12 @@ test("storyIsStale compares recorded call", () => {
   assert.equal(storyIsStale(undefined, "Batch_2"), true);
 });
 
+test("storyIsStale compares recorded runner-up", () => {
+  const story = { call: "Batch_2", runner_up: "Batch_1" };
+  assert.equal(storyIsStale(story, "Batch_2", "Batch_1"), false);
+  assert.equal(storyIsStale(story, "Batch_2", "Batch_3"), true);
+});
+
 test("evidenceIsStale compares the recorded call", () => {
   assert.equal(evidenceIsStale({ a: "Batch_1" }, "a", "Batch_1"), false);
   assert.equal(evidenceIsStale({ a: "Batch_1" }, "a", "Batch_2"), true);

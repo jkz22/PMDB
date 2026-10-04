@@ -21,9 +21,9 @@ export function clampTip(x, y, w, h, vw, vh, gap = 14, pad = 8) {
   return { left: Math.max(pad, left), top: Math.max(pad, top) };
 }
 
-// A story is only trusted when the loaded call equals the call it was written for.
-export function storyIsStale(story, call) {
-  return !story || story.call !== call;
+// A story is only trusted when the loaded call (and runner-up, when recorded) match what it was written for.
+export function storyIsStale(story, call, runnerUp) {
+  return !story || story.call !== call || (story.runner_up !== undefined && story.runner_up !== runnerUp);
 }
 
 // An evidence PNG is only trusted when the loaded call equals the call it was rendered for.

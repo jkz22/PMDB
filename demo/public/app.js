@@ -474,14 +474,14 @@ async function autoplay() {
 }
 
 // ---------------------------------------------------------------- test calls: probe embeddings
-// Each story was written for the recorded call; if refreshed results change the call, a note is shown.
+// Each story was written for the recorded call and runner-up; if refreshed results change either, a note is shown.
 const SITE_STORY = {
-  '0eryguqq': { call: 'Batch_3', text: "Every measured trait except Si–graphite contact points to Batch 3 over Batch 2, led by Si particle density and Si area fraction; the support is spread across the whole image." },
-  'fhwrjtet': { call: 'Batch_3', text: "Same picture as 0eryguqq: Si area fraction, Si particle density and the depth pattern all point to Batch 3; only Si–graphite contact dissents." },
-  'fspqbkxl': { call: 'Batch_2', text: "Porosity, Si–graphite contact and Si area fraction point to Batch 2; the depth pattern, Si particle size and density point back toward Batch 1. Over half of the call rests on texture we do not measure." },
-  'y59rxmxl': { call: 'Batch_1', text: "Mixed evidence: the depth pattern and Si particle size point to Batch 1, but Si area fraction, particle density, contact and porosity look more like Batch 2." },
-  'soo2ax3r': { call: 'Batch_1', text: "The depth pattern, Si area fraction, particle size and porosity point to Batch 1; Si particle density and Si–graphite contact look more like Batch 2, mostly in the left third of the image." },
-  '4hq27w4c': { call: 'Batch_2', text: "Near tie: porosity, Si–graphite contact and Si area fraction point to Batch 2; Si particle density, size and the depth pattern point to Batch 1." },
+  '0eryguqq': { call: 'Batch_3', runner_up: 'Batch_2', text: "Every measured trait except Si–graphite contact points to Batch 3 over Batch 2, led by Si particle density and Si area fraction; the support is spread across the whole image." },
+  'fhwrjtet': { call: 'Batch_3', runner_up: 'Batch_2', text: "Same picture as 0eryguqq: Si area fraction, Si particle density and the depth pattern all point to Batch 3; only Si–graphite contact dissents." },
+  'fspqbkxl': { call: 'Batch_2', runner_up: 'Batch_1', text: "Porosity, Si–graphite contact and Si area fraction point to Batch 2; the depth pattern, Si particle size and density point back toward Batch 1. Over half of the call rests on texture we do not measure." },
+  'y59rxmxl': { call: 'Batch_1', runner_up: 'Batch_2', text: "Mixed evidence: the depth pattern and Si particle size point to Batch 1, but Si area fraction, particle density, contact and porosity look more like Batch 2." },
+  'soo2ax3r': { call: 'Batch_1', runner_up: 'Batch_2', text: "The depth pattern, Si area fraction, particle size and porosity point to Batch 1; Si particle density and Si–graphite contact look more like Batch 2, mostly in the left third of the image." },
+  '4hq27w4c': { call: 'Batch_2', runner_up: 'Batch_1', text: "Near tie: porosity, Si–graphite contact and Si area fraction point to Batch 2; Si particle density, size and the depth pattern point to Batch 1." },
 };
 // Call each evidence PNG in /evidence was rendered for; a different loaded call means the map is stale.
 const EVIDENCE_CALL = { '0eryguqq': 'Batch_3', fhwrjtet: 'Batch_3', fspqbkxl: 'Batch_2', '4hq27w4c': 'Batch_2', y59rxmxl: 'Batch_1', soo2ax3r: 'Batch_1' };
@@ -531,8 +531,8 @@ R.embeddings = (root) => {
         h('a', { href: `/evidence/${s.site}.jpg`, target: '_blank', title: 'Open full size' },
           h('img', { src: `/evidence/${s.site}.jpg`, alt: `Evidence map for ${s.site}`, class: 'evidence' }))),
       ...(evidenceIsStale(EVIDENCE_CALL, s.site, s.call) ? [h('p', { class: 'src' }, `Evidence map was rendered for the call ${EVIDENCE_CALL[s.site] ? short(EVIDENCE_CALL[s.site]) : 'unknown'}; the loaded call is ${short(s.call)}, so the map may not match.`)] : []),
+      ...(storyIsStale(SITE_STORY[s.site], s.call, s.runner_up) ? [h('p', { class: 'src' }, `Explanation written for ${short(SITE_STORY[s.site].call)} over ${short(SITE_STORY[s.site].runner_up)}; the loaded data say ${short(s.call)} over ${short(s.runner_up)}, so the text below may be out of date. The evidence bars are from the loaded data.`)] : []),
       h('p', {}, SITE_STORY[s.site].text),
-      ...(storyIsStale(SITE_STORY[s.site], s.call) ? [h('p', { class: 'src' }, `Explanation written when this site was called ${short(SITE_STORY[s.site].call)}; the loaded call is ${short(s.call)}, so the text may be out of date. The evidence bars are from the loaded data.`)] : []),
       h('div', { class: 'ev' },
         h('div', { class: 'ev-head' }, h('span', {}, `against ${short(s.call)}`), h('span', {}, `supports ${short(s.call)}`)),
         ...nets.map(([k, v]) => h('div', { class: 'ev-row', title: `${KPI_NAME[k]}: ${v >= 0 ? 'supports' : 'argues against'} ${short(s.call)} over ${short(s.runner_up)} (${v.toFixed(2)})` },
