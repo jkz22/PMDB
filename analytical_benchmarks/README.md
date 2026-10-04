@@ -65,3 +65,4 @@ Outputs: `site_kpis.csv`, `physics.csv`/`physics.json`/`fig_physics.png` (physic
 `pitch/heldout_report.html` (single offline file): KPI quality, batch differences, the 3 held-back cases with probabilities, validation vs a shuffled-label null, QC decision card and images-per-batch curve. Rebuild: `PMDB_HELDOUT=<main checkout> python3 pitch_figs.py && python3 pitch_body.py`, then compile `pitch/body.html` with the artifact kit.
 
 Two 16:9 summary slides of the whole branch: `python3 pitch_slides.py [evolve video]` → `pitch/slide_1.png`, `pitch/slide_2.png`.
+After the answers were released: `python3 pitch_truth.py` → `pitch/slide_3.png` (scorecard, which evidence pointed to the truth, why 3e122cbj was missed).
