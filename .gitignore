@@ -15,3 +15,7 @@ outputs/modal/
 outputs/clean*/**/*.tif
 outputs/clean*/**/preview.png
 outputs/clean*/qc_report.html
+
+# spine features are rebuilt by scripts/run_swelling_spine.py extract
+outputs/spine/features_*.npy
+outputs/spine/extract.log

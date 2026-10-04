@@ -133,3 +133,9 @@ swelling QC sheets for all 31 labelled fields: `outputs/functional/figures/swell
 | Representation learning, classification, attribution | `devin/1791038010-v2-representation` | `outputs/v2/RESULTS.md`, `src/v2/` |
 | FEM lithiation model review | `fem-lit-review`, `fem-sim` | `docs/fem/literature-review.md` |
 | Functional morphology | this session | `pmdb/functional.py`, `docs/functional.md`, `outputs/functional/` |
+
+**Addendum (pretrained spine on the swelling targets, `docs/spine.md`).** Asked whether a frozen vision
+backbone (as in v2) is the right model for the lithiation geometry: no. The constrained share is read off
+five mask fractions at site R² 0.91 and a spine adds nothing; pore loss gains ≈ 0.05 site R² from
+MicroNet features (n.s. on 31 fields). MicroNet > DINOv2 throughout, as in v2. The segmentation is the
+model; the deep embedding is a lossy re-estimate of it.
