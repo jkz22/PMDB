@@ -1,6 +1,6 @@
 # Check 3: site-level pooling rules (D10)
 
-- Inputs: `/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/outputs/kpis/tile_kpis.csv`, `/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/outputs/kpis/site_kpis.csv`
+- Inputs: `outputs/kpis/tile_kpis.csv`, `outputs/kpis/site_kpis.csv`
 - Tile features (15); dropped constant: ['K16_si_graphite_dist_median_um']
 - Feature counts: R1 15; R2 15; R3 45; R4 42
 - Model: median impute, StandardScaler, LogisticRegression(class_weight=balanced, C=1.0, max_iter=5000, random_state=0), refitted per leave-one-site-out fold; no tuning.

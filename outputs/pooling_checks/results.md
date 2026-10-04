@@ -1,6 +1,6 @@
 # Tile-signal checks 1-2 (D10 pre-checks)
 
-- Input: `/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/outputs/kpis/tile_kpis.csv`
+- Input: `outputs/kpis/tile_kpis.csv`
 - Rows: 124; sites: 31 (4 tiles each); batches: Batch_1=7, Batch_2=7, Batch_3=17
 - Features used (15): K01_si_frac_adm, K02_si_density_per_1000um2, K03_ecd_d50_um, K03_ecd_d90_um, K03_ecd_max_um, K04_agglom_frac, K04_n_clusters_per_1000um2, K05_voronoi_sigma, K07_R_rl, K07_R_csr, K09_mst_m_norm, K09_mst_sigma_norm, K14_empty_p50_um, K14_empty_p95_um, K15_si_graphite_contact_frac
 - Features dropped (zero variance): ['K16_si_graphite_dist_median_um']

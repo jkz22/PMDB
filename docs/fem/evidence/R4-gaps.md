@@ -121,7 +121,7 @@ Provenance flag: items marked (tool summary) are WebFetch/WebSearch model output
 - Not in text: no per-component numeric table vs capacity or SOC beyond the figures (Fig. 4a/4b are plots; the text numbers above are the only numbers in the extracted text). Also: an accepted-manuscript copy of this paper is listed at <https://www.osti.gov/pages/servlets/purl/1496633> (search result title "Manuscript # aenm.201803380"); not opened.
 
 ### Item 2: arXiv 1511.02445 (Nadimpalli et al., local PDF, pdftotext, printed page 22 and 21)
-- **E7** `/Users/Kevin/.claude/projects/-Users-Kevin-Documents-GitHub-PMDB--claude-worktrees-heldout-data/f7044de1-2c11-44c1-b109-e683c9c4f5ce/tool-results/webfetch-1791052235431-bev6rh.pdf` page 22 - Table 2
+- **E7** `<local scratch file>` page 22 - Table 2
   ```
   Table 2: Mechanical properties and geometry of different layers of the specimen used in the study
   Si (111) wafer       E1 169 GPa; nu1 0.26; h1 450 µm; M1 228.3 GPa

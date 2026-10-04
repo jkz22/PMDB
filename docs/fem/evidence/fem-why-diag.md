@@ -3,7 +3,7 @@ Gather diagnostic evidence on why FEM-simulation features did not improve batch 
 
 ## Search log
 - S1 Read pmdb/classify/features.py, model.py, fem-build.md section 2.1, run_log.json head, metrics.csv: done.
-- S2 Ran scripts pre.py, t1.py, t1b.py (integrity), t2.py (univariate, redundancy, partial, saturation), t5.py (sensitivity). Full source is appended at the end of this file; copies in /Users/Kevin/.claude/jobs/7c923570/tmp/. Interpreter: repo default python (pandas 2.1.4, numpy 1.26.4). statsmodels is not installed; OLS done with numpy lstsq.
+- S2 Ran scripts pre.py, t1.py, t1b.py (integrity), t2.py (univariate, redundancy, partial, saturation), t5.py (sensitivity). Full source is appended at the end of this file; copies in <local scratch file> Interpreter: repo default python (pandas 2.1.4, numpy 1.26.4). statsmodels is not installed; OLS done with numpy lstsq.
 
 ## Evidence
 
@@ -43,7 +43,7 @@ Site level, n=31. Curated = mean of the site's 6 tile values; raw = site_curves.
   11 p_si_mean_MPa@s1.0 p=0.01258 d13=-0.68 d23=-0.53 d12=-0.35
   12 J_si_mean@s1.0 p=0.01258 d13=+0.68 d23=+0.53 d12=+0.35
   13 vm_si_p50_MPa@s1.0 / q50_vm_si@s1.0 p=0.01311 d13=+0.71 d23=+0.48 d12=+0.31
-  The printed top-15 list (with duplicates as separate rows) has 15 FEM raw entries; ordered by max|delta| it adds q25_vm_binder@s1.0 (d13 +0.71, p 0.0208) and q75_J_pore@s1.0 (d13 +0.70, p 0.036). Full table with all columns: /Users/Kevin/.claude/jobs/7c923570/tmp/univar.csv.
+  The printed top-15 list (with duplicates as separate rows) has 15 FEM raw entries; ordered by max|delta| it adds q25_vm_binder@s1.0 (d13 +0.71, p 0.0208) and q75_J_pore@s1.0 (d13 +0.70, p 0.036). Full table with all columns: <local scratch file>
 - Curated FEM features by p (site mean of tiles; d13/d23/d12): fem_J_si_mean_100 p=0.0212 (+0.63/+0.51/+0.31); fem_p_si_mean_100 p=0.0212 (signs reversed); fem_surface_rough_100 0.057 (+0.51/+0.50/+0.14); fem_swell_slope_late 0.090 (+0.53/+0.31/+0.39); fem_swell_slope_early 0.178 (+0.45/-0.06/+0.51); fem_swell_50 0.194 (+0.43/-0.06/+0.51); fem_swell_100 0.217 (+0.41/+0.01/+0.51); fem_vm_si_p95_100 0.333 (+0.34/+0.28/+0.06); fem_pore_closed_frac_100 0.443; fem_sxx_mean_100 0.518; fem_band_vm_maxdev_100 0.569; fem_first_closure_s 0.569; fem_vm_gr_p95_100 0.601; fem_vm_binder_p95_100 0.988; fem_pore_left_100 0.997.
 - KPI by p (site level): K12_depth_maxdev 0.065 (d13 +0.08, d23 +0.61, d12 -0.51); K15_si_graphite_contact_frac 0.070 (-0.56/-0.36/-0.27); K08_pcf_rpeak_x_um 0.075; K08_pcf_excess_max_x 0.075; K07_R_csr 0.085; K14_empty_p50_um 0.086; K06_void_region_frac 0.107; K07_R_rl 0.121; K05_local_af_cv 0.131; K05_voronoi_sigma 0.152. K01_si_frac_adm KW p = 0.377.
 - Medians of site means per batch (B1 / B2 / B3): vm_si_p95 24554 / 24482 / 24234; p_si_mean 17238 / 17657 / 18048; vm_binder_p95 920 / 956 / 875; vm_gr_p95 13767 / 13402 / 13310; sxx_mean -2989 / -2783 / -2854; band_vm_maxdev 0.468 / 0.580 / 0.523; J_si_mean 1.694 / 1.683 / 1.672.
@@ -83,7 +83,7 @@ Repo metrics.csv end-to-end balanced accuracy: KPI 0.437, FEM 0.370, KPI+FEM 0.3
 - KPI+FEM arm sensitivity, multiplicity correction, seed repeats of sensitivity runs, tile-level KW (pseudo-replication), per-frame curves other than s=0.5 and 1.0, bottom/top orientation-specific features. Stress magnitudes (~24 GPa von Mises in Si) were not cross-checked against material parameters beyond sigmaY. Top-15 contains duplicated metrics (see section 2).
 
 ## Code
-All run from the repo root with the repo default python. Files: /Users/Kevin/.claude/jobs/7c923570/tmp/{pre.py,t1.py,t1b.py,t2.py,t5.py}; contents appended below.
+All run from the repo root with the repo default python. Files: <local scratch file>,t1.py,t1b.py,t2.py,t5.py}; contents appended below.
 
 ### pre.py
 ```python
@@ -98,7 +98,7 @@ kpi=load_kpi_tiles6('outputs/classifier/kpi_tiles6.csv')
 
 ### t1.py
 ```python
-exec(open('/Users/Kevin/.claude/jobs/7c923570/tmp/pre.py').read())
+exec(open('<local scratch file>').read())
 print(raw.orientation.value_counts().to_dict(), raw.shape, raw.heldout.value_counts().to_dict())
 print('sym rows',len(cur),'sites',cur.site.nunique(),'dups key',cur.duplicated(['site','tile','frame']).sum())
 lab=fem[~fem.heldout]; print('labelled fem tile rows',len(lab), 'dup',lab.duplicated(TILE_ID).sum())
@@ -134,7 +134,7 @@ print('max|b-t| swell s=1',(b-t).xs(10,level='frame').abs().max())
 
 ### t1b.py
 ```python
-exec(open('/Users/Kevin/.claude/jobs/7c923570/tmp/pre.py').read())
+exec(open('<local scratch file>').read())
 from pmdb.io import list_sites
 m=list_sites(); lab=fem[~fem.heldout]
 for div in (1,2):
@@ -151,7 +151,7 @@ print(m[m.site.isin(lab.site)].groupby('batch').width.agg(['min','max']))
 
 ### t2.py
 ```python
-exec(open('/Users/Kevin/.claude/jobs/7c923570/tmp/pre.py').read())
+exec(open('<local scratch file>').read())
 from scipy.stats import kruskal, spearmanr, rankdata
 
 class _R: pass
@@ -190,7 +190,7 @@ def stats(df,src):
     return pd.DataFrame(out)
 R=pd.concat([stats(cur_site,'FEM curated(site mean of tiles)'),stats(rawsite,'FEM raw'),stats(ksite,'KPI')],ignore_index=True)
 R['maxabs_d']=R[['d13','d23','d12']].abs().max(axis=1)
-R.to_csv('/Users/Kevin/.claude/jobs/7c923570/tmp/univar.csv',index=False)
+R.to_csv('<local scratch file>',index=False)
 print(R.groupby('src').p.apply(lambda s:(s.notna().sum(),(s<0.05).sum(),(s<0.01).sum())))
 print('NaN/constant rows:'); print(R[R.p.isna()])
 Rr=R.dropna(subset=['p']).sort_values('p')
@@ -239,7 +239,7 @@ print('Si vm vs Si-yield limit sigmaY(u=0.8): ',3000-3150*3.0/(1+3.0))
 
 ### t5.py
 ```python
-exec(open('/Users/Kevin/.claude/jobs/7c923570/tmp/pre.py').read())
+exec(open('<local scratch file>').read())
 import pmdb.classify.model as M
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
