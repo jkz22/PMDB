@@ -1,0 +1,16 @@
+{
+  "protocol": "leave-one-parent-out, 34 labelled sites",
+  "fem_site_curves": "outputs/fem/free_lateral/site_curves.csv",
+  "A0": {
+    "lopo_correct": 16,
+    "lopo_n": 34,
+    "accuracy": 0.47058823529411764,
+    "balanced_accuracy": 0.4351851851851852
+  },
+  "A1": {
+    "lopo_correct": 21,
+    "lopo_n": 34,
+    "accuracy": 0.6176470588235294,
+    "balanced_accuracy": 0.5740740740740741
+  }
+}

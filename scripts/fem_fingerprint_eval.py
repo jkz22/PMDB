@@ -273,7 +273,8 @@ def main() -> int:
 
     freq = sel.groupby("feature").size().sort_values(ascending=False)
     sens = "" if args.tag == "main" else (
-        f"**Sensitivity run (A3, tag `{args.tag}`, table `{args.fem_site_curves}`): never the final arm.**")
+        f"**Sensitivity run (A3, tag `{args.tag}`, table `{args.fem_site_curves}`): its own verdict is not "
+        "promoted to the classifier of record (the table below still shows whether each arm passes the rule).**")
     lines = [f"# D21 verdict (tag `{args.tag}`)", "", sens, "",
              f"Rule: FEM arm adds value iff LOO correct >= {MIN_CORRECT}/31 and permutation "
              f"p <= {ALPHA} ({args.n_perm} perms, seed {args.seed}, in-fold selection rerun).", "",
