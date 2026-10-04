@@ -77,7 +77,13 @@ def _windows(g, rng=None, n=None):
     if rng is not None:
         tl = np.column_stack([rng.integers(0, max(H - WIN, 1), n), rng.integers(0, max(W - WIN, 1), n)])
     else:
-        tl = np.array([(r, c) for r in range(0, max(H - WIN, 1), WIN // 2) for c in range(0, max(W - WIN, 1), WIN // 2)])
+        def starts(L):  # half-stride grid that always ends flush with the far edge, so every pixel is covered
+            s = list(range(0, max(L - WIN, 0) + 1, WIN // 2))
+            if s[-1] != max(L - WIN, 0):
+                s.append(max(L - WIN, 0))
+            return s
+
+        tl = np.array([(r, c) for r in starts(H) for c in starts(W)])
     out = []
     for r, c in tl:
         idx = np.where((g["pos"][:, 0] >= r) & (g["pos"][:, 0] < r + WIN) & (g["pos"][:, 1] >= c) & (g["pos"][:, 1] < c + WIN))[0]
