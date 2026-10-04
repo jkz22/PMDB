@@ -168,13 +168,15 @@
 <!-- 6 · THE MODEL -->
 <section class="slide">
   <div class="kicker">6 · The model</div>
-  <h1>A linear probe on MicroNet patch embeddings.</h1>
-  <div class="cards">
-    <div class="call"><div class="batch">See</div><div class="why">Frozen MicroNet embeddings of image patches &mdash; microstructure texture, not grey levels.</div></div>
-    <div class="call"><div class="batch">Decide</div><div class="why">A single linear layer on top. No capacity to memorise sites.</div></div>
-    <div class="call"><div class="batch">Prove</div><div class="why">Validated leave-one-<em>parent</em>-out, so sibling crops never leak: accuracy 0.71, permutation p = 0.005.</div></div>
+  <h1>A linear probe on NASA&rsquo;s MicroNet.</h1>
+  <div style="display:flex;align-items:center;gap:5vw;margin-top:6vh">
+    <img src="../../outputs/slides/nasa_logo.svg" alt="NASA insignia" style="height:30vh;flex:none">
+    <div style="font-size:min(4vh,2.1vw);line-height:2">
+      <p>NASA&rsquo;s microscopy network, frozen &mdash; plus one linear layer.</p>
+      <p>Reads microstructure texture, not grey levels.</p>
+      <p><b>Leave-one-parent-out: accuracy 0.71 &middot; p = 0.005.</b></p>
+    </div>
   </div>
-  <div class="foot"><span>One model for both rounds of unknowns; every call ships with a KPI-level explanation of what the probe saw.</span><span>docs/final_predictions.md &middot; outputs/probe_explain/</span></div>
 </section>
 
 <section class="slide">
