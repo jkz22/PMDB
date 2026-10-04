@@ -215,10 +215,13 @@ texture-only shortcut falls to chance (0.52 → 0.48 → 0.42) and the strong se
 all (its four sites are one parent). Per detector the grey-stat LOPO accuracy is BSE 0.45 / Inlens 0.58 /
 SE 0.65 for `hybrid_spectrum` (BSE 0.61 / SE 0.65 already for `hybrid`), and material fractions alone give
 0.52–0.58, so the residual batch signal sits in the Inlens/SE tail statistics (p1, std) that the spectrum
-stage moves per site — see (ii) — not in BSE grey levels or in texture. So: the imaging-session (strong)
-fingerprint and the texture shift are removed, but a 27-feature grey-statistics classifier on all three
-detectors is *not* at chance after `hybrid_spectrum`; use BSE as the primary channel and run the grey-stat
-shortcut check on whatever channel set a model actually consumes.
+stage moves per site — see (ii) — not in BSE grey levels or in texture. So, precisely: the *texture*
+fingerprint of the strong session is reduced to near chance (texture-only strong-vs-rest 1.00 → 0.94, chance
+0.87) and the texture shift is removed, but on *grey statistics* the four strong sites are still perfectly
+separable from the other Batch 3 sites (`shortcut_strong_vs_rest_b3` = 1.00 for none, hybrid and
+hybrid_spectrum alike, leave-one-site-out) and a 27-feature grey-statistics classifier on all three detectors
+is *not* at chance after `hybrid_spectrum`; use BSE as the primary channel and run the grey-stat shortcut
+check on whatever channel set a model actually consumes.
 (ii) On Inlens the 1st
 percentile is a noise-floor measure, not a black level: the strong sites' Inlens high-frequency deficit
 is −41 %, so matching their spectrum to the reference adds high-frequency amplitude and their p1 rises

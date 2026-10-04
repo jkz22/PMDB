@@ -55,7 +55,7 @@ Methods compared on the `pmdb.clean`-masked half-res grey (`none` is the raw gre
 ## What is cut out ('crops')
 
 No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so
-nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, any interior pixel is KPI-invalid (bad band / charging), or a crack is flagged, and why
+nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, more than 0.1 % of the interior is KPI-invalid (bad band / charging), or a crack is flagged, and why
 
 | batch | site | detector | interior excluded | border |
 |---|---|---|---|---|
