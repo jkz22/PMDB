@@ -30,6 +30,9 @@ per-site `params.json`, `summary.csv`, `targets.json`, `material_thresholds.json
 evaluation under `outputs/clean/eval/`. A rebuild is deterministic (fixed seed `20261003`) and takes
 ≈ 12 min on 4 CPU workers. Raw TIFFs under `data/` are never touched.
 
+`params.json` stores the raw-TIFF `paths` relative to the repository root (absolute only for files
+outside it), so the committed parameter files and `scripts/eval_clean.py` work from any checkout.
+
 ## Pipeline (per site, full resolution 25 nm/px)
 
 | stage | what is done | evidence used | output |

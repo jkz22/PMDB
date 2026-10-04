@@ -1,0 +1,44 @@
+{
+  "plan": "docs/eval-plan-oct4.md",
+  "n_features": 26,
+  "loo": {
+    "n": 31,
+    "accuracy": 0.6129032258064516,
+    "recall": {
+      "Batch_1": 0.42857142857142855,
+      "Batch_2": 0.5714285714285714,
+      "Batch_3": 0.7058823529411765
+    },
+    "confusion": {
+      "Batch_1": {
+        "Batch_1": 3,
+        "Batch_2": 1,
+        "Batch_3": 3
+      },
+      "Batch_2": {
+        "Batch_1": 2,
+        "Batch_2": 4,
+        "Batch_3": 1
+      },
+      "Batch_3": {
+        "Batch_1": 3,
+        "Batch_2": 2,
+        "Batch_3": 12
+      }
+    }
+  },
+  "permutation": {
+    "observed_accuracy": 0.6129032258064516,
+    "null_mean": 0.37688709677419346,
+    "null_p95": 0.5483870967741935,
+    "p_value": 0.018490754622688656,
+    "n_perm": 2000,
+    "seed": 0
+  },
+  "rule": {
+    "loo_min": 0.742,
+    "p_max": 0.005
+  },
+  "adopt": false,
+  "elapsed_seconds": 169.5
+}
