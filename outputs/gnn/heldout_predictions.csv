@@ -1,0 +1,4 @@
+site,assigned,confidence,fingerprint_A0_of_record,agrees,p_Batch_1,p_Batch_2,p_Batch_3
+3e122cbj,Batch_1,0.923,Batch_1,True,0.923,0.011,0.066
+fn0mhxef,Batch_3,0.382,Batch_3,True,0.264,0.354,0.382
+xrv9xvzb,Batch_3,0.396,Batch_2,False,0.262,0.341,0.396
