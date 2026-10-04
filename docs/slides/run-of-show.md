@@ -5,8 +5,9 @@ Advance: `→` / click right half. Rehearse once against a stopwatch; the slide
 timings below total 85 s to leave 5 s of slack.
 
 Dashboard (live demo): `node demo/server.mjs` (Node ≥ 18, no `npm install`
-needed) → http://localhost:8080. Keys `1`–`6` switch views, `←`/`→` move the
-slider on the current view. It re-reads `outputs/` every 2 s, so a fresh
+needed) → http://localhost:8080. For another device, add `--host 0.0.0.0`
+and browse to the host’s LAN address. Keys `1`–`6` switch views, `←`/`→` move
+the slider on the current view. It re-reads `outputs/` every 2 s, so a fresh
 pipeline run shows up without a reload. Backup video:
 `demo/backup/pmdb-dashboard-demo.mp4` (regenerate: `python demo/record_backup.py`).
 

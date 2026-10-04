@@ -10,7 +10,7 @@ const pct = (v) => `${Math.round(v * 100)}%`;
 const median = (a) => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
 
 const state = {
-  view: 'confound', bundle: null,
+  view: 'confound', bundle: null, loadError: false,
   confound: { site: '4ih2ggld', delta: 0 },
   arrangement: { show: { Batch_1: true, Batch_2: true, Batch_3: true, Batch_heldout: true } },
   reject: { ti: 0 },
@@ -226,14 +226,26 @@ R.proof = (root) => {
 
 R.calls = (root) => {
   const D = M.D;
-  const stored = new Map(D.heldoutPredictions.map((r) => [r.site, r]));
-  let maxDiff = 0, sameCalls = true;
+  const storedRows = D.heldoutPredictions;
+  const stored = new Map(storedRows.map((r) => [r.site, r]));
+  const storedSites = new Set(stored.keys());
+  const liveSites = new Set(M.heldLive.map((p) => p.site));
+  const sameSites = storedRows.length === storedSites.size && M.heldLive.length === liveSites.size &&
+    storedSites.size === liveSites.size && [...storedSites].every((site) => liveSites.has(site));
+  let maxDiff = 0, sameCalls = true, metricsAvailable = true;
   for (const p of M.heldLive) {
     const s = stored.get(p.site);
     if (!s || s.assigned !== p.assigned || String(s.ood) !== (p.ood ? 'True' : 'False')) sameCalls = false;
-    if (s) for (const b of BATCHES) maxDiff = Math.max(maxDiff, Math.abs(s[`p_${b}`] - p.p[b]), Math.abs(s[`score_${b}`] - p.score[b]));
+    if (s) {
+      if (Number.isFinite(s.credibility) && Number.isFinite(s.confidence)) {
+        maxDiff = Math.max(maxDiff, Math.abs(s.credibility - p.credibility), Math.abs(s.confidence - p.confidence));
+      } else {
+        metricsAvailable = false;
+      }
+      for (const b of BATCHES) maxDiff = Math.max(maxDiff, Math.abs(s[`p_${b}`] - p.p[b]), Math.abs(s[`score_${b}`] - p.score[b]));
+    }
   }
-  const ok = sameCalls && maxDiff < 1e-9;
+  const ok = sameSites && sameCalls && metricsAvailable && maxDiff < 1e-9;
   const jk = D.jackknife.filter((r) => r.drop_k === 3);
   const hp = D.hyperparams;
   const explain = D.heldoutExplain.map((r) => ({ ...r, site: (String(r.site_index).match(/'([^']+)'\)$/) || [])[1] }));
@@ -265,8 +277,8 @@ R.calls = (root) => {
     h('p', { class: 'lede' }, 'Credibility = how typical the site is of its assigned batch. Confidence = how firmly every other batch is ruled out. p-values move in steps of 1/8 for a 7-site batch — read them as bins.'),
     h('div', { class: 'calls' }, cards),
     card(null, h('div', { class: `check ${ok ? 'good' : 'bad'}` }, ok
-      ? `✓ recomputed live in this browser from outputs/fingerprint/features.csv: identical to outputs/fingerprint/heldout_predictions.csv (max |Δ| = ${maxDiff.toExponential(1)})`
-      : `✗ live recomputation differs from outputs/fingerprint/heldout_predictions.csv (calls ${sameCalls ? 'same' : 'DIFFER'}, max |Δ| = ${maxDiff.toExponential(2)}) — results on disk changed; re-run scripts/run_fingerprint.py`),
+      ? `✓ recomputed live in this browser from outputs/fingerprint/features.csv: identical to outputs/fingerprint/heldout_predictions.csv (including credibility and confidence; max |Δ| = ${maxDiff.toExponential(1)})`
+      : `✗ live recomputation differs from outputs/fingerprint/heldout_predictions.csv (site keys ${sameSites ? 'same' : 'DIFFER'}, calls ${sameCalls ? 'same' : 'DIFFER'}, ${metricsAvailable ? `max |Δ| = ${maxDiff.toExponential(2)}` : 'stored credibility/confidence missing'}) — results on disk changed; re-run scripts/run_fingerprint.py`),
       'outputs/overnight/stability/jackknife_summary.csv · hyperparam_grid.csv · outputs/fingerprint/heldout_explain.csv'),
   );
 };
@@ -391,6 +403,7 @@ function setLive(kind, text) {
 }
 
 function describeLive() {
+  if (state.bundle == null || state.loadError) return;
   const b = state.bundle, g = b.git || {};
   const t = new Date(b.builtAt).toLocaleTimeString();
   let txt = `live · results v${b.version} @ ${t} · ${g.head || ''}`;
@@ -406,11 +419,22 @@ function toast(text) {
   clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 6000);
 }
 
+function showLoadError(error) {
+  const errors = Object.keys(state.bundle?.errors || {});
+  const detail = errors.length ? errors.join(', ') : String(error?.message || error);
+  const message = `Waiting for results: ${detail}`;
+  state.loadError = true;
+  viewEls[state.view].replaceChildren(h('div', { class: 'card' }, message));
+  setLive('err', message);
+}
+
 async function load() {
   const res = await fetch('/api/data', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`/api/data returned ${res.status}`);
   const bundle = await res.json();
   state.bundle = bundle;
   derive(bundle);
+  state.loadError = false;
   describeLive();
   render();
 }
@@ -418,13 +442,23 @@ async function load() {
 function connect() {
   const es = new EventSource('/api/events');
   es.addEventListener('update', async (e) => {
-    const { changed } = JSON.parse(e.data);
-    await load();
-    toast(`New results loaded: ${changed.join(', ')}`);
+    try {
+      const { changed } = JSON.parse(e.data);
+      await load();
+      toast(`New results loaded: ${changed.join(', ')}`);
+    } catch (error) {
+      showLoadError(error);
+      console.error(error);
+    }
   });
-  es.addEventListener('git', (e) => { state.bundle.git = JSON.parse(e.data); describeLive(); if (state.bundle.git.upstreamAhead) toast(`${state.bundle.git.upstreamAhead} new commit(s) on origin/main — git pull to update`); });
+  es.addEventListener('git', (e) => {
+    if (state.bundle == null) return;
+    state.bundle.git = JSON.parse(e.data);
+    describeLive();
+    if (state.bundle.git.upstreamAhead) toast(`${state.bundle.git.upstreamAhead} new commit(s) on origin/main — git pull to update`);
+  });
   es.onerror = () => setLive('err', 'server unreachable — showing last loaded data');
-  es.onopen = () => state.bundle && describeLive();
+  es.onopen = () => state.bundle != null && describeLive();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -456,8 +490,9 @@ async function autoplay() {
 }
 
 buildShell();
+connect();
 window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (VIEWS.some((x) => x.id === v) && v !== state.view) { state.view = v; render(); } });
 const initial = location.hash.slice(1);
 if (VIEWS.some((v) => v.id === initial)) state.view = initial;
-load().then(() => { connect(); if (new URLSearchParams(location.search).get('autoplay')) autoplay(); })
-  .catch((e) => { setLive('err', 'failed to load /api/data'); console.error(e); });
+load().then(() => { if (new URLSearchParams(location.search).get('autoplay')) autoplay(); })
+  .catch((error) => { showLoadError(error); console.error(error); });

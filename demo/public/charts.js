@@ -51,11 +51,15 @@ export function lineChart({ series, w = 640, h = 360, xTicks, xFmt, yLabel, xLab
   const m = { l: 56, r: 16, t: 14, b: 44 };
   const xs = series.flatMap((s) => s.points.map((p) => p[0]));
   const ys = series.flatMap((s) => s.points.map((p) => p[1]));
+  const svg = frame(w, h);
+  if (!xs.length) {
+    svg.append(el('text', { x: w / 2, y: h / 2, 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: '#8a8882' }, 'nothing selected'));
+    return svg;
+  }
   const [ylo, yhi] = yDomain || [Math.min(...ys), Math.max(...ys)];
   const pad = (yhi - ylo) * 0.06;
   const x = scale(Math.min(...xs), Math.max(...xs), m.l + 10, w - m.r - 10);
   const y = scale(ylo - pad, yhi + pad, h - m.b, m.t);
-  const svg = frame(w, h);
   axes(svg, x, y, { w, h, m, xTicks: xTicks || niceTicks(...x.domain), yTicks: niceTicks(ylo, yhi, 5),
     xFmt, yFmt: (v) => v.toFixed(2).replace(/\.?0+$/, '') || '0', xLabel, yLabel });
   if (extra) extra(svg, x, y, { w, h, m });

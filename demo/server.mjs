@@ -1,5 +1,5 @@
 // PMDB hackathon demo server: zero dependencies, Node >= 18.
-//   node demo/server.mjs [--port 8080]
+//   node demo/server.mjs [--port 8080] [--host 127.0.0.1]
 // Serves the dashboard, the read-only repo outputs/ tree, a JSON bundle of the
 // committed results (/api/data) and a server-sent event stream (/api/events)
 // that fires whenever a watched result file changes, so the dashboard always
@@ -15,6 +15,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const argPort = process.argv.indexOf('--port');
 const PORT = Number(argPort > 0 ? process.argv[argPort + 1] : process.env.PORT || 8080);
+const argHost = process.argv.indexOf('--host');
+const HOST = argHost > 0 ? process.argv[argHost + 1] : process.env.DEMO_HOST || '127.0.0.1';
 const POLL_MS = 2000;
 const GIT_POLL_S = Number(process.env.DEMO_GIT_POLL || 0);
 
@@ -55,6 +57,8 @@ const STATIC_ROOTS = {
   '/docs/': path.join(ROOT, 'docs'),
   '/': path.join(HERE, 'public'),
 };
+const STATIC_ROOT_REAL = new Map(await Promise.all(Object.entries(STATIC_ROOTS)
+  .map(async ([prefix, dir]) => [prefix, await fs.promises.realpath(dir)])));
 
 function readSource(rel) {
   const abs = path.join(ROOT, rel);
@@ -108,31 +112,91 @@ async function refreshGit(fetchUpstream) {
   gitState.head = await git(['rev-parse', '--short', 'HEAD']);
   gitState.branch = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
   const log = await git(['log', '--oneline', 'HEAD..origin/main']);
+  const ahead = await git(['rev-list', '--count', 'HEAD..origin/main']);
   gitState.upstreamLog = log ? log.split('\n').filter(Boolean).slice(0, 20) : [];
-  gitState.upstreamAhead = log === null ? null : gitState.upstreamLog.length;
+  gitState.upstreamAhead = ahead === null ? null : Number(ahead);
   gitState.checked = new Date().toISOString();
 }
 
-function serveStatic(req, res, urlPath) {
+async function serveStatic(req, res, urlPath) {
   for (const [prefix, dir] of Object.entries(STATIC_ROOTS)) {
     if (!urlPath.startsWith(prefix)) continue;
-    let rel = decodeURIComponent(urlPath.slice(prefix.length)) || 'index.html';
+    let rel;
+    try { rel = decodeURIComponent(urlPath.slice(prefix.length)) || 'index.html'; }
+    catch { res.writeHead(400).end('bad path'); return; }
     const abs = path.resolve(dir, rel);
     if (!abs.startsWith(dir + path.sep) && abs !== dir) { res.writeHead(403).end(); return; }
-    fs.stat(abs, (err, st) => {
-      if (err || !st.isFile()) { res.writeHead(404).end('not found'); return; }
-      const type = MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream';
-      const range = req.headers.range;
-      if (range && /^bytes=\d*-\d*$/.test(range)) {
-        let [s, e] = range.slice(6).split('-');
-        const start = s ? Number(s) : 0, end = e ? Number(e) : st.size - 1;
-        res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${start}-${end}/${st.size}`,
-          'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, 'Cache-Control': 'no-cache' });
-        fs.createReadStream(abs, { start, end }).pipe(res);
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Cache-Control': 'no-cache' });
-      fs.createReadStream(abs).pipe(res);
+    let real;
+    try { real = await fs.promises.realpath(abs); }
+    catch { res.writeHead(404).end('not found'); return; }
+    const rootReal = STATIC_ROOT_REAL.get(prefix);
+    if (real !== rootReal && !real.startsWith(rootReal + path.sep)) { res.writeHead(403).end(); return; }
+    fs.open(real, 'r', (openErr, fd) => {
+      if (openErr) { res.writeHead(404).end('not found'); return; }
+      fs.fstat(fd, (statErr, st) => {
+        const notFound = () => fs.close(fd, () => {
+          if (!res.destroyed) res.writeHead(404).end('not found');
+        });
+        if (statErr || !st.isFile()) { notFound(); return; }
+        const type = MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream';
+        const range = req.headers.range;
+        let start = 0, end = st.size - 1, status = 200;
+        if (range !== undefined) {
+          const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+          let valid = false;
+          if (match && (match[1] || match[2])) {
+            const size = BigInt(st.size);
+            const last = size - 1n;
+            if (match[1] && match[2]) {
+              const requestedStart = BigInt(match[1]), requestedEnd = BigInt(match[2]);
+              if (requestedStart < size && requestedStart <= requestedEnd) {
+                start = Number(requestedStart);
+                end = Number(requestedEnd > last ? last : requestedEnd);
+                valid = start <= end;
+              }
+            } else if (match[1]) {
+              const requestedStart = BigInt(match[1]);
+              if (requestedStart < size) {
+                start = Number(requestedStart);
+                end = st.size - 1;
+                valid = start <= end;
+              }
+            } else {
+              const suffixLength = BigInt(match[2]);
+              if (suffixLength > 0n && size > 0n) {
+                start = Number(suffixLength >= size ? 0n : size - suffixLength);
+                end = st.size - 1;
+                valid = start <= end;
+              }
+            }
+          }
+          if (!valid) {
+            fs.close(fd, () => {
+              if (!res.destroyed) res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }).end();
+            });
+            return;
+          }
+          status = 206;
+        }
+        const headers = { 'Content-Type': type, 'Content-Length': end - start + 1,
+          'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' };
+        if (status === 206) headers['Content-Range'] = `bytes ${start}-${end}/${st.size}`;
+        let stream;
+        try {
+          stream = fs.createReadStream(null, { fd, autoClose: true, ...(status === 206 ? { start, end } : {}) });
+        } catch {
+          fs.close(fd, () => {
+            if (!res.destroyed) res.writeHead(500).end();
+          });
+          return;
+        }
+        stream.on('error', () => {
+          if (!res.headersSent) res.writeHead(500).end();
+          else res.destroy();
+        });
+        res.writeHead(status, headers);
+        stream.pipe(res);
+      });
     });
     return;
   }
@@ -177,8 +241,8 @@ if (GIT_POLL_S > 0) {
   }, GIT_POLL_S * 1000);
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   const errs = Object.keys(bundle.errors);
-  console.log(`[demo] PMDB dashboard on http://localhost:${PORT}  (git ${gitState.head}, ${Object.keys(SOURCES).length - errs.length}/${Object.keys(SOURCES).length} result files loaded)`);
+  console.log(`[demo] PMDB dashboard on http://${HOST}:${PORT}  (git ${gitState.head}, ${Object.keys(SOURCES).length - errs.length}/${Object.keys(SOURCES).length} result files loaded)`);
   if (errs.length) console.log('[demo] missing/unreadable:', bundle.errors);
 });
