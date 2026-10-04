@@ -15,6 +15,7 @@ Run:
     modal run modal_patch_mil.py --mode probe    # supervised linear probe, LOPO, 34 sites
     modal run modal_patch_mil.py --mode explain    # KPI-language explanation of the 34-site probe
     modal run modal_patch_mil.py --mode explain-test  # sibling-excluded probe + KPI explanation of the 6 test + 3 held-out sites
+    modal run modal_patch_mil.py --mode evidence  # per-patch evidence overlays for the 6 test sites
     modal run modal_patch_mil.py --mode test     # embed + score new organiser test sites with the frozen selection
 
 See docs/patch_mil.md.
@@ -436,6 +437,59 @@ def probe_explain_test_fit(tag: str, labels: list[dict], kpi_records: list[dict]
     return {"predictions": pred, "contributions": contrib_rows, "elapsed_s": round(time.time() - t0, 2)}
 
 
+@app.function(volumes={"/out": out_vol, "/data": data_vol}, cpu=4.0, memory=16384, timeout=3000)
+def evidence_render(tag: str, labels: list[dict], targets: list[dict]) -> dict:
+    """Sibling-excluded probe per parent; per-patch vote = log p(call) - log p(runner_up); render overlay PNG per site."""
+    import io
+
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.patches import Rectangle
+
+    from pmdb import patch_probe as pp
+    from pmdb.io import load_site
+
+    out_vol.reload()
+    Xall = {r["site"]: _load_emb(tag, r["batch"], r["site"])[0] for r in labels}
+    sb = {r["site"]: r["label"] for r in labels}
+    pngs, meta = {}, {}
+    for par in sorted({t["parent"] for t in targets}):
+        train = [r["site"] for r in labels if r["parent"] != par]
+        sc, pca, clf = pp.fit_full_probe({s: Xall[s] for s in train}, {s: sb[s] for s in train})
+        for t in [t for t in targets if t["parent"] == par]:
+            feat, coords, _ = _load_emb(tag, t["batch"], t["site"])
+            lp = clf.predict_log_proba(pca.transform(sc.transform(feat)))
+            ci, ri = list(clf.classes_).index(t["call"]), list(clf.classes_).index(t["runner_up"])
+            vote = lp[:, ci] - lp[:, ri]
+            s = load_site(t["batch"], t["site"], resolution="half", normalise="fixed", harmonise=HARMONISE,
+                          cache_root="/data/test")
+            bse = s.image[..., 0]
+            h, w = bse.shape
+            scale = np.percentile(np.abs(vote), 95) or 1.0
+            hdr = 0.6
+            fig = plt.figure(figsize=(16, 16 * h / w + hdr), dpi=100)
+            ax = fig.add_axes([0, 0, 1, 1 - hdr / (16 * h / w + hdr)])
+            ax.imshow(bse, cmap="gray", vmin=0, vmax=1)
+            for v, (_, _, y0, x0) in zip(vote, coords):
+                a = min(abs(v) / scale, 1.0) * 0.6
+                ax.add_patch(Rectangle((x0, y0), 224, 224, fc=(1, 0, 0) if v > 0 else (0, 0.3, 1), ec="none", alpha=a))
+            for i in np.argsort(-vote)[:3]:
+                ax.add_patch(Rectangle((coords[i][3], coords[i][2]), 224, 224, fc="none", ec="yellow", lw=3))
+            ax.axis("off")
+            fig.text(0.01, 0.99, f"{t['site']} \u2192 {t['call']} (p={t['p']:.3f})", va="top", fontsize=20)
+            fig.text(0.99, 0.99, "red = supports call   blue = against   yellow = top-3 supporting", va="top", ha="right", fontsize=13)
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png")
+            plt.close(fig)
+            pngs[t["site"]] = buf.getvalue()
+            meta[t["site"]] = {"width": int(w), "height": int(h), "call": t["call"], "runner_up": t["runner_up"],
+                               "patches": [{"y0": int(c[2]), "x0": int(c[3]), "size": 224, "vote": round(float(v), 4)}
+                                           for v, c in zip(vote, coords)]}
+    return {"pngs": pngs, "meta": meta}
+
+
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -450,8 +504,8 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
     from pmdb.parents import write_parent_groups
     from pmdb.patch_mil import fingerprint_comparison
 
-    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain", "explain-test"):
-        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain | explain-test")
+    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe", "explain", "explain-test", "evidence"):
+        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe | explain | explain-test | evidence")
     root = Path(__file__).resolve().parent
     if mode == "probe":
         _probe(root, n_perm, centre)
@@ -461,6 +515,9 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000, centre: str
         return
     if mode == "explain-test":
         _explain_test(root)
+        return
+    if mode == "evidence":
+        _evidence(root)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -629,6 +686,25 @@ def _explain_test(root: Path) -> None:
     _atomic_write(out / "test_contributions.csv", pd.DataFrame(res["contributions"]).to_csv(index=False).encode())
     print(pr[cols].to_string())
     print(f"wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
+
+
+def _evidence(root: Path) -> None:
+    import pandas as pd
+
+    from pmdb.batch_menu import labelled_sites
+
+    lab = labelled_sites()
+    pg = pd.read_csv(root / "outputs" / "parent_groups.csv", dtype={"site": str}).set_index("site")["parent_id"]
+    lab["parent"] = lab["site"].map(pg)
+    pr = pd.read_csv(root / "outputs" / "probe_explain" / "test_final_predictions.csv", dtype={"site": str}).set_index("site")
+    targets = [{"batch": "Batch_test", "site": s, "parent": p, "call": pr.loc[s, "call"], "runner_up": pr.loc[s, "runner_up"],
+                "p": float(pr.loc[s, "p_" + pr.loc[s, "call"]])} for s, p in TEST_PARENTS.items()]
+    res = evidence_render.remote("full", lab.to_dict("records"), targets)
+    out = root / "demo" / "public" / "evidence"
+    for s, b in res["pngs"].items():
+        _atomic_write(out / f"{s}.png", b)
+    _atomic_write(out / "patches.json", json.dumps(res["meta"]).encode())
+    print("wrote", sorted(res["pngs"]))
 
 
 def _menu_or_test(mode: str, root: Path) -> None:
