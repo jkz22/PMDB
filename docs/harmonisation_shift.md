@@ -100,14 +100,14 @@ a real held-out site is). The nested numbers are the honest ones:
 |---|---|---|---|---|
 | fingerprint (16) | session shortcut | 0.52 | 0.45 | **0.52** |
 | fingerprint (16) | strong-vs-rest | 0.81 | 0.77 | **0.81** |
-| fingerprint (16) | batch | 0.52 | 0.61 | **0.45** |
+| fingerprint (16) | batch | 0.52 | 0.61 | **0.52** |
 | KPIs (42) | session shortcut | 0.52 | 0.39 | **0.42** |
 | KPIs (42) | strong-vs-rest | 0.81 | 0.61 | **0.74** |
-| KPIs (42) | batch | 0.39 | 0.65 | **0.45** |
+| KPIs (42) | batch | 0.39 | 0.65 | **0.39** |
 
 Verdict: on the fingerprint table nested ComBat changes nothing (the session effect is estimated from
 4 + 5 sites and shrunk to the prior); on the KPI table it removes part of the session signal
-(0.52 → 0.42, strong-vs-rest 0.81 → 0.74) with batch accuracy within noise (0.39 → 0.45). The
+(0.52 → 0.42, strong-vs-rest 0.81 → 0.74) with batch accuracy unchanged (0.39 → 0.39). The
 apparent "batch kept and sharpened" result of the in-sample run (0.61 / 0.65) was leakage of the
 protected covariate and is not reproduced. ComBat is therefore a modest, feature-level complement
 for KPI models, not a replacement for the image routes.

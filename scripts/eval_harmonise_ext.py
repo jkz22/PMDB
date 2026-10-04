@@ -422,12 +422,18 @@ def _fig_fractions(site_df: pd.DataFrame, out: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO_ROOT / "outputs" / "harmonisation_ext"))
-    ap.add_argument("--methods", nargs="+", default=["none", "nyul", "basic", "hybrid"])
+    ap.add_argument("--methods", nargs="+", default=None,
+                    help="default: none nyul basic hybrid; with --figures-only, the methods saved in summary.csv")
     ap.add_argument("--no-heldout", action="store_true")
     ap.add_argument("--figures-only", action="store_true", help="redraw figures/report from the saved site_metrics.csv")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    if args.methods is None:
+        if args.figures_only and (out / "summary.csv").exists():
+            args.methods = list(pd.read_csv(out / "summary.csv")["method"])
+        else:
+            args.methods = ["none", "nyul", "basic", "hybrid"]
 
     hybrid_root = get_cache_root()  # H.load_lut / H.load_reference append 'harmonised/<method>' themselves
     methods = [m for m in args.methods if m != "hybrid" or (hybrid_root / "harmonised" / "hybrid" / "luts.npz").exists()]
