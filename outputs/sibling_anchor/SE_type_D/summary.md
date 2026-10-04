@@ -14,7 +14,7 @@ Labelled sites 34 (31 + 3 released truths), majority 0.529. delta (within pure-p
 
 | site | parent | D | assigned (cut rule) | conf | anchored (cross-check) | anch p(B1) | anch p(B2) | anch p(B3) | labelled siblings (label) D |
 |---|---|---|---|---|---|---|---|---|---|
-| 0eryguqq | G1612 | +4.78 | Batch_3 | high | Batch_2 | 0.00 | 0.58 | 0.42 | ptg8lmto (3) +5.44; xgj4xftb (3) +6.21 |
+| 0eryguqq | G1612 | +4.78 | Batch_3 | low | Batch_2 | 0.00 | 0.58 | 0.42 | ptg8lmto (3) +5.44; xgj4xftb (3) +6.21 |
 | 4hq27w4c | G2148 | -10.25 | Batch_1 | high | Batch_1 | 1.00 | 0.00 | 0.00 | f1vzngrs (1) -9.01; epqdaau9 (2) -8.80 |
 | fhwrjtet | G1612 | +5.88 | Batch_3 | high | Batch_3 | 0.00 | 0.00 | 1.00 | ptg8lmto (3) +5.44; xgj4xftb (3) +6.21 |
 | fspqbkxl | G2148 | -11.25 | Batch_1 | high | Batch_1 | 1.00 | 0.00 | 0.00 | f1vzngrs (1) -9.01; epqdaau9 (2) -8.80 |

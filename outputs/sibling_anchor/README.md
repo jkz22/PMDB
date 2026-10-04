@@ -26,11 +26,12 @@ functional-morphology branch). Two predictors, 34 labelled sites (31 + 3 release
   of the *label*, not evidence that the organiser's feature is a grey level.
 - Test-site calls below therefore use the cross-parent two-cut rule (full fit on 34). Both detectors give the
   same six calls. Confidence is low wherever the site's own parent contradicts the rule (G2156: both labelled
-  siblings sit above the B3 cut yet are B1/B2) or the site sits within one SD of a cut.
+  siblings sit above the B3 cut yet are B1/B2), the site sits within one SD of a cut, or the sibling-anchored
+  cross-check disagrees with the cut rule on that detector.
 
 | site | parent | SE_type_D | BSE_D | call | confidence | why |
 |---|---|---|---|---|---|---|
-| 0eryguqq | G1612 | +4.8 | +16.2 | Batch_3 | high | pure-B3 parent; slightly below both B3 siblings on SE and BSE (not inside their range), still well above the B3 cut |
+| 0eryguqq | G1612 | +4.8 | +16.2 | Batch_3 | low (SE) / high (BSE) | pure-B3 parent; slightly below both B3 siblings on SE and BSE (not inside their range), still well above the B3 cut; on SE the anchored cross-check favours Batch_2, so SE confidence is low |
 | fhwrjtet | G1612 | +5.9 | +18.3 | Batch_3 | high | pure-B3 parent, inside sibling range |
 | fspqbkxl | G2148 | −11.2 | +0.7 | Batch_1 | high | below B1 cut on both detectors; darker than the B1 sibling |
 | 4hq27w4c | G2148 | −10.3 | −1.6 | Batch_1 | high | below B1 cut on both detectors; darker than the B1 sibling |
