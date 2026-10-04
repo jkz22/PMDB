@@ -31,6 +31,15 @@ from pmdb.stats import raw_intensity_stats
 DEFAULT_OUTPUTS_DIR = REPO_ROOT / "outputs"
 
 
+
+def _rel(path: Path) -> str:
+    """Repo-relative path for the manifest, so it is the same on every machine."""
+    try:
+        return str(Path(path).resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def build_cache(
     data_root: Path | None = None,
     cache_root: Path | None = None,
@@ -132,7 +141,7 @@ def build_cache(
             "height": h_half,
             "width": w_half,
             "nm_per_px": 50.0,
-            "path": str(npz_path),
+            "path": _rel(npz_path),
         })
 
         print(f"[{idx+1}/{total_sites}] {b}/{s}: processed -> half shape {half_uint8.shape}")

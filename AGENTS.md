@@ -20,7 +20,7 @@ site = load_site("Batch_1", "4ih2ggld", resolution="half")
 # site.image: float32 ndarray of shape (H, W, 3), scaled [0, 1] via percentile normalisation
 # site.nm_per_px: 50.0
 # site.se_detector: 'ETD' or 'SE'
-# site.channel_names: ['BSE', 'Inlens', 'ETD'] (or ['BSE', 'Inlens', 'SE'])
+# site.channels: ('BSE', 'Inlens', 'SE_type'); site.se_detector says which SE detector channel 2 is
 
 # Channel slicing:
 bse = site.image[..., 0]      # Backscattered electron (compositional/phase contrast)

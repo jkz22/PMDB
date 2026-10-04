@@ -13,11 +13,11 @@ The repository contains raw microscopy TIFFs in `data/` and **pre-processed, ali
   - Fixed 4-px border artefact columns cropped from both left and right edges (`arr[:, 4:W-4]`).
   - Downsampled 2×2 block mean to 50 nm/px (full resolution is 25 nm/px).
   - Stored as compressed numpy archives in `cache/half/<batch>__<site>.npz`.
-  - How processed arrays differ from the raw TIFFs, what normalisation costs, and what is *not* done: see [`docs/data-processing.md`](docs/data-processing.md).
+  - How processed arrays differ from the raw TIFFs, what normalisation costs, and what is *not* done: see [`docs/data-processing.md`](data-processing.md).
 
 > **Note for Agents & Analysis Pipelines**:
 > All 31 sites are pre-processed and tracked directly in `cache/half/`.
-> Use `resolution="half"` for fast, out-of-the-box loading without re-processing raw TIFFs. See [`AGENTS.md`](AGENTS.md) for detailed guidelines.
+> Use `resolution="half"` for fast, out-of-the-box loading without re-processing raw TIFFs. See [`AGENTS.md`](../AGENTS.md) for detailed guidelines.
 
 ## Quickstart: Data Loading
 
@@ -31,7 +31,7 @@ manifest = list_sites()
 site = load_site("Batch_1", "4ih2ggld", resolution="half")
 print(site.image.shape)      # (1158, 3494, 3) -> [H, W, 3]
 print(site.nm_per_px)        # 50.0 nm/px
-print(site.channel_names)    # ['BSE', 'Inlens', 'ETD']
+print(site.channels)         # ('BSE', 'Inlens', 'SE_type')
 print(site.se_detector)      # 'ETD'
 
 # Slice channels directly:
