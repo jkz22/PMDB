@@ -1,6 +1,6 @@
 # FEM lithiation-swelling simulation — decisions so far (pre-spec)
 
-Status: scoping. Literature review complete: `docs/fem/literature-review.md` (parameter table, SOC→Si/graphite mapping, validation bands, accepted risks; evidence in `docs/fem/evidence/`). Full spec to follow.
+Status: DONE 2026-10-04 — 68/68 simulations, 34 GIFs, classifier ablation + held-out predictions, pitch brief (docs/pitch-brief.md), PR #32. Literature review complete: `docs/fem/literature-review.md` (parameter table, SOC→Si/graphite mapping, validation bands, accepted risks; evidence in `docs/fem/evidence/`). Full spec to follow.
 
 ## Decided by user
 - D1 Free/open-source Python: FEniCSx (finite strain needs a nonlinear solver; scikit-fem dropped).
