@@ -20,20 +20,21 @@
    "lopo_n": 34,
    "lopo_accuracy": 0.618,
    "lopo_balanced_accuracy": 0.574,
-   "lopo_a0_correct_check": "16/34, identical to the menu 'fingerprint' option (0.471), so the A1 number is protocol-comparable",
+   "lopo_a0_correct_check": "A0 per-site calls identical to the menu 'fingerprint' option at all 34 sites (16/34, balanced acc 0.412; enforced in scripts/fem_a1_lopo.py and tests/test_fem_fingerprint.py), so the A1 number is protocol-comparable",
    "lopo_metrics": "outputs/fem_fingerprint/lopo/metrics.json",
    "rubric": "not computed: A1 has no confidence-flag rule in the menu, so it is not ranked by rubric",
-   "superseded_site_loo": "24/31 leave-one-site-out (balanced acc 0.695, perm p 0.001) had sibling crops of the same parent in training; do not compare with menu numbers",
+   "not_comparable_site_loo": "24/31 leave-one-site-out (balanced acc 0.695, perm p 0.001) had sibling crops of the same parent in training; do not compare with menu numbers",
    "heldout_correct": 0,
    "heldout_n": 3,
    "heldout_calls": {
-    "3e122cbj": "Batch_1",
+    "3e122cbj": "Batch_3",
     "fn0mhxef": "Batch_3",
     "xrv9xvzb": "Batch_2"
    },
    "predictions": {
-    "loo": "outputs/fem_fingerprint/main/loo_predictions.csv (arm A1)",
-    "heldout": "outputs/fem_fingerprint/main/heldout_predictions.csv (arm A1)"
+    "lopo": "outputs/fem_fingerprint/lopo/predictions.csv (arm A1, 34 sites, leave-one-parent-out; the record for this entry)",
+    "legacy_loo_superseded": "outputs/fem_fingerprint/main/loo_predictions.csv (31-site LOO, not comparable)",
+    "legacy_heldout_superseded": "outputs/fem_fingerprint/main/heldout_predictions.csv (trained on 31 sites, not LOPO)"
    },
    "produced_by": "python scripts/fem_a1_lopo.py (LOPO); python scripts/fem_fingerprint_eval.py --fem-site-curves outputs/fem/free_lateral/site_curves.csv --tag main (site-LOO, superseded)",
    "status": "selected (promoted 2026-10-04, test day)",

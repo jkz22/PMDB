@@ -280,7 +280,7 @@ def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[di
             "test_predictions": test_pred, "elapsed_s": round(time.time() - t0, 2)}
 
 
-@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=1800)
+@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=3600)  # 200 perms took 371 s; 1000 perms ~31 min, so 2x headroom
 def probe_lopo(tag: str, labels: list[dict], parents: list[dict], menu: list[dict], n_perm: int = 200, centre: str = "none") -> dict:
     import numpy as np
     import pandas as pd

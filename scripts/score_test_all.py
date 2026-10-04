@@ -6,8 +6,8 @@ Needs (see docs/patch_mil.md, Test day runbook): outputs/test/features.csv and o
 (modal_test_prep.py), outputs/fem/free_lateral_test/site_curves.csv (modal_fem.py full_free settings on
 Batch_test + scripts/fem_collect.py --edge), outputs/test/menu_predictions.csv (modal_patch_mil.py --mode test).
 
-Models: fem_a1 (selected, outputs/menu/selection.json; refit on the 31 labelled sites exactly as its held-out
-run) and the 3 menu options (fingerprint, fingerprint_centred, patch). Writes outputs/test/
+Models: fem_a1 (selected, outputs/menu/selection.json; built as registered: 34 labelled sites, test site's parent left out,
+menu features; scripts/fem_a1_lopo.py) and the 3 menu options (fingerprint, fingerprint_centred, patch). Writes outputs/test/
 all_models_predictions.csv (long), all_models_wide.csv, final_predictions.csv and submission.md.
 """
 from __future__ import annotations
@@ -22,10 +22,14 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+import fem_a1_lopo as fal  # noqa: E402
 import fem_fingerprint_eval as ffe  # noqa: E402
 
 from pmdb import fingerprint as fp  # noqa: E402
 from pmdb import patch_lopo as plo  # noqa: E402
+from pmdb.batch_menu import feature_table, labelled_sites  # noqa: E402
+from pmdb.fem_features import subset  # noqa: E402
+from pmdb.parents import parent_groups  # noqa: E402
 
 BATCHES = ["Batch_1", "Batch_2", "Batch_3"]
 OUT = ROOT / "outputs/test"
@@ -40,13 +44,29 @@ PHRASES = {"swell_resid": "simulated lithiation swelling beyond what its Si cont
            "si_stress_spread": "the spread of simulated stress across the Si particles"}
 
 
-def fem_a1(test=None):
-    """fem_a1 refit on all 31 labelled sites (as fem_fingerprint_eval.py held-out scoring), predict `test`."""
-    tr, te, y, leo_cols = ffe.load_inputs(FEM_LABELLED, test)
+def fem_arm(arm: str):
+    """fem_a1 (arm A1) as registered: 34 labelled sites (31 + 3 revealed held-out), menu fingerprint features,
+    and, like every menu option at test time, the test site's own parent left out of training
+    (scripts/fem_a1_lopo.py protocol). Returns per-test-site predictions and per-feature evidence."""
+    tr, te, _, leo_cols = ffe.load_inputs(FEM_LABELLED)
+    pool = fal.pooled(tr, te)
+    keys = [tuple(r) for r in pool["index"]]
+    pool["leo"] = feature_table(keys).to_numpy(float)
+    lab = labelled_sites().set_index(["batch", "site"])["label"]
+    pg = parent_groups().set_index(["batch", "site"])["parent_id"]
+    y = pd.Series([lab[k] for k in keys], index=ffe._mi(pool["index"]), name="batch")
+    groups = np.array([pg[k] for k in keys])
     codes = np.array([BATCHES.index(b) for b in y])
-    Xtr, Xte, _, _ = ffe.frames("A1", tr, te, codes, leo_cols)
-    m = fp.fit(Xtr, y)
-    return fp.predict(m, Xte), fp.explain(m, Xte)
+    _, tst, _, _ = ffe.load_inputs(FEM_LABELLED, TEST)
+    preds, expls = [], []
+    for i, key in enumerate(tuple(r) for r in tst["index"]):
+        m = groups != pg.get(key, "none")
+        Xtr, Xte, _, _ = ffe.frames(arm, subset(pool, m), subset(tst, np.arange(len(tst["index"])) == i),
+                                    codes[m], leo_cols)
+        model = fp.fit(Xtr, y[m])
+        preds.append(fp.predict(model, Xte))
+        expls.append(fp.explain(model, Xte))
+    return pd.concat(preds), pd.concat(expls)
 
 
 def phrase(f: str) -> str:
@@ -80,15 +100,13 @@ def explain(site: str, k: int, high: bool, expl: pd.DataFrame, others: dict[str,
 def main() -> None:
     sel = json.loads((ROOT / "outputs/menu/selection.json").read_text())
     assert sel["option"] == "fem_a1", sel["option"]
-    # reproduce the registered held-out calls before trusting the test path
-    held, _ = fem_a1()
-    reg = sel["registry"]["fem_a1"]["heldout_calls"]
-    assert dict(zip(held.index.get_level_values("site"), held["assigned"])) == reg, held["assigned"]
-
-    pred, expl = fem_a1(TEST)
+    pred, expl = fem_arm("A1")
     menu = pd.read_csv(OUT / "menu_predictions.csv", dtype={"site": str}).set_index("site")
     sites = list(pred.index.get_level_values("site"))
     assert sorted(sites) == sorted(menu.index), (sites, list(menu.index))
+    # protocol check: arm A0 (same data path, no FEM columns) must reproduce the menu fingerprint call per site
+    a0, _ = fem_arm("A0")
+    assert (a0["assigned"].to_numpy() == menu.loc[sites, "fingerprint_call"].to_numpy()).all(), a0["assigned"]
 
     long, final = [], []
     for i, site in enumerate(sites):

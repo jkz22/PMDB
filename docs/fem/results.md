@@ -98,6 +98,56 @@ GIFs (bottom orientation):
 - [Batch_heldout/xrv9xvzb](../../outputs/fem/gifs/Batch_heldout__xrv9xvzb.gif)
 <!-- /AUTO:figures -->
 
+## Free right edge rerun (`free_lateral`) GIFs
+
+The selected FEM model (`fem_a1`) reads `outputs/fem/free_lateral/site_curves.csv`: the same simulation with `solver_overrides {"lateral": "left"}`, i.e. roller on the left edge only, right edge free (crops come from a horizontal strip, so rollers on both edges over-constrain). Its GIFs (bottom orientation, Modal tags `full_free` and `full_free_test`) are below; the GIFs above are from the original both-rollers run.
+
+Labelled and held-out sites:
+
+- [Batch_1/4ih2ggld](../../outputs/fem/free_lateral/gifs/Batch_1__4ih2ggld.gif)
+- [Batch_1/5n1q8atc](../../outputs/fem/free_lateral/gifs/Batch_1__5n1q8atc.gif)
+- [Batch_1/f1vzngrs](../../outputs/fem/free_lateral/gifs/Batch_1__f1vzngrs.gif)
+- [Batch_1/ffwubibz](../../outputs/fem/free_lateral/gifs/Batch_1__ffwubibz.gif)
+- [Batch_1/fzrt2k6r](../../outputs/fem/free_lateral/gifs/Batch_1__fzrt2k6r.gif)
+- [Batch_1/iv6g2oq0](../../outputs/fem/free_lateral/gifs/Batch_1__iv6g2oq0.gif)
+- [Batch_1/uhdslk0o](../../outputs/fem/free_lateral/gifs/Batch_1__uhdslk0o.gif)
+- [Batch_2/3806gxp0](../../outputs/fem/free_lateral/gifs/Batch_2__3806gxp0.gif)
+- [Batch_2/avn74qx1](../../outputs/fem/free_lateral/gifs/Batch_2__avn74qx1.gif)
+- [Batch_2/b3esycq1](../../outputs/fem/free_lateral/gifs/Batch_2__b3esycq1.gif)
+- [Batch_2/epqdaau9](../../outputs/fem/free_lateral/gifs/Batch_2__epqdaau9.gif)
+- [Batch_2/i9jiqjwl](../../outputs/fem/free_lateral/gifs/Batch_2__i9jiqjwl.gif)
+- [Batch_2/r17byphk](../../outputs/fem/free_lateral/gifs/Batch_2__r17byphk.gif)
+- [Batch_2/rxax5ozo](../../outputs/fem/free_lateral/gifs/Batch_2__rxax5ozo.gif)
+- [Batch_3/0grcilhi](../../outputs/fem/free_lateral/gifs/Batch_3__0grcilhi.gif)
+- [Batch_3/71vgq3fw](../../outputs/fem/free_lateral/gifs/Batch_3__71vgq3fw.gif)
+- [Batch_3/9luzk4jm](../../outputs/fem/free_lateral/gifs/Batch_3__9luzk4jm.gif)
+- [Batch_3/cfe5vt7s](../../outputs/fem/free_lateral/gifs/Batch_3__cfe5vt7s.gif)
+- [Batch_3/hawkfj64](../../outputs/fem/free_lateral/gifs/Batch_3__hawkfj64.gif)
+- [Batch_3/hzumfsms](../../outputs/fem/free_lateral/gifs/Batch_3__hzumfsms.gif)
+- [Batch_3/kbdh4tri](../../outputs/fem/free_lateral/gifs/Batch_3__kbdh4tri.gif)
+- [Batch_3/mgxahqnk](../../outputs/fem/free_lateral/gifs/Batch_3__mgxahqnk.gif)
+- [Batch_3/pl8uabbv](../../outputs/fem/free_lateral/gifs/Batch_3__pl8uabbv.gif)
+- [Batch_3/ptg8lmto](../../outputs/fem/free_lateral/gifs/Batch_3__ptg8lmto.gif)
+- [Batch_3/tuy3zymq](../../outputs/fem/free_lateral/gifs/Batch_3__tuy3zymq.gif)
+- [Batch_3/ufdvpb81](../../outputs/fem/free_lateral/gifs/Batch_3__ufdvpb81.gif)
+- [Batch_3/utfgcjfa](../../outputs/fem/free_lateral/gifs/Batch_3__utfgcjfa.gif)
+- [Batch_3/vc2whyaq](../../outputs/fem/free_lateral/gifs/Batch_3__vc2whyaq.gif)
+- [Batch_3/x77cy643](../../outputs/fem/free_lateral/gifs/Batch_3__x77cy643.gif)
+- [Batch_3/x7u69zsw](../../outputs/fem/free_lateral/gifs/Batch_3__x7u69zsw.gif)
+- [Batch_3/xgj4xftb](../../outputs/fem/free_lateral/gifs/Batch_3__xgj4xftb.gif)
+- [Batch_heldout/3e122cbj](../../outputs/fem/free_lateral/gifs/Batch_heldout__3e122cbj.gif)
+- [Batch_heldout/fn0mhxef](../../outputs/fem/free_lateral/gifs/Batch_heldout__fn0mhxef.gif)
+- [Batch_heldout/xrv9xvzb](../../outputs/fem/free_lateral/gifs/Batch_heldout__xrv9xvzb.gif)
+
+Test-day sites:
+
+- [Batch_test/0eryguqq](../../outputs/fem/free_lateral_test/gifs/Batch_test__0eryguqq.gif)
+- [Batch_test/4hq27w4c](../../outputs/fem/free_lateral_test/gifs/Batch_test__4hq27w4c.gif)
+- [Batch_test/fhwrjtet](../../outputs/fem/free_lateral_test/gifs/Batch_test__fhwrjtet.gif)
+- [Batch_test/fspqbkxl](../../outputs/fem/free_lateral_test/gifs/Batch_test__fspqbkxl.gif)
+- [Batch_test/soo2ax3r](../../outputs/fem/free_lateral_test/gifs/Batch_test__soo2ax3r.gif)
+- [Batch_test/y59rxmxl](../../outputs/fem/free_lateral_test/gifs/Batch_test__y59rxmxl.gif)
+
 ## Batch differences
 
 <!-- AUTO:batch_diff -->
