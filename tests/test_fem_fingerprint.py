@@ -84,3 +84,14 @@ def test_test_site_nan_never_reaches_prediction_matrix():
         te["cand"][0, j] = np.nan
         _, xte, names, _ = ffe.fold_matrices("A2", tr, te, codes[1:])
         assert np.isfinite(xte).all() and "abcd"[j] not in names
+
+
+def test_a1_lopo_a0_matches_menu_fingerprint():
+    """Committed A0 LOPO calls equal the menu fingerprint option's calls at every one of the 34 sites."""
+    import pandas as pd
+    root = Path(__file__).resolve().parents[1]
+    a0 = pd.read_csv(root / "outputs/fem_fingerprint/lopo/predictions.csv", dtype={"site": str})
+    a0 = a0[a0["arm"] == "A0"].set_index("site")["assigned"]
+    menu = pd.read_csv(root / "outputs/menu/menu_predictions.csv", dtype={"site": str}).set_index("site")["fp_call"]
+    assert len(a0) == 34 and set(a0.index) == set(menu.index)
+    assert (a0 == menu.reindex(a0.index)).all()

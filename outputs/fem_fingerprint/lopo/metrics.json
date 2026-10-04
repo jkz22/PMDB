@@ -5,7 +5,7 @@
     "lopo_correct": 16,
     "lopo_n": 34,
     "accuracy": 0.47058823529411764,
-    "balanced_accuracy": 0.4351851851851852
+    "balanced_accuracy": 0.41203703703703703
   },
   "A1": {
     "lopo_correct": 21,
