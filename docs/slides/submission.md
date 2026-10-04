@@ -4,7 +4,7 @@
 
 - **Repo:** https://github.com/jkz22/PMDB (public)
 - **Video (≤ 2 min):** `demo/backup/pmdb-submission.mp4`, a captioned walkthrough that works muted. Upload it to YouTube (unlisted is fine) or Loom.
-  Regenerate with `node demo/server.mjs & python demo/record_submission.py`.
+  Regenerate with `node demo/server.mjs &` then `python demo/submission/build.py --video`.
 
 ## Short description (paste into the form)
 

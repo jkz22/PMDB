@@ -31,8 +31,7 @@ same amount. The difference is *where* it sits." Point at the curves: "the basel
 Batch 2 is top-heavy (drying migration), Batch 1 is bottom-heavy (sedimentation)."
 
 ## 1:25–1:50 Proof (view `3`)
-"16 curve-shape features, no fitted weights: 21 of 31 leave-one-out, p = 0.0025 over ten
-thousand label shuffles. Every challenger was pre-registered: FEM features, and XGBoost on
+"16 curve-shape features, no fitted weights: 21 of 31 leave-one-out, p = 0.0025 over ten thousand label shuffles. Every challenger was pre-registered: FEM features, and XGBoost on
 24 KPIs, which got 10 of 31. All of them failed their own rule, so we kept the honest model."
 
 ## 1:50–2:15 Held-out calls (view `4`)

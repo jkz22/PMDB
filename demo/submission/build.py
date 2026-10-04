@@ -62,7 +62,7 @@ def integer_words(number):
         return f"{small[hundreds]} hundred" + (f" {integer_words(remainder)}" if remainder else "")
     if number < 1_000_000:
         thousands, remainder = divmod(number, 1000)
-        return f"{integer_words(thousands)}\nthousand" + (f" {integer_words(remainder)}" if remainder else "")
+        return f"{integer_words(thousands)} thousand" + (f" {integer_words(remainder)}" if remainder else "")
     return f"{number:,}"
 
 
