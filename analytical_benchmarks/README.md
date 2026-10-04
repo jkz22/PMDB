@@ -59,3 +59,7 @@ Limits:
 - Validation would need cycling and dilatometry data.
 
 Outputs: `site_kpis.csv`, `physics.csv`/`physics.json`/`fig_physics.png` (physics estimates), `compare.json`, `verdicts.txt`, `fig_kpis.png` (all KPIs per site), `fig_psd.png` (size/shape distributions), `fig_particles.png` (flagged particle crops), `fig_importance.png`, `importance.csv`/`importance.json` (feature importance), `fig_gpmaps.png`, `overlays.png`, `qc_report.html`.
+
+## Presentation report for the held-back sites
+
+`pitch/heldout_report.html` (single offline file): KPI quality, batch differences, the 3 held-back cases with probabilities, validation vs a shuffled-label null, QC decision card and images-per-batch curve. Rebuild: `PMDB_HELDOUT=<main checkout> python3 pitch_figs.py && python3 pitch_body.py`, then compile `pitch/body.html` with the artifact kit.
