@@ -1,6 +1,6 @@
 # Batch classifier: method
 
-Results are in [`results.md`](results.md) (script-generated; regenerate with the commands in section 6). This page holds design constants only, no result numbers. FEM side: [`../fem/method.md`](../fem/method.md). Architecture decision D18: [`../../.claude/plans/fem-swelling.md`](../../.claude/plans/fem-swelling.md).
+Results are in [`results.md`](results.md) (script-generated; regenerate with the commands in section 6). This page holds design constants only, no result numbers. FEM side: [`../fem/method.md`](../fem/method.md). Architecture decision D18: [`../fem/decisions-fem-swelling.md`](../../.claude/plans/fem-swelling.md).
 
 ## 1. Goal
 

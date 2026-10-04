@@ -99,7 +99,7 @@ WebSearch returns tool-written summaries; WebFetch returns model-extracted text 
 - Primary source for the "~370%" and "160%" SiOx figures (E6, E9).
 
 ## Not checked
-- Sethuraman 2010 original Electrochem. Commun./JES PDFs and Bucci 2014 full text (PDFs unreadable; saved binaries exist under /Users/Kevin/.claude/projects/-Users-Kevin-Documents-GitHub-PMDB--claude-worktrees-heldout-data/f7044de1-2c11-44c1-b109-e683c9c4f5ce/tool-results/ and could be read with a PDF reader).
+- Sethuraman 2010 original Electrochem. Commun./JES PDFs and Bucci 2014 full text (PDFs unreadable; saved binaries exist under <local scratch file> and could be read with a PDF reader).
 - Hertzberg et al. nanoindentation of lithiated Si (named in S14 summary, no link).
 - Li-Si-O silicate/Li2O mechanical properties; SiOx particle fracture studies.
 - Lithiated Si Poisson's ratio measurements (only DFT, E15, and a model input, E14).

@@ -66,5 +66,5 @@ Note: S1, S2, S4, S5, S10, S18 are search-engine summaries (not verbatim page te
 - Dilatometry thickness vs SOC at intermediate SOC for Si/graphite; Moyassari numbers (S3, S5, S6, S14).
 
 ## Not checked
-- Locally saved PDFs that WebFetch could not parse (could be text-extracted with pdftotext): /Users/Kevin/.claude/projects/-Users-Kevin-Documents-GitHub-PMDB--claude-worktrees-heldout-data/f7044de1-2c11-44c1-b109-e683c9c4f5ce/tool-results/webfetch-1791052184965-xqqgpf.pdf (Qi 2014 PDF), ...webfetch-1791052225504-ewz1th.pdf (Yao 2019), ...webfetch-1791052235431-bev6rh.pdf (arXiv 1511.02445), ...webfetch-1791052248650-xbaov5.pdf (arXiv 2005.04983).
+- Locally saved PDFs that WebFetch could not parse (could be text-extracted with pdftotext): <local scratch file> (Qi 2014 PDF), ...webfetch-1791052225504-ewz1th.pdf (Yao 2019), ...webfetch-1791052235431-bev6rh.pdf (arXiv 1511.02445), ...webfetch-1791052248650-xbaov5.pdf (arXiv 2005.04983).
 - Ohzuku 1993, Dahn 1991, Persson 2010 PRB, Jiang, Schmerling not opened; publisher paywalls/bot checks blocked several fetches; depth cap reached.

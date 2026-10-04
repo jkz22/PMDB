@@ -10,9 +10,9 @@ The literature backs the overall approach: image-based multiphase models, finite
 Two inputs have only tool-summary evidence and should be swept widely: binder E and the SiOx expansion. The pore stiffness, plane-strain choice and pore-closure criterion have no literature support at all; they are numerical choices.
 
 ## Sources
-- R1: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-si.md — Si/LixSi/SiOx expansion, moduli, yield, commercial utilisation, fracture size
-- R2: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-gr-binder.md — graphite strain/elastic constants, binder E/ν, Si-vs-Gr lithiation sequence, electrode swelling
-- R3: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-method.md — image-based FE precedent, finite-strain formulations, BCs and stack pressure, uniform SOC, 2D vs 3D, FEniCSx
+- R1: .claude/reports/fem-lit.explorer-si.md — Si/LixSi/SiOx expansion, moduli, yield, commercial utilisation, fracture size
+- R2: .claude/reports/fem-lit.explorer-gr-binder.md — graphite strain/elastic constants, binder E/ν, Si-vs-Gr lithiation sequence, electrode swelling
+- R3: .claude/reports/fem-lit.explorer-method.md — image-based FE precedent, finite-strain formulations, BCs and stack pressure, uniform SOC, 2D vs 3D, FEniCSx
 - V1-V5: my own reads of the local PDFs that R2 lists under "Not checked" (Qi 2014; Yao 2019; Nadimpalli/arXiv 1511.02445 in two reads; Tardif/arXiv 2005.04983).
 
 ## Parameter table
@@ -165,8 +165,8 @@ Evidence strength:
 - **Graphite strain at intermediate SOC** is read off Yao's figure rather than a tabulated source (C14 breakpoints are approximate).
 
 ## Gather next
-- Read pages 9-end of /Users/Kevin/.claude/projects/-Users-Kevin-Documents-GitHub-PMDB--claude-worktrees-heldout-data/f7044de1-2c11-44c1-b109-e683c9c4f5ce/tool-results/webfetch-1791052225504-ewz1th.pdf (Yao 2019, Adv. Energy Mater.). Extract the figure or table giving Si and graphite fractional lithiation (or Li content x) versus electrode capacity or potential for the 15 wt% Si-Gr electrode, including the Si capacity reached at 0.01 V and the experimental section (rate, cut-offs). This settles the Si/Gr SOC split (C11, verdict 3).
-- Read pages 17-end of /Users/Kevin/.claude/projects/-Users-Kevin-Documents-GitHub-PMDB--claude-worktrees-heldout-data/f7044de1-2c11-44c1-b109-e683c9c4f5ce/tool-results/webfetch-1791052235431-bev6rh.pdf (Nadimpalli, arXiv 1511.02445) for Table 1 (anode formulation and porosity) and Table 2 (E and ν used for PVdF, graphite and coatings). Gives a primary binder E (C18).
+- Read pages 9-end of <local scratch file> (Yao 2019, Adv. Energy Mater.). Extract the figure or table giving Si and graphite fractional lithiation (or Li content x) versus electrode capacity or potential for the 15 wt% Si-Gr electrode, including the Si capacity reached at 0.01 V and the experimental section (rate, cut-offs). This settles the Si/Gr SOC split (C11, verdict 3).
+- Read pages 17-end of <local scratch file> (Nadimpalli, arXiv 1511.02445) for Table 1 (anode formulation and porosity) and Table 2 (E and ν used for PVdF, graphite and coatings). Gives a primary binder E (C18).
 - Find primary text for the Si utilisation in commercial Si/graphite full cells at 100% SOC: the anode potential at top of charge and the x in LixSi. Candidate sources are the LG M50/M50T parameterisation papers (OSTI 1491439; ACS Appl. Energy Mater. acsaem.2c02047), and the IOP paper "Towards Improving the Practical Energy Density…" (10.1149/2.0481701jes). Settles C9.
 - Find primary sources for SiOx (x ≈ 1) volume expansion and Young's modulus: the J. Power Sources 2017 SiOx review S0378775317309655 and Nat. Commun. s41467-026-72434-4. Settles the SiOx scenario.
 - Find the formulation, porosity and thickness basis for the JES 2021 dilatometry paper (10.1149/1945-7111/abd465): whether the swelling is relative to the coating or the whole electrode, and first-cycle or reversible. Settles V-T1.

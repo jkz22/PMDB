@@ -173,7 +173,7 @@ R.arrangement = (root) => {
     h('p', { class: 'lede' }, 'We simulated lithiation inside every real microstructure (68 FEM cases on Modal). Swelling is set by how much Si there is — and the batches hold the same amount. The signal is where the Si sits.'),
     h('div', { class: 'row' },
       card('Si area fraction (K01) by batch', h('div', { style: 'height:300px' }, stripPlot({ groups, w: 480, h: 300, yLabel: 'Si area fraction' })),
-        'outputs/kpis/site_kpis.csv · Kruskal–Wallis across batches p = 0.377 (.claude/checkpoint/reports/fem-why.explorer-diag.md)', { style: 'flex:1' }),
+        'outputs/kpis/site_kpis.csv · Kruskal–Wallis across batches p = 0.377 (docs/fem/evidence/fem-why-diag.md)', { style: 'flex:1' }),
       card('Simulated swelling at full charge vs Si fraction', h('div', {}, h('div', { style: 'height:270px' }, scatter({ points: pts, w: 520, h: 290, fit: { a, b }, xLabel: 'Si area fraction (K01)', yLabel: 'electrode swelling', yFmt: (v) => v.toFixed(2) })),
           h('div', { class: 'note' }, h('b', {}, `R² = ${r2.toFixed(3)}`), ` (OLS, ${lab.length} labelled sites, computed live) · median swelling B1 ${f3(medSwell.Batch_1)} · B2 ${f3(medSwell.Batch_2)} · B3 ${f3(medSwell.Batch_3)}`)),
         'outputs/fem/validation.csv (swelling_sym) × outputs/kpis/site_kpis.csv', { style: 'flex:1.1' }),

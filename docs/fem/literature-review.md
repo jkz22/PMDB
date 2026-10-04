@@ -25,14 +25,14 @@ The main accepted risks:
 
 ## Sources
 Labels keep the round-1 numbering (R1-R3) so that carried-forward citations stay valid. This departs from strict spawn-prompt order.
-- R1: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-si.md — Si/LixSi/SiOx expansion, moduli, yield, commercial utilisation, fracture size
-- R2: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-gr-binder.md — graphite strain and elastic constants, binder E/ν, lithiation sequence, electrode swelling
-- R3: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-method.md — image-based FE precedent, finite strain, BCs and stack pressure, uniform SOC, 2D vs 3D, FEniCSx
-- R4: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-r2.md — round 2: Yao 2019 Si/Gr split, arXiv 1511.02445 Tables 1-2, Si utilisation in full cells, SiOx, dilatometry basis, graphite texture
-- R5: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.explorer-shah.md — full-text extraction of Shah, de Vasconcelos & Zhao 2022, J. Appl. Mech. 89, 081005
-- P: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/reports/fem-lit.synthesiser.md — round-1 synthesis. `P:Cn` is a round-1 claim and `P:Vn` a round-1 verification read of a primary PDF (V1 Qi 2014, V2 Yao 2019 pp. 1-8, V3/V5 Nadimpalli arXiv 1511.02445, V4 Tardif arXiv 2005.04983).
+- R1: .claude/reports/fem-lit.explorer-si.md — Si/LixSi/SiOx expansion, moduli, yield, commercial utilisation, fracture size
+- R2: .claude/reports/fem-lit.explorer-gr-binder.md — graphite strain and elastic constants, binder E/ν, lithiation sequence, electrode swelling
+- R3: .claude/reports/fem-lit.explorer-method.md — image-based FE precedent, finite strain, BCs and stack pressure, uniform SOC, 2D vs 3D, FEniCSx
+- R4: .claude/reports/fem-lit.explorer-r2.md — round 2: Yao 2019 Si/Gr split, arXiv 1511.02445 Tables 1-2, Si utilisation in full cells, SiOx, dilatometry basis, graphite texture
+- R5: .claude/reports/fem-lit.explorer-shah.md — full-text extraction of Shah, de Vasconcelos & Zhao 2022, J. Appl. Mech. 89, 081005
+- P: .claude/reports/fem-lit.synthesiser.md — round-1 synthesis. `P:Cn` is a round-1 claim and `P:Vn` a round-1 verification read of a primary PDF (V1 Qi 2014, V2 Yao 2019 pp. 1-8, V3/V5 Nadimpalli arXiv 1511.02445, V4 Tardif arXiv 2005.04983).
 - V1, V2: my round-2 checks (see Verification).
-- User decisions D1-D7: /Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/heldout-data/.claude/plans/fem-swelling.md
+- User decisions D1-D7: .claude/plans/fem-swelling.md
 
 ## 1. Final parameter table
 Evidence strength:
@@ -226,7 +226,7 @@ Why s* = 0.25 (INFERRED, C3): it is the only breakpoint for which Yao's two rati
 None. Per the dispatcher, no further gathering rounds will run, and the residual gaps above are accepted as spec risks. If a round ever reopens, the highest-value item is the PyBaMM parameter files Chen2020_composite / OKane2022 from GitHub raw, for Si and graphite stoichiometry windows at 100% SOC in the LG M50 [R4 Not checked]. That would settle u_max and y_max and the low-Si split.
 
 ## Verification
-- **V1** `/Users/Kevin/Documents/GitHub/PMDB/105.pdf` p. 9 (Table 1). Tests C8/C9 (Shah E(C), σY(x), Ω, Cmax). Confirmed.
+- **V1** `105.pdf` p. 9 (Table 1). Tests C8/C9 (Shah E(C), σY(x), Ω, Cmax). Confirmed.
   ```
   Yield stress, σY  Independent of concentration C  1 GPa [77]
   Concentration dependent  −3.15(x/(1 + x)) + 3 GPa [20] where x is atomic fraction in LixSi
