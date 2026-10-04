@@ -46,6 +46,45 @@ mid-depth contrast (segmenter-robust); constrained share excluded. Depth-2 trees
 - Batch 3-vs-rest: no family reaches significance; the functional one is again the closest (0.67, p 0.08),
   consistent with `docs/acceptance.md` §4.
 
+## 1b. Tile voting with a confidence cutoff (`scripts/run_tile_vote.py`, `outputs/tilevote/`)
+
+The natural next idea — run the KPIs on tiles, classify every tile, let the tiles vote and use the vote share
+as the field's confidence, abstaining below a cutoff — was tested as stated. Tiles are 16 or 32 equal-width,
+full-height strips (`pmdb.kpis.tile_slices`), so both the reliable tile KPIs and *arrangement* features (Si
+fraction in 5 depth bands relative to the tile mean, slope, mid-dip, SOC-1 pore loss) exist per tile.
+Logistic regression and XGBoost, leave-one-site-out (all tiles of the held-out field removed), plurality vote,
+100-permutation null, accuracy-vs-coverage for cutoffs on the vote share.
+
+| tiles | features | model | LOSO vote accuracy | perm p | vote share, correct calls | vote share, wrong calls |
+|---|---|---|---|---|---|---|
+| 16 | reliable KPIs | LR | 0.61 | 0.05 | 0.95 | 0.95 |
+| 16 | arrangement | LR / XGB | 0.55 (= majority class) | 1.0 | 0.94 | 0.95 |
+| 16 | all | LR / XGB | 0.61 | 0.06 | 0.87 | 0.92 |
+| 32 | all | LR / XGB | 0.61 | — | 0.93 | 0.97 |
+
+| cutoff on vote share (all, LR, 16) | coverage | accuracy among covered |
+|---|---|---|
+| 0.5 | 100 % | 0.61 |
+| 0.8 | 90 % | 0.57 |
+| 0.9 | 42 % | 0.46 |
+| 0.94 | 23 % | 0.57 |
+
+Readings (`outputs/tilevote/loso_votes.csv`, `coverage.csv`, `figures/coverage.png`):
+
+- **The vote share is not a confidence.** Wrong calls are made with the same tile agreement as correct ones;
+  14 fields have ≥ 15 of 16 tiles agreeing and 7 of them are wrong (every one called Batch 3). Raising the cutoff
+  removes coverage without adding accuracy. Tiles of one field are near-copies of each other (K02 ICC 0.82), so
+  they agree with *each other*, not with the truth: 16 votes carry about one vote of information.
+- **Arrangement does not survive tiling.** Per-tile depth profiles classify at the majority-class rate: the
+  Si depth profile is a whole-field quantity (it is averaged over the full width in the fingerprint for a
+  reason); on a 3 µm strip it is sampling noise. Hence tile models can only use composition, which is exactly
+  the information that carries no batch signal (§1).
+- Held-out under the rule (all, LR, 16): 3e122cbj → Batch 1 (16/16 tiles), fn0mhxef → Batch 3 (16/16),
+  xrv9xvzb → Batch 3 (14/16, mean posterior 0.57) — the tile view, being composition-only, sides with the
+  scalar methods on xrv9xvzb and cannot see the depth arrangement the fingerprint calls Batch 2 on.
+- Conclusion: the usable confidence remains the field-level conformal p / credibility of the fingerprint,
+  which is a statement about *how unusual this field is for each batch*, not about how many sub-images agree.
+
 ## 2. The pipeline (`scripts/run_decision.py`, `outputs/decision/`)
 
 One card per held-back field, every line pointing at a committed file:
@@ -76,8 +115,8 @@ Result (`outputs/decision/heldout_cards.md`, figure `figures/decision.png`):
 
 ## 3. What not to do, and why
 
-- **No further classifiers on these 31 fields.** Four model families (robust NB, two-stage RF, frozen
-  DINOv2/MicroNet heads, XGBoost) land between 0.58 and 0.68; the permutation null's 95th percentile is 0.58.
+- **No further classifiers on these 31 fields.** Five model families (robust NB, two-stage RF, frozen
+  DINOv2/MicroNet heads, XGBoost, tile voting) land between 0.55 and 0.68; the permutation null's 95th percentile is 0.58.
   Anything higher reported from here on is a search artefact unless pre-registered
   (`docs/eval-plan-oct4.md` showed how that goes).
 - **No accept/reject rule for Batch 3.** Best-of-84 column AUC 0.74 = chance (p 0.50); pre-specified family
