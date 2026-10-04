@@ -1,8 +1,10 @@
 """Image-based charge/discharge + cycling simulator (illustrative, literature parameters, not calibrated).
 
 Input: one segmented SEM image (a PMDB site, or any BSE .tif). The image itself evolves cycle by cycle:
-  per half-cycle  Li diffuses into each Si particle from its surface (c = erfc(d / 2 sqrt(D t)) on charge,
-                  c_end * erf(...) on discharge; graphite/binder lithiates uniformly). Each pixel expands
+  per half-cycle  constant current (C-rate): the Li flux is shared by the Si surface that is not yet full
+                  (charge) or empty (discharge) and diffuses inside each particle (implicit finite
+                  differences); Li trapped in particle cores carries over to the next cycle; graphite/binder
+                  lithiates uniformly. (--li erfc: older instant-surface model, c = erfc(d / 2 sqrt(D t)).) Each pixel expands
                   isotropically with its Li content; a 2-D plane-strain finite-element solve (Q1 pixel
                   elements, coating clamped below and laterally, free top) gives stress, pore closure and
                   thickness change.
@@ -17,6 +19,7 @@ indicator. Rows are taken as the through-thickness direction (top = separator si
 
   python3 simulate.py Batch_1/5n1q8atc Batch_2/epqdaau9 --cycles 50 --seeds 3
   python3 simulate.py --image my_bse.tif --nm-per-px 25
+  python3 simulate.py --image my_bse.tif --cycles 100 --seeds 1 --render   # + render_<name>.npz for evolve_video.py
 """
 import argparse, json, os, numpy as np, pandas as pd, scipy.sparse as sp
 from multiprocessing import Pool
@@ -39,7 +42,10 @@ PAR = dict(
     k_sei=0.05,                     # SEI growth, µm per sqrt(cycle)
     sigma0=25.0, m=4.0,             # Weibull scale (GPa, elastic indicator) and modulus for Si cracking
     a_min=0.25,                     # fragments below this area (µm²) lose contact -> inactive
+    li="cc",                        # "cc": constant-current Li model, "erfc": instant surface switch (older)
 )
+NSUB = 120                          # Li time steps per half-cycle
+DMG = (12, 30, 60, 90, 120)         # steps (of NSUB) at which stress is evaluated for damage
 CMAP = np.array([[30, 60, 200], [90, 90, 90], [255, 150, 0], [40, 200, 90], [220, 30, 30]], np.uint8)
 S4 = ndi.generate_binary_structure(2, 1)
 
@@ -79,7 +85,35 @@ class Mesh:
         sig = self.E[:, None] * ((strain - eps[:, None] * [1, 1, 0]) @ self.D.T)
         sx, sy, txy = sig.T
         s1 = (sx + sy) / 2 + np.hypot((sx - sy) / 2, txy); ang = 0.5 * np.arctan2(2 * txy, sx - sy)
-        return dict(thick=u[self.top_y].mean() / (self.ny * self.h), s1=s1, ang=ang, vol=strain[:, 0] + strain[:, 1])
+        return dict(thick=u[self.top_y].mean() / (self.ny * self.h), s1=s1, ang=ang, vol=strain[:, 0] + strain[:, 1], u=u)
+
+
+class LiFD:
+    """Constant-current Li in Si. Each step the current (sized so that all active Si would fill in T) is shared by
+    the surface faces that are not yet full (charge) or empty (discharge); Li diffuses inside each particle
+    (implicit Euler, no flux to other phases). Clipping at 0/1 acts as the voltage cut-off."""
+    def __init__(self, act, T):
+        H, W = act.shape; self.act = act; self.N = N = int(act.sum())
+        if N == 0: return
+        idx = -np.ones(act.shape, int); idx[act] = np.arange(N)
+        pa = np.pad(act, 1); pi = np.pad(idx, 1, constant_values=-1); r, c, f = [], [], np.zeros(act.shape, int)
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            na = pa[1 + di:1 + di + H, 1 + dj:1 + dj + W]; ni = pi[1 + di:1 + di + H, 1 + dj:1 + dj + W]
+            m = act & na; r.append(idx[m]); c.append(ni[m]); f += act & ~na
+        A = sp.coo_matrix((np.ones(sum(map(len, r))), (np.concatenate(r), np.concatenate(c))), shape=(N, N)).tocsr()
+        Lp = A - sp.diags(np.asarray(A.sum(1)).ravel()); a = PAR["D_si"] * T / NSUB / PX ** 2
+        self.lu = splu((sp.identity(N, format="csc") - a * Lp).tocsc()); self.f = f[act].astype(float)
+
+    def run(self, c0, charge, steps):
+        if self.N == 0: return {k: np.zeros(self.act.shape) for k in steps}
+        c = c0[self.act].astype(float); q = self.N / NSUB * (1 if charge else -1); out = {}
+        for k in range(1, max(steps) + 1):
+            op = (self.f > 0) & ((c < 1) if charge else (c > 0)); F = self.f[op].sum()
+            src = np.zeros(self.N)
+            if F > 0: src[op] = self.f[op] / F * q
+            c = np.clip(self.lu.solve(c + src), 0, 1)
+            if k in steps: o = np.zeros(self.act.shape); o[self.act] = c; out[k] = o
+        return out
 
 
 def blocks(a):
@@ -109,10 +143,26 @@ def load_labels(spec, nm_per_px=25.0):
     return lab[::2, ::2].copy(), name               # 50 nm -> 0.1 µm
 
 
+def crop_box(shape, width_um, x0_um=None):
+    H = shape[0] // MB * MB; w = min(int(width_um / PX) // MB * MB, shape[1] // MB * MB)
+    return H, ((shape[1] - w) // 2 if x0_um is None else int(x0_um / PX)), w
+
+
 def crop(lab, width_um, x0_um=None):
-    H = lab.shape[0] // MB * MB; w = min(int(width_um / PX) // MB * MB, lab.shape[1] // MB * MB)
-    x0 = (lab.shape[1] - w) // 2 if x0_um is None else int(x0_um / PX)
-    return lab[:H, x0:x0 + w].copy()
+    H, x0, w = crop_box(lab.shape, width_um, x0_um); return lab[:H, x0:x0 + w].copy()
+
+
+def crack_mask(pr, pc, th, L, rng, shape, step=3):
+    """Slightly meandering crack through (pr, pc) along angle th (image x right, y up), 0.2 µm wide."""
+    H, W = shape; m = np.zeros(shape, bool)
+    for a0 in (th, th + np.pi):
+        y, x, dev = float(pr), float(pc), 0.0
+        for _ in range(int(L / step)):
+            dev = 0.8 * dev + rng.normal(0, 0.2); a = a0 + dev
+            y1, x1 = y - step * np.sin(a), x + step * np.cos(a)
+            rr, cc = draw.line(int(round(y)), int(round(x)), int(round(y1)), int(round(x1)))
+            ok = (rr >= 0) & (rr < H) & (cc >= 0) & (cc < W); m[rr[ok], cc[ok]] = True; y, x = y1, x1
+    return ndi.binary_dilation(m, np.ones((2, 2), bool))
 
 
 # ---------------- simulation ----------------
@@ -127,44 +177,58 @@ def kpis_of(lab):
                 si_fragments_per_1000um2=(n_all - kp["si_count_per_1000um2"] * area / 1000) / area * 1000)
 
 
-def half_cycle(mesh, lab, d_si, c_end, T, charge, rec=None, n=0, maps=None):
-    """Returns Li in Si at the end, plus elementwise max principal stress and its angle."""
-    act = lab == 2; gr = lab == 1; ts = T * np.array([0.1, 0.25, 0.5, 0.75, 1.0])
+def half_cycle(mesh, lab, li, c0, T, charge, rec=None, n=0, maps=None, n_render=0, frames=None, mid=None):
+    """Li in Si at the end, elementwise max principal stress (over DMG steps) and its angle, and the last FE result."""
+    act = lab == 2; gr = lab == 1
+    rnd = set(range(NSUB // n_render, NSUB + 1, NSUB // n_render)) if n_render else set()
+    steps = sorted(set(DMG) | rnd | ({NSUB // 2} if mid is not None else set()))
+    if PAR["li"] == "erfc":
+        d_si = np.maximum(ndi.distance_transform_edt(act) * PX - PX / 2, 0); cs = {}
+        for k in steps:
+            z = d_si / (2 * np.sqrt(PAR["D_si"] * T * k / NSUB)); cs[k] = np.where(act, erfc(z) if charge else c0 * erf(z), 0.0)
+    else:
+        cs = li.run(c0, charge, set(steps))
     s1max = np.full(mesh.E.shape, -np.inf); amax = np.zeros_like(s1max); por = blocks((lab == 0).astype(float)) > 0.5
-    for t in ts:
-        z = d_si / (2 * np.sqrt(PAR["D_si"] * t))
-        c = np.where(act, erfc(z) if charge else c_end * erf(z), 0.0)
-        cg = t / T if charge else 1 - t / T
+    sim = blocks(act.astype(float)) > 0.5
+    for k in steps:
+        t = T * k / NSUB; c = cs[k]; cg = t / T if charge else 1 - t / T
+        if mid is not None and k == NSUB // 2: mid["c"] = np.where(act, c, np.nan)
+        if k not in DMG and k not in rnd: continue
         eps = blocks(np.where(act, PAR["eps_si"] * c, 0) + np.where(gr, PAR["eps_gr"] * cg, 0))
-        r = mesh.solve(eps); m = r["s1"] > s1max; s1max[m] = r["s1"][m]; amax[m] = r["ang"][m]
+        r = mesh.solve(eps)
+        if k in DMG:
+            m = r["s1"] > s1max; s1max[m] = r["s1"][m]; amax[m] = r["ang"][m]
+            if maps is not None: maps.append((n, int(charge), t, c.astype(np.float16), r["s1"].astype(np.float16)))
         if rec is not None:
-            sim = blocks(act.astype(float)) > 0.5
             rec.append(dict(cycle=n, phase="charge" if charge else "discharge", t_min=t / 60 + (0 if charge else T / 60),
                             thickness_pct=100 * r["thick"], si_li=c[act].mean() if act.any() else np.nan,
                             sigma1_p95_si=np.percentile(r["s1"][sim], 95) if sim.any() else np.nan,
                             pore_closure_pct=-100 * (r["vol"][por].mean() if por.any() else 0)))
-        if maps is not None:
-            maps.append((n, int(charge), t, c.astype(np.float16), r["s1"].astype(np.float16)))
-    return c, s1max, amax
+        if frames is not None and k in rnd:
+            frames.append((n, int(charge), t, c.astype(np.float16), r["u"].astype(np.float16), r["vol"].astype(np.float16)))
+    return c, s1max, amax, r
 
 
-def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
+def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True, render=None):
+    """render: {cycle: frames per half-cycle} -> per-step Li/displacement frames + end-of-discharge state every cycle."""
     rng = np.random.default_rng(seed); lab = lab0.copy(); H, W = lab.shape; area = lab.size
     mesh = Mesh(H // MB, W // MB, PX * MB, PAR["nu"]); T = 3600 / crate
     born = np.full(lab.shape, -1, int); rows, within, snaps, maps = [], [], [(0, lab.copy())], []
-    li_lost = sei_acc = 0.0; inv0 = None; n_cracks = 0; crack_px = 0; extra = {}
+    li_lost = sei_acc = 0.0; inv0 = None; n_cracks = 0; crack_px = 0; extra = {}; c_prev = np.zeros(lab.shape)
+    frames, tl = ([], []) if render is not None else (None, None)
     for n in range(1, cycles + 1):
         mesh.factor(blocks(np.vectorize(PAR["E"].get)(lab).astype(float)))
-        act = lab == 2; d_si = np.maximum(ndi.distance_transform_edt(act) * PX - PX / 2, 0)
-        rec = within if n in (1, cycles) else None; mp = maps if (snap and rec is not None) else None
-        c_end, s1c, ac = half_cycle(mesh, lab, d_si, None, T, True, rec, n, mp)
-        full = mesh.solve(blocks(np.where(act, PAR["eps_si"] * c_end, 0) + np.where(lab == 1, PAR["eps_gr"], 0)))
-        c_dis, s1d, ad = half_cycle(mesh, lab, d_si, c_end, T, False, rec, n, mp)
+        act = lab == 2; li = LiFD(act, T) if PAR["li"] == "cc" else None; nr = (render or {}).get(n, 0)
+        rec = within if n in (1, cycles) or nr else None; mp = maps if (snap and n in (1, cycles)) else None
+        mid = {} if n == 1 else None
+        c_end, s1c, ac, full = half_cycle(mesh, lab, li, np.where(act, c_prev, 0), T, True, rec, n, mp, nr, frames, mid)
+        c_dis, s1d, ad, rd = half_cycle(mesh, lab, li, c_end, T, False, rec, n, mp, nr, frames)
+        c_prev = c_dis
+        if tl is not None: tl.append((n, c_dis.astype(np.float16), rd["u"].astype(np.float16), rd["vol"].astype(np.float16)))
         s1 = np.maximum(s1c, s1d); ang = np.where(s1d >= s1c, ad, ac)
         rev = ((c_end - c_dis)[act].sum() * PAR["Q_si"] + (lab == 1).sum() * PAR["Q_gr"]) / area
         if n == 1:
-            extra = dict(li_mid=np.where(act, erfc(d_si / (2 * np.sqrt(PAR["D_si"] * T / 2))), np.nan),
-                         s1_map=up(s1, lab.shape), lab1=lab.copy())
+            extra = dict(li_mid=mid["c"], s1_map=up(s1, lab.shape), lab1=lab.copy())
         # SEI on all active Si surfaces (electrolyte also reaches Si through the binder/carbon); it locks Li
         # and fills adjacent pores. Crack faces are new surfaces with fresh, fast-growing SEI.
         bnd = act & ndi.binary_dilation(lab != 2, S4)
@@ -185,10 +249,7 @@ def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
             P = 1 - np.exp(-(np.clip(smax, 0, None) / PAR["sigma0"]) ** PAR["m"])
             for k in np.where(rng.random(len(ids)) < P)[0]:
                 (pr, pc), th = pos[k], A[pos[k]] + np.pi / 2; Lk = int(np.ceil(np.hypot(*lab.shape) / 4))
-                # direction in image coords: x right, y up -> row = -y
-                rr, cc = draw.line(int(pr + Lk * np.sin(th)), int(pc - Lk * np.cos(th)), int(pr - Lk * np.sin(th)), int(pc + Lk * np.cos(th)))
-                ok = (rr >= 0) & (rr < H) & (cc >= 0) & (cc < W); m = np.zeros(lab.shape, bool); m[rr[ok], cc[ok]] = True
-                m = ndi.binary_dilation(m, S4) & (L == ids[k])
+                m = crack_mask(pr, pc, th, min(Lk, 80), rng, lab.shape) & (L == ids[k])
                 lab[m] = 0; n_cracks += 1; crack_px += m.sum()
         # inactive: tiny fragments or no contact with the graphite/binder matrix
         L = measure.label(lab == 2); ids = np.arange(1, L.max() + 1)
@@ -199,20 +260,22 @@ def simulate(lab0, cycles=50, crate=1.0, seed=0, snap=True):
         sim = blocks((lab == 2).astype(float)) > 0.5
         rows.append(dict(cycle=n, capacity_mAh_cm3=cap, reversible_mAh_cm3=rev, li_lost_sei_mAh_cm3=li_lost,
                          si_utilisation=float((c_end - c_dis)[act].mean()) if act.any() else np.nan,
-                         thickness_charged_pct=100 * full["thick"], thickness_irrev_pct=100 * crack_px / W / H,
+                         thickness_charged_pct=100 * full["thick"], thickness_discharged_pct=100 * rd["thick"],
+                         thickness_irrev_pct=100 * crack_px / W / H,
                          sigma1_p95_si=float(np.percentile(s1[sim], 95)) if sim.any() else np.nan,
                          n_cracks=n_cracks, **kpis_of(lab)))
         if snap: snaps.append((n, lab.copy()))
     t = pd.DataFrame(rows); t["retention_pct"] = 100 * t.capacity_mAh_cm3 / t.capacity_mAh_cm3.iloc[0]
     k0 = kpis_of(lab0); t0 = {**{k: np.nan for k in t.columns}, **k0, "cycle": 0}
     t = pd.concat([pd.DataFrame([t0]), t], ignore_index=True)
-    return dict(traj=t, within=pd.DataFrame(within), snaps=snaps, maps=maps, **extra)
+    return dict(traj=t, within=pd.DataFrame(within), snaps=snaps, maps=maps, frames=frames, tl=tl, **extra)
 
 
 def _job(a):
-    spec, seed, cycles, crate, width, x0, nm = a
-    lab, name = load_labels(spec, nm); lab = crop(lab, width, x0)
-    r = simulate(lab, cycles, crate, seed, snap=seed == 0); r["traj"]["seed"] = seed
+    spec, seed, cycles, crate, width, x0, nm, render = a
+    lab, name = load_labels(spec, nm); box = crop_box(lab.shape, width, x0); lab = crop(lab, width, x0)
+    rd = {1: 24, cycles: 24, **{max(2, round(cycles * f)): 12 for f in (0.25, 0.5, 0.75)}} if render and seed == 0 else None
+    r = simulate(lab, cycles, crate, seed, snap=seed == 0, render=rd); r["traj"]["seed"] = seed; r["box"] = box
     return spec, name, seed, r
 
 
@@ -278,9 +341,11 @@ if __name__ == "__main__":
     ap.add_argument("--seeds", type=int, default=3); ap.add_argument("--width", type=float, default=58.0, help="crop width, µm")
     ap.add_argument("--x0", type=float, default=None, help="crop start, µm (default: centre)")
     ap.add_argument("--out", default="sim"); ap.add_argument("--jobs", type=int, default=8)
-    a = ap.parse_args(); specs = (a.inputs + a.image) or ["Batch_1/5n1q8atc", "Batch_1/4ih2ggld", "Batch_2/epqdaau9", "Batch_3/x77cy643"]
+    ap.add_argument("--li", choices=("cc", "erfc"), default="cc", help="Li model (constant current, or older instant surface)")
+    ap.add_argument("--render", action="store_true", help="also save render_<name>.npz for evolve_video.py")
+    a = ap.parse_args(); PAR["li"] = a.li; specs = (a.inputs + a.image) or ["Batch_1/5n1q8atc", "Batch_1/4ih2ggld", "Batch_2/epqdaau9", "Batch_3/x77cy643"]
     os.makedirs(a.out, exist_ok=True)
-    jobs = [(s, k, a.cycles, a.crate, a.width, a.x0, a.nm_per_px) for s in specs for k in range(a.seeds)]
+    jobs = [(s, k, a.cycles, a.crate, a.width, a.x0, a.nm_per_px, a.render) for s in specs for k in range(a.seeds)]
     with Pool(min(a.jobs, len(jobs))) as p: done = p.map(_job, jobs)
     res = {}
     for spec, name, seed, r in done: res.setdefault(name, []).append(r)
@@ -294,6 +359,14 @@ if __name__ == "__main__":
         np.savez_compressed(f"{a.out}/frames_{name}.npz", labs=np.stack([l for _, l in r0["snaps"]]),
                             m_cycle=[m[0] for m in mp], m_charge=[m[1] for m in mp], m_t=[m[2] for m in mp],
                             li=np.stack([m[3] for m in mp]), s1=np.stack([m[4] for m in mp]), px=PX, mb=MB)
+        if r0["frames"]:
+            fr, tl = r0["frames"], r0["tl"]; H, x0, w = r0["box"]
+            src = next(s for s in specs if (os.path.splitext(os.path.basename(s))[0] if os.path.exists(s) else s.split("/")[-1]) == name)
+            np.savez_compressed(f"{a.out}/render_{name}.npz", r_cycle=[f[0] for f in fr], r_charge=[f[1] for f in fr],
+                                r_t=[f[2] for f in fr], r_c=np.stack([f[3] for f in fr]), r_u=np.stack([f[4] for f in fr]),
+                                r_vol=np.stack([f[5] for f in fr]), tl_cycle=[f[0] for f in tl], tl_c=np.stack([f[1] for f in tl]),
+                                tl_u=np.stack([f[2] for f in tl]), tl_vol=np.stack([f[3] for f in tl]), x0=x0, H=H, W=w,
+                                px=PX, mb=MB, crate=a.crate, src=src, nm_per_px=a.nm_per_px)
         L = pd.concat([r["traj"] for r in runs]); end = L[L.cycle == a.cycles]; c1 = L[L.cycle == 1]
         summ[name] = {k: dict(cycle1=float(c1[k].mean()), end=float(end[k].mean()), end_min=float(end[k].min()), end_max=float(end[k].max()))
                       for k, _ in TRAJ + [("capacity_mAh_cm3", ""), ("si_utilisation", ""), ("si_frac", "")]}

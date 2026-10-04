@@ -44,3 +44,14 @@ def test_deterministic_per_seed():
     a = S.simulate(disc_lab(2), cycles=3, seed=1, snap=False)["traj"]
     b = S.simulate(disc_lab(2), cycles=3, seed=1, snap=False)["traj"]
     assert a.drop(columns="cycle").fillna(-1).equals(b.drop(columns="cycle").fillna(-1))
+
+
+def test_constant_current_li_is_gradual_and_reversible():
+    act = disc_lab(4) == 2
+    li = S.LiFD(act, 3600.0)
+    ch = li.run(np.zeros(act.shape), True, {12, 60, 120})
+    assert ch[12][act].mean() == pytest.approx(0.1, abs=0.01)       # 1C: 10% of the Si filled after 6 min
+    assert ch[60][act].mean() == pytest.approx(0.5, abs=0.03)
+    dis = li.run(ch[120], False, {12, 120})
+    assert ch[120][act].mean() - dis[12][act].mean() == pytest.approx(0.1, abs=0.01)   # no jump when the current reverses
+    assert dis[120][act].mean() < 0.05 and (dis[120] >= 0).all()
