@@ -32,8 +32,8 @@ FP_TAU = pm.SOFTMAX_TAU  # same temperature as the patch softmax_conf
 SINGLETON_RULE = ("A site that is the only member of its parent in the pool is excluded from centred-model "
                   "training and predicted with the uncentred fingerprint (its centred row is identically zero "
                   "and carries no information).")
-CAVEAT = ("Selection is the maximum of 5 LOPO rubric estimates on 34 sites from 13 parent images; the winning "
-          "estimate is optimistically biased (winner's curse). Differences smaller than about one SE are not "
+CAVEAT = (f"Selection is the maximum of {len(OPTIONS)} LOPO rubric estimates on 34 sites from 13 parent images; "
+          "the winning estimate is optimistically biased (winner's curse). Differences smaller than about one SE are not "
           "meaningful. The 3 held-out sites enter LOPO as ordinary labelled sites; nothing was tuned on them.")
 
 

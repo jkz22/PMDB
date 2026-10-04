@@ -58,30 +58,38 @@ def fem_arm(arm: str):
     groups = np.array([pg[k] for k in keys])
     codes = np.array([BATCHES.index(b) for b in y])
     _, tst, _, _ = ffe.load_inputs(FEM_LABELLED, TEST)
-    preds, expls = [], []
+    preds, expls, floors = [], [], []
     for i, key in enumerate(tuple(r) for r in tst["index"]):
         m = groups != pg.get(key, "none")
         Xtr, Xte, _, _ = ffe.frames(arm, subset(pool, m), subset(tst, np.arange(len(tst["index"])) == i),
                                     codes[m], leo_cols)
         model = fp.fit(Xtr, y[m])
+        floors.append(1.0 / (np.bincount(model.train_codes, minlength=len(BATCHES)) + 1.0))
         preds.append(fp.predict(model, Xte))
         expls.append(fp.explain(model, Xte))
-    return pd.concat(preds), pd.concat(expls)
+    return pd.concat(preds), pd.concat(expls), floors
 
 
 def phrase(f: str) -> str:
     return PHRASES.get(f, plo.feature_phrase(f)).removeprefix("the ")
 
 
-def explain(site: str, k: int, high: bool, expl: pd.DataFrame, others: dict[str, str]) -> str:
+def explain(site: str, k: int, high: bool, expl: pd.DataFrame, others: dict[str, str],
+            rejected: bool = False) -> str:
     """How the site differs from Batch 3 (top 3 features by distance from the Batch 3 centre) + confidence."""
     e = expl.sort_values("dev_Batch_3", ascending=False, kind="stable").head(3)
     diffs = [f"{'higher' if r['z'] > r['center_Batch_3'] else 'lower'} {phrase(r['feature'])}"
              for _, r in e.iterrows()]
-    head = (f"Assigned to Batch {k + 1}. Compared with the Batch 3 supplier baseline this image shows "
-            f"{plo._join(diffs)}." if k != 2 else
-            f"Assigned to Batch 3: it sits within the normal Batch 3 range; its largest departures "
-            f"({plo._join(diffs)}) are within the spread between Batch 3 images.")
+    if k != 2:
+        head = (f"Assigned to Batch {k + 1}. Compared with the Batch 3 supplier baseline this image shows "
+                f"{plo._join(diffs)}.")
+    elif rejected:
+        head = (f"Assigned to Batch 3 as the closest batch, but the statistical check does not confirm it as a typical "
+                f"Batch 3 image (the check rejects Batch 3 for this site); its largest departures from the Batch 3 "
+                f"baseline are {plo._join(diffs)}.")
+    else:
+        head = (f"Assigned to Batch 3: it sits within the normal Batch 3 range; its largest departures "
+                f"({plo._join(diffs)}) are within the spread between Batch 3 images.")
     agree = [EVIDENCE[o] for o, c in others.items() if c == BATCHES[k]]
     other = [f"{EVIDENCE[o]} looks like Batch {c.split('_')[1]}" for o, c in others.items() if c != BATCHES[k]]
     if high:
@@ -100,12 +108,12 @@ def explain(site: str, k: int, high: bool, expl: pd.DataFrame, others: dict[str,
 def main() -> None:
     sel = json.loads((ROOT / "outputs/menu/selection.json").read_text())
     assert sel["option"] == "fem_a1", sel["option"]
-    pred, expl = fem_arm("A1")
+    pred, expl, floors = fem_arm("A1")
     menu = pd.read_csv(OUT / "menu_predictions.csv", dtype={"site": str}).set_index("site")
     sites = list(pred.index.get_level_values("site"))
     assert sorted(sites) == sorted(menu.index), (sites, list(menu.index))
     # protocol check: arm A0 (same data path, no FEM columns) must reproduce the menu fingerprint call per site
-    a0, _ = fem_arm("A0")
+    a0, _, _ = fem_arm("A0")
     assert (a0["assigned"].to_numpy() == menu.loc[sites, "fingerprint_call"].to_numpy()).all(), a0["assigned"]
 
     long, final = [], []
@@ -116,20 +124,22 @@ def main() -> None:
         ood = bool(pred["ood"].iloc[i])
         n_agree = sum(c == BATCHES[k] for c in calls.values())
         high = (not ood) and n_agree >= 2
+        cred = float(pred["credibility"].iloc[i])
+        rejected = cred < fp.DEFAULT_OOD_ALPHA or cred <= floors[i][k] + 1e-12  # same rule as fp.predict
         p = {f"p_{b}": float(pred[f"p_{b}"].iloc[i]) for b in BATCHES}
-        long.append({"site": site, "parent_id": m["parent_id"], "model": "fem_a1", "selected": True,
+        long.append({"site": site, "parent_id": m["parent_id"], "model": "fem_a1", "selected": True, "score_kind": "conformal_p",
                      "assigned": BATCHES[k], "confidence": "high" if high else "low", **p, "ood": ood,
                      # fem_a1 p_* are conformal p-values (fp.predict), not probabilities
                      "credibility": float(pred["credibility"].iloc[i]),
                      "conformal_confidence": float(pred["confidence"].iloc[i])})
         for o in MENU:
-            long.append({"site": site, "parent_id": m["parent_id"], "model": o, "selected": False,
+            long.append({"site": site, "parent_id": m["parent_id"], "model": o, "selected": False, "score_kind": "probability",
                          "assigned": calls[o], "confidence": m[f"{o}_confidence"],
                          **{f"p_{b}": float(m[f"p_{o}_{b}"]) for b in BATCHES}, "ood": np.nan})
         e = expl[expl["site_index"] == pred.index[i]]
         final.append({"site": site, "assigned": BATCHES[k], "confidence": "high" if high else "low",
-                      "model": "fem_a1", **p, "n_menu_agree": n_agree, "ood": ood,
-                      "parent_id": m["parent_id"], "explanation": explain(site, k, high, e, calls)})
+                      "model": "fem_a1", "score_kind": "conformal_p", **p, "n_menu_agree": n_agree, "ood": ood,
+                      "parent_id": m["parent_id"], "explanation": explain(site, k, high, e, calls, rejected)})
 
     long = pd.DataFrame(long)
     long.to_csv(OUT / "all_models_predictions.csv", index=False, float_format="%.4f")
