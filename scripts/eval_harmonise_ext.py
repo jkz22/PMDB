@@ -155,13 +155,14 @@ def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict
 
 TEXTURE = ("hf_ratio", "noise_sigma", "grad_p90", "edge_sigma_px")
 METHOD_LABEL = {"none": "raw", "nyul": "N4 + Nyúl–Udupa", "basic": "BaSiC", "hybrid": "hybrid LUT",
-                "spectrum": "spectrum (NPS filter)", "fda": "FDA"}
+                "spectrum": "spectrum (NPS filter)", "fda": "FDA", "hybrid_spectrum": "hybrid LUT → spectrum"}
 METHOD_BLURB = {
     "nyul": "**nyul** = N4ITK bias-field correction → Nyúl–Udupa piecewise-linear histogram standardisation (`pmdb/harmonise_ext.py`, `docs/harmonisation_ext.md`)",
     "basic": "**basic** = BaSiC flat-field/dark-field + per-image baseline (`pmdb/harmonise_ext.py`)",
     "spectrum": "**spectrum** = radial amplitude-spectrum (MTF/NPS) matching filter to the labelled median, DC kept (`pmdb/harmonise_shift.py`, `docs/harmonisation_shift.md`)",
     "fda": "**fda** = Fourier Domain Adaptation, low-frequency amplitude window (β = 0.01) from the labelled reference (`pmdb/harmonise_shift.py`)",
     "hybrid": "**hybrid** = in-house LUT route (`pmdb/harmonise.py`), for reference",
+    "hybrid_spectrum": "**hybrid_spectrum** = hybrid LUT followed by the spectrum filter refit on the LUT-corrected grey; the recommended single modelling input (`pmdb/harmonise_shift.py`, `docs/harmonisation_shift.md` §2b)",
 }
 
 
@@ -331,7 +332,7 @@ def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
             rows.append(row)
     table = pd.DataFrame(rows)
     # poorly imaged fields, same rule on every detector: > CROP_GALLERY_STATS_FRAC of the interior excluded from
-    # statistics (clipping included), or any KPI-invalid interior pixel (bad band / charging), or a crack flag
+    # statistics (clipping included), or > 0.1 % KPI-invalid interior pixels (bad band / charging), or a crack flag
     bad = table[(table.frac_invalid_stats_inner > CROP_GALLERY_STATS_FRAC) | (table.frac_invalid_kpi_inner > 0.001)
                 | (table.frac_crack > 0)]
     keys = sorted({(r.batch, r.site) for r in bad.itertuples()})
@@ -451,7 +452,7 @@ def main() -> None:
 
     if args.figures_only:
         site_df = pd.read_csv(out / "site_metrics.csv")
-        summary = pd.read_csv(out / "summary.csv")
+        summary = pd.read_csv(out / "summary.csv") if (out / "summary.csv").exists() else _summarise(site_df)
         hrows = pd.read_csv(out / "heldout_metrics.csv").to_dict("records") if (out / "heldout_metrics.csv").exists() else []
         hs = list_clean_sites(heldout=True) if hrows else None
         _figures(out, methods, sites, hs, hrows, loader, site_df, summary)
@@ -506,7 +507,7 @@ def resolve_methods(methods, figures_only: bool, out: Path) -> list[str]:
     if figures_only:
         summ = out / "summary.csv"
         if not summ.exists():
-            raise SystemExit(f"--figures-only: cannot determine methods, {summ} is missing; pass --methods")
+            raise SystemExit(f"--figures-only: cannot determine methods, {summ} is missing; pass --methods (site_metrics.csv is then required and the summary is recomputed from it)")
         return list(pd.read_csv(summ)["method"])
     return ["none", "nyul", "basic", "hybrid"]
 
@@ -560,7 +561,7 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
           "* `texture_shortcut_*`: the same leave-one-out classifier on the four texture statistics only (is the site still identifiable from blur/noise?); `all_shortcut_batch_acc` uses grey + texture.", ""]
     L += ["## What is cut out ('crops')", "",
           "No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so",
-          "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where the mask excludes more than 0.2 % of the interior and why", ""]
+          "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, more than 0.1 % of the interior is KPI-invalid (bad band / charging), or a crack is flagged, and why", ""]
     worst = crops.sort_values("frac_invalid_stats_inner", ascending=False).head(12)
     L.append("| batch | site | detector | interior excluded | border |")
     L.append("|---|---|---|---|---|")

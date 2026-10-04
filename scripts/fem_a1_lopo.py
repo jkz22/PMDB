@@ -22,7 +22,7 @@ ffe = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(ffe)
 
 from pmdb import fingerprint as fp  # noqa: E402
-from pmdb.batch_menu import BATCHES, labelled_sites  # noqa: E402
+from pmdb.batch_menu import BATCHES, feature_table, labelled_sites  # noqa: E402
 from pmdb.fem_features import subset  # noqa: E402
 from pmdb.parents import parent_groups  # noqa: E402
 
@@ -47,6 +47,11 @@ def lopo(arm: str, pool: dict, y: pd.Series, groups: np.ndarray, leo_cols: list[
     return pd.concat(rows)
 
 
+def keys_by_group(p: pd.DataFrame, keys: list, groups: np.ndarray) -> list:
+    """Site keys in the row order of lopo() output (groups ascending, pool order within group)."""
+    return [keys[i] for g in np.unique(groups) for i in np.flatnonzero(groups == g)]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fem-site-curves", default="outputs/fem/free_lateral/site_curves.csv")
@@ -55,6 +60,11 @@ def main() -> int:
     tr, te, _, leo_cols = ffe.load_inputs(ROOT / args.fem_site_curves)
     pool = pooled(tr, te)
     keys = [tuple(r) for r in pool["index"]]
+    # fingerprint features exactly as the menu builds them (features.csv + heldout_features_modal.csv)
+    menu_X = feature_table(keys)
+    if list(menu_X.columns) != list(leo_cols):
+        raise ValueError("menu fingerprint columns differ from FEM-eval columns")
+    pool["leo"] = menu_X.to_numpy(float)
     lab = labelled_sites().set_index(["batch", "site"])["label"]
     pg = parent_groups().set_index(["batch", "site"])["parent_id"]
     y = pd.Series([lab[k] for k in keys], index=ffe._mi(pool["index"]), name="batch")
@@ -67,6 +77,14 @@ def main() -> int:
         rec = [float(c[p["true"].to_numpy() == b].mean()) for b in BATCHES]
         res[arm] = {"lopo_correct": int(c.sum()), "lopo_n": int(len(p)), "accuracy": float(c.mean()),
                     "balanced_accuracy": float(np.mean(rec))}
+    # acceptance: A0 must reproduce the menu fingerprint option's per-site calls
+    menu_calls = pd.read_csv(ROOT / "outputs/menu/menu_predictions.csv", dtype={"site": str})
+    a0 = preds["A0"].copy()
+    a0["site"] = [k[1] for k in keys_by_group(a0, keys, groups)]
+    mc = menu_calls.set_index("site")["fp_call"]
+    mism = [s for s, c in zip(a0["site"], a0["assigned"]) if mc[s] != c]
+    if mism:
+        raise AssertionError(f"A0 per-site calls differ from menu fingerprint at {mism}")
     out = ROOT / args.out
     out.mkdir(parents=True, exist_ok=True)
     (out / "metrics.json").write_text(json.dumps({"protocol": "leave-one-parent-out, 34 labelled sites",

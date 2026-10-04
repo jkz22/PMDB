@@ -193,7 +193,9 @@ Rehearsal (the 3 held-out sites copied to `data_test/`, then removed): half cach
 
 ## Supervised linear probe (LOPO, 34 sites)
 
-Method: frozen MicroNet patch embeddings (affine2 BSE+Inlens, 31 labelled + 3 held-out sites with organiser truths, 13 parents). Per leave-one-parent-out fold: StandardScaler, PCA(64) fit on training patches, multinomial `LogisticRegression(C=0.1, class_weight="balanced")`, each patch labelled with its site's batch and weighted 1/n_patches(site). Site probability = softmax of the mean per-patch log-probability. `probe+ensemble` averages the probe with `p_ens_*` of `outputs/menu/menu_predictions.csv` (same folds). One configuration, no tuning. Code: `pmdb/patch_probe.py`, `modal_patch_mil.py --mode probe`; outputs in `outputs/patch_probe/`.
+**Status: the numbers below are from the previous run (balanced class weights, 200 permutations) and are pending a rerun with the current code (site-balanced weights, `--n-perm 1000` honoured); see `outputs/patch_probe/STALE.md`. Treat them as provisional.**
+
+Method: frozen MicroNet patch embeddings (affine2 BSE+Inlens, 31 labelled + 3 held-out sites with organiser truths, 13 parents). Per leave-one-parent-out fold: StandardScaler, PCA(64) fit on training patches, multinomial `LogisticRegression(C=0.1)`, each patch labelled with its site's batch and site-balanced sample weights (each site sums to 1/(sites in its batch), so every batch carries equal total weight; `class_weight="balanced"` is no longer used). Site probability = softmax of the mean per-patch log-probability. `probe+ensemble` averages the probe with `p_ens_*` of `outputs/menu/menu_predictions.csv` (same folds). One configuration, no tuning. Code: `pmdb/patch_probe.py`, `modal_patch_mil.py --mode probe`; outputs in `outputs/patch_probe/`.
 
 | model | acc | bal acc | macro-F1 | recall B1/B2/B3 | rubric all-high | rubric (high iff max p >= 0.5) |
 |---|---|---|---|---|---|---|
@@ -209,7 +211,7 @@ Held-out sites, LOPO-fold calls (truth in brackets):
 | fn0mhxef (B1) | B2 (0.57) | B2 (0.44) | B3 (0.52) |
 | xrv9xvzb (B3) | B3 (0.70) | B3 (0.43) | B2 (0.59) |
 
-Permutation test (probe, 200 site-label permutations, parents fixed, seed 0): observed accuracy 0.706, null mean 0.337, p = 0.005.
+Permutation test (probe, previous run: 200 site-label permutations, parents fixed, seed 0; the current code honours `--n-perm`, rerun planned with 1000): observed accuracy 0.706, null mean 0.337, p = 0.005.
 
 Verdict: probe+ensemble beats the ensemble on LOPO rubric all-high (1.412 vs 1.235) and balanced accuracy (0.630 vs 0.597), so by the pre-set criterion it is adopted as the better candidate. Caveats: 34 sites from 13 parents, one configuration, and the improvement is a few sites; Batch 1 recall remains weak for the probe alone (0.38). Prior evidence: the v2 fine-tune reached only 0.64 accuracy with Batch 2 recall 0.20 under field-grouped CV, so a frozen-feature linear probe is the better-behaved supervised route.
 
