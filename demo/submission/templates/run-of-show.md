@@ -35,7 +35,7 @@ Batch 2 is top-heavy (drying migration), Batch 1 is bottom-heavy (sedimentation)
 ## 1:50–2:15 Held-out calls (view `4`)
 "These are recomputed live in the browser and are identical to the Python output. xrv9xvzb is
 {{call_xrv9xvzb_batch}}, even though it carries a Batch-3-style black level: we bet on the material, not the
-microscope. 3e122cbj is {{call_3e122cbj_batch}} with confidence zero, because it looks typical of every batch
+microscope. 3e122cbj is {{call_3e122cbj_batch}} with confidence {{call_3e122cbj_conf_word}}, because it looks typical of every batch
 and the model refuses to manufacture certainty."
 
 ## 2:15–2:50 Reject a shipment (view `5`)

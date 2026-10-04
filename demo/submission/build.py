@@ -126,6 +126,12 @@ def display(facts):
             f"call_{site}_hp": f"{call['hp_agree']}/{call['hp_configs']}",
             f"call_{site}_site": site,
         })
+        if site == "3e122cbj":
+            confidence = float(call["confidence"])
+            values["call_3e122cbj_conf_plain"] = f"{confidence:g}"
+            values["call_3e122cbj_conf_word"] = (
+                integer_words(int(confidence)) if confidence.is_integer() else f"{confidence:g}"
+            )
     return values
 
 

@@ -27,7 +27,7 @@ The model is ported to JS and recomputes the held-out calls from `outputs/finger
 in the browser, identical to the Python output to 1e-15 (`node --test demo/test`). Edit `outputs/`
 and the page reloads within 2 s.
 
-**"Confidence 0 on 3e122cbj? Isn't that a failure?"**
+**"Confidence {{call_3e122cbj_conf_plain}} on 3e122cbj? Isn't that a failure?"**
 No, it's honest. Its arrangement is typical of every batch, so the conformal p-values can't
 separate them. {{call_3e122cbj_batch}} is still the stable call, and it differs from Batch 3 in amount (Si fraction
 z ≈ +8, a loading only Batch 1 reaches).
