@@ -109,3 +109,4 @@ header.top nav button { white-space: nowrap; }
 .split .meas { background: var(--good); } .split .tex { background: var(--muted); opacity: .4; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--hair); }
+.evidence { width: 100%; border-radius: 6px; border: 1px solid var(--hair); display: block; }
