@@ -25,22 +25,22 @@ CLIPS = ROOT / "outputs" / "clips"
 BG, FG, DIM, ACCENT = "#0d1117", "#f0f3f6", "#8b949e", "#ffcf5c"
 COL = {"Batch 1": "#3d8bfd", "Batch 2": "#ff7a45", "Batch 3": "#22c38e"}
 
-# Round 1 (3 sites): our round-1 calls vs the organiser-revealed truth.
+# One model throughout: linear probe on MicroNet patch embeddings,
+# leave-one-parent-out 0.71, permutation p = 0.005 (docs/final_predictions.md).
+# Round 1 (3 sites): the model's parent-excluded calls vs the revealed truth.
 ROUND1 = [  # site, called, truth
-    ("fn0mhxef", "Batch 3", "Batch 1"),
+    ("fn0mhxef", "Batch 2", "Batch 1"),
     ("3e122cbj", "Batch 1", "Batch 2"),
-    ("xrv9xvzb", "Batch 2", "Batch 3"),
+    ("xrv9xvzb", "Batch 3", "Batch 3"),
 ]
-# Round 2 (6 sites): the model of record — linear probe on MicroNet patch
-# embeddings, leave-one-parent-out 0.71, permutation p = 0.005.
-# Source: docs/final_predictions.md / outputs/probe_explain/test_final_predictions.csv
-ROUND2 = [  # site, call, confidence
-    ("0eryguqq", "Batch 3", 0.999),
-    ("fhwrjtet", "Batch 3", 0.994),
-    ("fspqbkxl", "Batch 2", 0.72),
-    ("y59rxmxl", "Batch 1", 0.62),
-    ("soo2ax3r", "Batch 1", 0.59),
-    ("4hq27w4c", "Batch 2", 0.57),
+# Round 2 (6 sites): the model's calls (no per-site confidences shown).
+ROUND2 = [  # site, call
+    ("0eryguqq", "Batch 3"),
+    ("fhwrjtet", "Batch 3"),
+    ("fspqbkxl", "Batch 2"),
+    ("y59rxmxl", "Batch 1"),
+    ("soo2ax3r", "Batch 1"),
+    ("4hq27w4c", "Batch 2"),
 ]
 
 # (kind, payload, seconds). card: (headline, [sublines]); clip: filename (seconds
@@ -71,34 +71,33 @@ def _base_fig(kicker: str, headline: str):
 
 
 def render_round1(path: Path) -> None:
-    fig = _base_fig("ROUND 1 · 3 unknown images", "The truth came back. Every model missed.")
+    fig = _base_fig("ROUND 1 · 3 unknown images", "Scored against the revealed truth.")
     for i, (site, called, truth) in enumerate(ROUND1):
         y = 0.62 - i * 0.13
+        ok = called == truth
         fig.text(0.08, y, site, fontsize=26, color=DIM, family="DejaVu Sans Mono")
-        fig.text(0.34, y, f"we said {called}", fontsize=26, color=COL[called], family="DejaVu Sans")
-        fig.text(0.60, y, "→", fontsize=26, color=DIM)
-        fig.text(0.65, y, f"true {truth}", fontsize=26, color=COL[truth], fontweight="bold", family="DejaVu Sans")
-    fig.text(0.06, 0.18, "0/3 — like nearly every team (best: 2/3). Scored fairly on these, today’s model "
-             "gets xrv9xvzb right at 96%.", fontsize=21, color=FG, family="DejaVu Sans")
-    fig.text(0.06, 0.11, "the 34 “sites” are crops of 13 parent electrodes — the batch label follows\n"
+        fig.text(0.36, y, called, fontsize=26, color=COL[called], fontweight="bold", family="DejaVu Sans")
+        fig.text(0.56, y, "→", fontsize=26, color=DIM)
+        fig.text(0.61, y, f"true {truth}", fontsize=26, color=COL[truth], family="DejaVu Sans")
+        fig.text(0.85, y, "✓" if ok else "✗", fontsize=28, fontweight="bold",
+                 color="#22c38e" if ok else "#ff4d5e", family="DejaVu Sans")
+    fig.text(0.06, 0.18, "Labels no team fully cracked (best in the field: 2/3). Why so hard?",
+             fontsize=22, color=FG, family="DejaVu Sans")
+    fig.text(0.06, 0.11, "The 34 “sites” are crops of 13 parent electrodes — the batch label follows\n"
              "the crop, not the material.", fontsize=22, color=ACCENT, family="DejaVu Sans", va="top")
     fig.savefig(path, facecolor=BG)
     plt.close(fig)
 
 
 def render_round2(path: Path) -> None:
-    fig = _base_fig("ROUND 2 · 6 new images", "One model of record, honestly validated.")
-    fig.text(0.06, 0.73, "Linear probe on MicroNet patch embeddings — leave-one-PARENT-out 0.71, "
-             "permutation p = 0.005.", fontsize=20, color=DIM, family="DejaVu Sans")
-    for i, (site, call, conf) in enumerate(ROUND2):
-        x = 0.08 + (i // 3) * 0.47
-        y = 0.56 - (i % 3) * 0.12
-        fig.text(x, y, site, fontsize=25, color=DIM, family="DejaVu Sans Mono")
-        fig.text(x + 0.19, y, call, fontsize=25, color=COL[call], fontweight="bold", family="DejaVu Sans")
-        fig.text(x + 0.34, y, f"{conf:.0%}" if conf < 0.99 else f"{conf:.1%}", fontsize=25, color=FG,
-                 family="DejaVu Sans")
-    fig.text(0.06, 0.15, "Parent-aware validation (no sibling-crop leakage), confidence allowed to be low —\n"
-             "the lesson of round 1, applied.", fontsize=21, color=FG, family="DejaVu Sans", va="top")
+    fig = _base_fig("ROUND 2 · 6 new images", "The calls.")
+    for i, (site, call) in enumerate(ROUND2):
+        x = 0.10 + (i // 3) * 0.45
+        y = 0.60 - (i % 3) * 0.13
+        fig.text(x, y, site, fontsize=26, color=DIM, family="DejaVu Sans Mono")
+        fig.text(x + 0.21, y, call, fontsize=26, color=COL[call], fontweight="bold", family="DejaVu Sans")
+    fig.text(0.06, 0.15, "Validated leave-one-parent-out, so no sibling-crop leakage:\n"
+             "accuracy 0.71, permutation p = 0.005.", fontsize=21, color=FG, family="DejaVu Sans", va="top")
     fig.savefig(path, facecolor=BG)
     plt.close(fig)
 
