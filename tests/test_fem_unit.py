@@ -278,3 +278,9 @@ def test_features_z_edge_cropped(orientation):
     site, _ = run_curves(r, orientation, p, window=True, z_edge_um=3.0)
     assert np.isnan(site[0]["first_pore_closure_s"])
     assert region_metrics(r, 5, slice(0, 40), orientation, p)["q99_vm_gr"] == pytest.approx(99.0)
+
+
+def test_features_oversized_z_edge_raises():
+    lab = np.zeros((20, 20), dtype=np.uint8)
+    with pytest.raises(ValueError, match="no interior"):
+        region_metrics(_synthetic(lab, px=0.1), 2, slice(0, 10), "bottom", load_params(), z_edge_um=1.0)

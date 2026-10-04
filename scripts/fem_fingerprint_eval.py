@@ -92,11 +92,8 @@ def load_inputs(fem_path):
                 "cand": cand.to_numpy(float), "cand_names": list(cand.columns)}
 
     tr, te = pack(leo, fem, k), pack(leo_h, fem_h, kh)
-    # label-free screen on the labelled sites only: candidate must be finite everywhere
-    keep = np.isfinite(tr["cand"]).all(axis=0)
+    # the finite-candidate screen is applied inside each fold (training rows only), see fold_matrices
     for d in (tr, te):
-        d["cand"] = d["cand"][:, keep]
-        d["cand_names"] = [n for n, kp in zip(d["cand_names"], keep) if kp]
         for name in ("swell", "spread", "k01"):
             if not np.isfinite(d[name]).all():
                 raise ValueError(f"non-finite {name}")
@@ -174,7 +171,9 @@ def fold_matrices(arm: str, tr: dict, te: dict, codes_tr: np.ndarray):
                 np.column_stack([te["leo"], r_te, te["spread"]]),
                 ["swell_resid", "si_stress_spread"], None)
     if arm == "A2":
-        chosen, p, skipped = select_features(tr["cand"], codes_tr)
+        ok = np.flatnonzero(np.isfinite(tr["cand"]).all(axis=0))  # training-rows-only availability screen
+        sel, p, skipped = select_features(tr["cand"][:, ok], codes_tr)
+        chosen = [int(ok[j]) for j in sel]
         names = [tr["cand_names"][j] for j in chosen]
         return (np.column_stack([tr["leo"], tr["cand"][:, chosen]]),
                 np.column_stack([te["leo"], te["cand"][:, chosen]]), names,
@@ -261,11 +260,13 @@ def summarize(pred, batches):
             "balanced_accuracy": float(np.mean(list(rec.values()))), "recall": rec, "confusion": conf}
 
 
-def decide(results: dict) -> tuple[str, dict]:
-    """Apply the D21 rule mechanically."""
+def decide(results: dict, sensitivity: bool = False) -> tuple[str, dict]:
+    """Apply the D21 rule mechanically. Sensitivity runs (tag != main) are never promoted: A0 stays the arm."""
     passes = {a: bool(results[a]["n_correct"] >= MIN_CORRECT and results[a]["perm_p"] <= ALPHA)
               for a in ("A1", "A2")}
-    if passes["A1"] and passes["A2"]:
+    if sensitivity:
+        chosen = "A0"
+    elif passes["A1"] and passes["A2"]:
         chosen = "A2" if results["A2"]["n_correct"] > results["A1"]["n_correct"] else "A1"
     elif passes["A1"]:
         chosen = "A1"
@@ -313,7 +314,7 @@ def main() -> int:
         print(f"{arm}: {results[arm]['n_correct']}/31 acc {results[arm]['accuracy']:.3f} "
               f"bal {results[arm]['balanced_accuracy']:.3f} perm p {perms[arm]['p_value']:.4f}")
 
-    chosen, passes = decide(results)
+    chosen, passes = decide(results, sensitivity=args.tag != "main")
     print(f"verdict: chosen arm {chosen} (pass: {passes})")
 
     # held-out scoring after the rule; in-fold quantities refit on all 31 labelled sites

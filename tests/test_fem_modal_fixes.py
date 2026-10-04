@@ -50,3 +50,16 @@ def test_g2_fails_on_missing_case(tmp_path, capsys):
     _write(tmp_path / "r50", "a")
     assert fem_collect.g2(tmp_path / "r100", tmp_path / "r50") == 1
     assert "B/b/bottom" in capsys.readouterr().out
+
+
+def test_refeature_failure_invalidates_stale_result(tmp_path, monkeypatch):
+    case = {"batch": "B", "site": "s", "orientation": "bottom"}
+    stale = tmp_path / "old.json"
+    stale.write_text(json.dumps({"meta": {}, "site_rows": [{"x": 1}], "tile_rows": []}))
+    monkeypatch.setattr(modal_fem, "_case_path", lambda *a: str(stale))
+    monkeypatch.setattr(modal_fem.out_vol, "reload", lambda: None)
+    monkeypatch.setattr(modal_fem.out_vol, "commit", lambda: None)
+    out = modal_fem.refeature_case.local(case, "t", 0.5)  # fields npz absent -> fails
+    assert out["error"]
+    d = json.loads(stale.read_text())
+    assert d["meta"]["error"] and d["site_rows"] == []
