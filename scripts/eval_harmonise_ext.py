@@ -108,13 +108,26 @@ def _fixed_fractions(site_df: pd.DataFrame) -> pd.DataFrame:
     return out.drop(columns=["_hist_smooth"])
 
 
+def _fill_invalid(img: np.ndarray, msk: np.ndarray) -> np.ndarray:
+    """Copy of ``img`` with stats-invalid pixels of each detector set to that detector's valid-pixel median.
+
+    ``estimate_anchors`` / ``segment_bse`` take no mask, so anchors and thresholds are made valid-pixel-only this way.
+    """
+    out = img.copy()
+    for c in range(img.shape[-1]):
+        v = C.valid_for_stats(msk[..., c])
+        if v.any() and not v.all():
+            out[..., c][~v] = np.median(img[..., c][v]).astype(img.dtype)
+    return out
+
+
 def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict:
     out: dict = {}
     for c, d in enumerate(X.DETECTORS):
         v = C.valid_for_stats(msk[..., c])
         for k, val in _stats(img[..., c][v].astype(np.float32)).items():
             out[f"{d}_{k}"] = float(val)
-    anchors, _ = H.estimate_anchors(img, NM)
+    anchors, _ = H.estimate_anchors(_fill_invalid(img, msk), NM)
     for d in X.DETECTORS:
         for a in H.ANCHOR_NAMES:
             out[f"{d}_anchor_{a}"] = anchors[d][a]
@@ -123,14 +136,19 @@ def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict
     v0 = C.valid_for_kpis(msk[..., 0])
     g = ndimage.gaussian_filter(img[..., 0].astype(np.float64), V0_PARAMS["gauss_sigma_px"])
     out["_hist_smooth"] = np.histogram(g[v0], bins=SMOOTH_BINS)[0] / v0.sum()  # fixed-threshold fractions later
-    masks = segment_bse(img[..., 0].astype(np.float64), NM)
+    masks = segment_bse(_fill_invalid(img, msk)[..., 0].astype(np.float64), NM)
     out["seg_f_pore"] = float(masks.pore[v0].mean())
     out["seg_f_si"] = float(masks.si[v0].mean())
     out["mean_abs_change"] = float(np.mean(np.abs(img[..., 0][v0].astype(np.int16) - raw_img[..., 0][v0].astype(np.int16))))
     return out
 
 
-def _shortcut(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
+def _recall(pred: np.ndarray, y: np.ndarray) -> float:
+    """Correct positive predictions / all actual positives (``y`` boolean)."""
+    return float((pred[y] == y[y]).mean()) if y.any() else float("nan")
+
+
+def _shortcut(df: pd.DataFrame, cols: list[str], y: np.ndarray, recall: bool = False) -> float:
     if len(np.unique(y)) < 2:
         return float("nan")
     Xm = np.nan_to_num(df[cols].to_numpy(dtype=float))
@@ -138,7 +156,7 @@ def _shortcut(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         pred = cross_val_predict(clf, Xm, y, cv=LeaveOneOut())
-    return float((pred == y).mean())
+    return _recall(pred, y) if recall else float((pred == y).mean())
 
 
 def _summarise(site_df: pd.DataFrame) -> pd.DataFrame:
@@ -171,7 +189,7 @@ def _summarise(site_df: pd.DataFrame) -> pd.DataFrame:
         row["mean_abs_change_clean"] = float(clean.mean_abs_change.mean())
         row["mean_abs_change_strong"] = float(strong.mean_abs_change.mean())
         row["shortcut_batch_acc"] = _shortcut(d, cols, d.batch.to_numpy())
-        row["shortcut_batch3_recall"] = _shortcut(d, cols, (d.batch == "Batch_3").to_numpy())
+        row["shortcut_batch3_recall"] = _shortcut(d, cols, (d.batch == "Batch_3").to_numpy(), recall=True)
         row["shortcut_strong_vs_rest_b3"] = _shortcut(b3, cols, (b3.group == "strong").to_numpy())
         rows.append(row)
     return pd.DataFrame(rows)
@@ -240,6 +258,12 @@ def _fig_examples(loader, out: Path, hs) -> None:
     plt.close(fig)
 
 
+def _gallery_keys(table: pd.DataFrame, thr: float = 0.001) -> list[tuple[str, str]]:
+    """Fields with > ``thr`` of the interior stats-excluded (or a crack flag) on any detector, same rule for all detectors."""
+    bad = table[(table.frac_invalid_stats_inner > thr) | (table.frac_crack > 0)]
+    return sorted({(r.batch, r.site) for r in bad.itertuples()})
+
+
 def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
     rows = []
     for b, s in sites:
@@ -254,11 +278,7 @@ def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
             row["frac_invalid_stats_inner"] = float((~C.valid_for_stats(m))[inner].mean())
             rows.append(row)
     table = pd.DataFrame(rows)
-    # poorly imaged fields: anything beyond border + clipping (bad bands, charging, cracks) on any detector,
-    # plus the three most saturated Inlens fields as the clipping example
-    bad = table[(table.frac_invalid_kpi_inner > 0.001) | (table.frac_crack > 0)]
-    sat = table[table.detector == "Inlens"].sort_values("frac_clip_high", ascending=False).head(3)
-    keys = sorted({(r.batch, r.site) for r in pd.concat([bad, sat]).itertuples()})
+    keys = _gallery_keys(table)
     if not keys:
         return table
     fig, axes = plt.subplots(len(keys), 3, figsize=(16, 1.6 * len(keys)), squeeze=False)
@@ -460,7 +480,7 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
           "  with the segmenter. Nyúl matches 11 landmarks per site, which by construction forces equal percentile positions and so pulls phase",
           "  fractions towards a common value (the known limitation of histogram standardisation).",
           "* `mean_abs_change_*`: |method − raw| per pixel in stored uint8 units; for `nyul` (standard scale) and `basic` (raw − bᵢ + 64) this includes the scale change itself.",
-          "* `shortcut_*`: leave-one-out accuracy of a logistic regression on grey statistics only (chance: 0.45 batch, 0.55 Batch-3, 0.76 strong-vs-rest).", ""]
+          "* `shortcut_*`: leave-one-out accuracy (`shortcut_batch3_recall`: recall of Batch 3) of a logistic regression on grey statistics only (chance: 0.45 batch, 0.55 Batch-3, 0.76 strong-vs-rest).", ""]
     L += ["## What is cut out ('crops')", "",
           "No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so",
           "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where the mask excludes more than 0.2 % of the interior and why", ""]
