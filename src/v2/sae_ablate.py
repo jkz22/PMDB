@@ -29,8 +29,8 @@ from sklearn.model_selection import LeaveOneGroupOut, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.v2.common import CROP, OUT, REPO, grid, harm_method
-from src.v2.data import VIEWS, normalise_percentile, naive_transform, phase_labels
+from src.v2.common import CROP, EXT_METHODS, OUT, REPO, grid, harm_method
+from src.v2.data import NAIVE_BLUR, VIEWS, normalise_percentile, naive_transform, phase_labels
 from src.v2.kpi_adapter import GATED_COLS, kpi_cols
 from src.v2.latent_audit import load, targets
 from src.v2.sae import BATCHES, IMG_KEYS, characterise, fit_sae
@@ -129,6 +129,8 @@ def _route_array(site: str, harm: str) -> tuple[np.ndarray, np.ndarray | None]:
         im, v = z["image"].copy(), z["valid"]
         im[~v] = 0
         return im, v.all(-1)
+    if harm in EXT_METHODS:
+        return np.load(root / "harmonised_ext" / harm / "half" / f"Batch_heldout__{site}.npz")["image"], None
     return np.load(root / "harmonised" / harm / "half" / f"Batch_heldout__{site}.npz")["image"], None
 
 
@@ -160,15 +162,17 @@ def heldout_crops(cfg: dict) -> tuple[np.ndarray, pd.DataFrame]:
     for s in HELDOUT:
         im, valid = _route_array(s, harm)
         x = normalise_percentile(im.astype(np.float32)) if cfg["input"] == "norm" else im.astype(np.float32) / 255.0
-        if cfg["input"] == "naive":
+        naive = cfg["input"] in ("naive", "extreme")
+        if naive:
             x[phase_labels(im[..., 0].astype(np.float32)) == 0] = 0.0
         for k, (y, xx) in enumerate(grid(*im.shape[:2], CROP, CROP)):
             if valid is not None and valid[y:y + CROP, xx:xx + CROP].mean() < 0.9:
                 continue
             c = x[y:y + CROP, xx:xx + CROP][..., ch]
-            if cfg["input"] == "naive":
+            if naive:
                 c = naive_transform(torch.from_numpy(np.ascontiguousarray(c)).permute(2, 0, 1)[None],
-                                    torch.Generator().manual_seed(1_000_003 * k + 17))[0].permute(1, 2, 0).numpy()
+                                    torch.Generator().manual_seed(1_000_003 * k + 17),
+                                    blur=NAIVE_BLUR if cfg["input"] == "extreme" else 0.0)[0].permute(1, 2, 0).numpy()
             crops.append(c)
             rows.append(dict(site=s, y=y, x=xx, **crop_imaging_stats(im[y:y + CROP, xx:xx + CROP, 0])))
     return np.stack(crops), pd.DataFrame(rows)

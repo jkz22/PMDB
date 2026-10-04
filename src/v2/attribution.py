@@ -30,7 +30,7 @@ from scipy import ndimage
 from scipy.stats import spearmanr
 
 from src.v2 import kpi_adapter as K
-from src.v2.classify import (BATCHES, CLS_RUNS, Classifier, _labels, device, full_cfg, manifest,
+from src.v2.classify import (BATCHES, CLS_RUNS, Classifier, _labels, classes_of, device, full_cfg, manifest,
                              stratified_group_folds)
 from src.v2.common import CROP, NM_HALF, load_half_raw
 from src.v2.data import CropDataset, FieldStore, VIEWS
@@ -41,7 +41,7 @@ N_TOP = 6
 
 def load_run(d: Path):
     c = json.loads((d / "config.json").read_text())
-    model = Classifier(c["arch"])
+    model = Classifier(c["arch"], n_cls=len(classes_of(c)))
     model.load_state_dict(torch.load(d / "final.pt", map_location="cpu"))
     return model.eval(), full_cfg(c)
 
@@ -144,7 +144,7 @@ def analyse(d: Path, n_top: int = N_TOP, max_crops: int | None = None) -> dict:
     te_f = test_fold(c)
     store = FieldStore(te_f, c["input"], harmonise=c["harmonise"])
     ds = CropDataset(store, c["view"], stride=CROP)
-    y_te = _labels(te_f)[torch.tensor([i for i, _, _ in ds.index])].numpy()
+    y_te = _labels(te_f, c)[torch.tensor([i for i, _, _ in ds.index])].numpy()
     masks_by_field = {}
     for gid in te_f.group_id:
         b, s = gid.split("/")

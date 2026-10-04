@@ -1,0 +1,68 @@
+[
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "input": "raw",
+  "harmonise": "nyul",
+  "stage": "EXT"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "train_set": "all_fields",
+  "input": "raw",
+  "harmonise": "nyul",
+  "stage": "EXT"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "phase_mask": "inpaint",
+  "input": "raw",
+  "harmonise": "nyul",
+  "stage": "EXT"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "baseline",
+  "input": "raw",
+  "harmonise": "nyul",
+  "stage": "EXT"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "input": "raw",
+  "harmonise": "basic",
+  "stage": "EXT"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "train_set": "all_fields",
+  "input": "raw",
+  "harmonise": "basic",
+  "stage": "EXT"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "phase_mask": "inpaint",
+  "input": "raw",
+  "harmonise": "basic",
+  "stage": "EXT"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "baseline",
+  "input": "raw",
+  "harmonise": "basic",
+  "stage": "EXT"
+ }
+]
