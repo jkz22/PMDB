@@ -77,11 +77,8 @@ def _windows(g, rng=None, n=None):
     if rng is not None:
         tl = np.column_stack([rng.integers(0, max(H - WIN, 1), n), rng.integers(0, max(W - WIN, 1), n)])
     else:
-        def starts(L):  # half-stride grid that always ends flush with the far edge, so every pixel is covered
-            s = list(range(0, max(L - WIN, 0) + 1, WIN // 2))
-            if s[-1] != max(L - WIN, 0):
-                s.append(max(L - WIN, 0))
-            return s
+        def starts(n):  # half-overlapping grid whose last window ends at the image edge
+            return sorted(set(range(0, max(n - WIN, 0) + 1, WIN // 2)) | {max(n - WIN, 0)})
 
         tl = np.array([(r, c) for r in starts(H) for c in starts(W)])
     out = []
