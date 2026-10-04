@@ -1,94 +1,56 @@
-# Run of show — 90 s slides + 90 s live demo
+# Run of show: 3 min qualifier (≈ 20 s framing + 2:40 live demo) + 2 min Q&A
 
-Deck: open `docs/slides/pitch.html` in a browser, F11 for fullscreen.
-Advance: `→` / click right half. Rehearse once against a stopwatch; the slide
-timings below total 85 s to leave 5 s of slack.
+The organisers want a live demo, not slides, and not the video. Open the dashboard
+fullscreen and stay on it. The deck (`docs/slides/pitch.html`) is for Q&A or a
+dashboard failure only.
 
-Dashboard (live demo): `node demo/server.mjs` (Node ≥ 18, no `npm install`
-needed) → http://localhost:8080. Keys `1`–`6` switch views, `←`/`→` move the
-slider on the current view. It re-reads `outputs/` every 2 s, so a fresh
-pipeline run shows up without a reload. Backup video:
-`demo/backup/pmdb-dashboard-demo.mp4` (regenerate: `python demo/record_backup.py`).
+Pre-flight: `node demo/server.mjs` (Node ≥ 18, no `npm install`) → http://localhost:8080,
+F11, press `1`, check the top-right dot is green ("live · results v…"). Keys `1`–`6`
+switch views and `←`/`→` move the slider on the current view. Keep
+`demo/backup/pmdb-dashboard-demo.mp4` open in a second tab (to present from another device:
+`node demo/server.mjs --host 0.0.0.0`).
 
-## Slides (90 s)
+## 0:00–0:20 Framing (dashboard on view 1, slider at 0)
+"Three batches of a silicon/graphite anode that are chemically identical. A manufacturer
+needs to know which batch a sample came from, and whether a new shipment is out of spec.
+We built a model that answers from the electrode's structure, not from the microscope."
 
-**Slide 1 — The trap (20 s).**
-"Everyone's first model on this dataset is a pixel or intensity model. It scores
-0.71 — better than ours. Then you add 7 grey levels — a microscope knob, the
-material untouched — and its prediction flips batches. It learned the imaging
-session, not the electrode. Keep that in mind when you see big accuracy numbers
-today. Ours is geometry-only: that offset cannot move a single feature."
+## 0:20–0:55 The trap (view `1`)
+"Everyone's first model reads pixel intensity. It scores 0.71, which is better than ours."
+Tap `→` once. "One grey level brighter, a microscope setting with the material untouched, and
+it calls Batch 1 *Batch 3*. So does every Batch 1 and 2 site: 14 of 14." Go on to +7.
+"It learned the imaging session. Ours is geometry-only, so this offset cannot move a single
+feature."
 
-**Slide 2 — The finding (15 s).**
-"All 51 composition KPIs are batch-blind — these batches are the same material.
-What differs is where the silicon sits: the baseline is uniform, Batch 2 is
-top-heavy with a depleted mid-depth — drying migration — Batch 1 is bottom-heavy —
-sedimentation. That's physics a manufacturer can act on."
+## 0:55–1:25 Amount vs arrangement (view `2`)
+"All 51 composition KPIs are batch-blind. We ran 68 finite-element charging simulations on
+Modal for $2.61. Swelling follows how much silicon there is, R² 0.97, and the batches hold the
+same amount. The difference is *where* it sits." Point at the curves: "the baseline is uniform,
+Batch 2 is top-heavy (drying migration), Batch 1 is bottom-heavy (sedimentation)."
 
-**Slide 3 — The physics (15 s).**
-"We then simulated charging inside every real microstructure — 68 finite-element
-runs on Modal for $2.61. Swelling tracks how much silicon there is, R² 0.97, and
-the batches hold the same amount, p 0.38. So swelling can't separate batches —
-adding FEM features failed our pre-registered rule. The signal is the arrangement."
+## 1:25–1:50 Proof (view `3`)
+"16 curve-shape features, no fitted weights: 21 of 31 leave-one-out, p = 0.0025 over ten
+thousand label shuffles. Every challenger was pre-registered: FEM features, and XGBoost on
+24 KPIs, which got 10 of 31. All of them failed their own rule, so we kept the honest model."
 
-**Slide 4 — The proof (20 s).**
-"Thirty-one sites forbid fitted weights, so the model is 16 curve-shape features
-and per-batch robust statistics, and the claims are stress-tested instead:
-permutation p = 0.0025 over ten thousand shuffles; the calls survive 1,496
-jackknife refits and 45 hyperparameter settings. And when we pre-registered a
-richer feature set yesterday, it failed its own rule — so we kept the honest
-model. One evaluation, no second attempt."
+## 1:50–2:15 Held-out calls (view `4`)
+"These are recomputed live in the browser and are identical to the Python output. xrv9xvzb is
+Batch 2, even though it carries a Batch-3-style black level: we bet on the material, not the
+microscope. 3e122cbj is Batch 1 with confidence zero, because it looks typical of every batch
+and the model refuses to manufacture certainty."
 
-**Slide 5 — The calls (15 s).**
-"fn0mhxef: Batch 3. xrv9xvzb: Batch 2 — it carries a Batch-3-style black level
-and we bet the material over the microscope, documented before scoring.
-3e122cbj: Batch 1 — a stable decision with confidence zero, because it's typical
-of every batch; the model refuses to manufacture certainty. Which brings us to
-the thing a manufacturer actually needs —"
+## 2:15–2:50 Reject a shipment (view `5`)
+Drag the slider slowly. "A shipment drifts toward sedimentation. First it's accepted, then it's
+flagged as Batch 1-like, which tells you *what kind* of wrong it is, and past t ≈ 1.15 it is rejected
+as out of distribution. Same model, no retraining, no tuned thresholds."
 
-## Live demo (90 s) — dashboard, browser fullscreen
-
-Pre-flight: start the server, open http://localhost:8080, press `1`, check the
-top-right dot is green ("live · results v1"). Keep the backup video open in a
-second tab.
-
-**Part 1 — the confound, live (±35 s), view `1`:**
-Tap `→` once (+1), then on to +7. Say: "This is the intensity model from
-slide 1, running live. Same real site, one grey level brighter — so no pixel
-clips to black any more…" — point at the red card: "Batch 1 becomes Batch 3, and
-so does every Batch 1 and 2 site, 14 of 14. By +7, roughly the Batch 3 average
-black level, it's still Batch 3. Our model's call doesn't move; it has no
-grey-level input."
-
-**Part 2 — reject the unknown shipment (±45 s), view `5`:**
-Drag the drift slider slowly. Say: "Now a shipment drifts from the baseline
-toward heavy sedimentation. First it's accepted as the baseline, then it's
-flagged as Batch 1 — the sedimentation-prone batch, the model telling you *what
-kind* of wrong it is — and past t ≈ 1.15 every batch rejects it: out of
-distribution, reject the shipment. This is the same model that made the three
-calls, running in the browser, with parity tests against the Python code. No retraining, no thresholds tuned."
-
-Close (±10 s): "Identical composition, different arrangement, calibrated
-doubt — and a model that can't be fooled by a brightness knob. Thank you."
-
-If asked: views `2` (amount vs arrangement), `3` (null distribution, pre-registered
-tests), `4` (held-out calls, recomputed live) and `6` (any site's overlay + FEM GIF).
+## 2:50–3:00 Close
+"Identical composition, different arrangement, calibrated doubt, and a model a brightness knob
+can't fool. Thank you." (View `6`, the site explorer, is there for questions.)
 
 ## Fallbacks
+1. Dashboard fails: play `demo/backup/pmdb-dashboard-demo.mp4` (69 s, silent) and narrate this script over it.
+2. Browser dead: `python scripts/demo_confound.py` then `python scripts/demo_reject.py` in a terminal.
+3. Pre-rendered clips: `outputs/clips/01_confound_flip.mp4` … `04_verdict_reject.mp4`.
 
-- Dashboard fails (no Node, port taken, browser issue) → play
-  `demo/backup/pmdb-dashboard-demo.mp4` and narrate the same script over it.
-- Second fallback: the terminal demos (`python scripts/demo_confound.py`,
-  `python scripts/demo_reject.py`, ~3 s each) or the pitch clips in
-  `outputs/clips/01_confound_flip.mp4` … `04_verdict_reject.mp4`.
-- If only one demo fits (time pressure), drop Part 1 — slide 1 already told the
-  confound story; the reject demo is the one nobody else will have.
-- Likely questions:
-  - "Why only 0.677?" → slide 1; the honest number beats the confounded one.
-    The permutation test (p = 0.0025), not the point estimate, is the claim.
-  - "What if xrv9xvzb is really Batch 3?" → two-hypothesis slide in
-    `docs/presentation-strategy.md`: we chose the material signal over a session
-    artifact, stated falsifiers before scoring; if wrong, it's the error a
-    deployable QC model should make.
-  - "Why no deep model?" → n = 31; nothing with capacity can be validated here,
-    and the confound demo shows what capacity buys you on this data.
+Q&A prep: `docs/slides/qa.md`.
