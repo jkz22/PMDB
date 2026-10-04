@@ -69,7 +69,7 @@ def main() -> None:
         score = np.where(f, np.where(c, 2, 0), 1)
         bacc = np.mean([np.mean(call[o][y == b] == b) for b in B])
         rows.append({"option": o, "accuracy": c.mean(), "balanced_accuracy": bacc,
-                     "expected_rubric": plo.expected_rubric(c, f), "rubric_se": score.std() / np.sqrt(len(score)),
+                     "expected_rubric": plo.expected_rubric(c, f), "rubric_se": score.std(ddof=1) / np.sqrt(len(score)),
                      "n_high": int(f.sum())})
         for i in np.where(np.isin(sites, HELDOUT))[0]:
             held.append({"option": o, "site": sites[i], "true": y[i], "call": call[o][i],
