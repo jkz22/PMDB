@@ -515,11 +515,13 @@ def downsample_clean(z: np.ndarray, mask: np.ndarray) -> tuple[np.ndarray, np.nd
     mean_all = s.mean(axis=(1, 3))
     out = np.where(n_ok > 0, mean_ok, mean_all).astype(np.float32)
     m4 = mm.reshape(He // 2, 2, We // 2, 2)
-    mask_half = (m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1]).astype(np.uint16)
-    # validity comes from the contributing parents: keep the informational flags of masked parents, but
-    # a block with at least one valid parent is valid (its mean uses only those parents)
-    keep = (n_ok > 0)
-    mask_half = np.where(keep, mask_half & ~np.uint16(_clean.INVALID_KPI), mask_half).astype(np.uint16)
+    m_all = m4[:, 0, :, 0] | m4[:, 1, :, 0] | m4[:, 0, :, 1] | m4[:, 1, :, 1]
+    # the mask word comes from the parents that contributed to the mean: a block with at least one valid
+    # parent is valid, and only carries clipping/crack/band bits of those parents (a clipped parent that
+    # was excluded must not make the clean mean invalid for statistics). A fully masked block keeps the
+    # OR of all four words.
+    m_ok = np.bitwise_or.reduce(np.where(o.astype(bool), m4, 0), axis=(1, 3))
+    mask_half = np.where(n_ok > 0, m_ok, m_all).astype(np.uint16)
     return out, mask_half
 
 

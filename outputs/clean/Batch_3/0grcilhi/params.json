@@ -42,7 +42,7 @@
     "x1": 6205,
     "area_um2": 1.230625,
     "solidity": 0.6316971446904075,
-    "bse_z": 1.3130414485931396
+    "bse_z": 1.3130415678024292
    },
    {
     "y0": 1354,
@@ -62,25 +62,25 @@
  },
  "anchors": {
   "BSE": {
-   "D": 12.026420867538915,
-   "D_se": 0.019859449961968256,
+   "D": 12.026436260567168,
+   "D_se": 0.019859449403966632,
    "D_method": "tobit",
    "D_n": 1215957,
    "D_frac_zero": 0.16807419999226947,
    "D_mode": 0.0,
    "D_median": 11.217034339904785,
-   "G_level": 42.90602238972982,
+   "G_level": 42.90600713094076,
    "G_coef": [
-    43.51122348998496,
-    -0.9753212839246055,
-    -3.3648665102579605,
-    1.8571870289891015,
-    0.30346650069732184,
-    2.8271067235485505
+    43.511208231195866,
+    -0.9753212839245818,
+    -3.3648665102580146,
+    1.8571870289891381,
+    0.3034665006973171,
+    2.82710672354853
    ],
    "G_blocks": 2699,
-   "G_ptp_rel": 0.045792799443006516,
-   "si_graphite_ratio": 2.4340574741363525,
+   "G_ptp_rel": 0.04579280689358711,
+   "si_graphite_ratio": 2.4340579509735107,
    "grey_levels_used": 177,
    "grey_step": 1
   },
@@ -94,11 +94,11 @@
    "D_median": 42.33918762207031,
    "G_level": 65.34865951538086,
    "G_coef": [
-    68.51225959151803,
-    -11.329028456502291,
-    -7.84040844694061,
-    10.78800572648736,
-    0.348296190565184,
+    68.51225959151799,
+    -11.329028456502233,
+    -7.840408446940736,
+    10.78800572648738,
+    0.3482961905652333,
     10.299512449329749
    ],
    "G_blocks": 2674,
@@ -108,25 +108,25 @@
    "grey_step": 2
   },
   "SE_type": {
-   "D": 4.42130440612027,
-   "D_se": 0.014126120186762493,
+   "D": 4.4212956600121895,
+   "D_se": 0.014126122763157925,
    "D_method": "tobit",
    "D_n": 1213028,
    "D_frac_zero": 0.26412498310014276,
    "D_mode": 0.0,
    "D_median": 3.4288015365600586,
-   "G_level": 64.09319686889648,
+   "G_level": 64.09320449829102,
    "G_coef": [
-    66.32384420067805,
-    -5.637630794412833,
-    -3.9451701738736387,
-    0.9277708533048152,
-    3.9305011786607222,
-    5.146857485653911
+    66.32385183097921,
+    -5.637630796620437,
+    -3.945170174703696,
+    0.9277708550952806,
+    3.93050117834901,
+    5.146857486654911
    ],
    "G_blocks": 2694,
    "G_ptp_rel": 0.09153613448143005,
-   "si_graphite_ratio": 1.7813721895217896,
+   "si_graphite_ratio": 1.7813720703125,
    "grey_levels_used": 224,
    "grey_step": 1
   }
@@ -137,28 +137,28 @@
  ],
  "fingerprint": {
   "BSE": {
-   "sigma_e_px": 1.5168124551240814,
-   "edge_10_90_nm": 97.19188863072077,
+   "sigma_e_px": 1.512561648867406,
+   "edge_10_90_nm": 96.91951224899087,
    "edge_n_kept": 1352,
-   "noise_alpha": 0.03646831689920491,
-   "noise_beta": 0.014130813428844173,
-   "noise_sigma_graphite": 0.2249425044940353
+   "noise_alpha": 0.03648111583966425,
+   "noise_beta": 0.014114768371710048,
+   "noise_sigma_graphite": 0.22493528894189613
   },
   "Inlens": {
-   "sigma_e_px": 1.5349431955149493,
-   "edge_10_90_nm": 98.35364128834752,
+   "sigma_e_px": 1.5349431843137133,
+   "edge_10_90_nm": 98.3536405706126,
    "edge_n_kept": 4208,
-   "noise_alpha": 0.00760670187777543,
-   "noise_beta": 0.0009184387208311191,
-   "noise_sigma_graphite": 0.09233168794409939
+   "noise_alpha": 0.007606701877775428,
+   "noise_beta": 0.0009184387208311192,
+   "noise_sigma_graphite": 0.09233168794409938
   },
   "SE_type": {
-   "sigma_e_px": 1.574610589099128,
-   "edge_10_90_nm": 100.8953852504836,
-   "edge_n_kept": 3260,
-   "noise_alpha": 0.011081043856880739,
+   "sigma_e_px": 1.5752720021675115,
+   "edge_10_90_nm": 100.93776622188457,
+   "edge_n_kept": 3259,
+   "noise_alpha": 0.011061596563113878,
    "noise_beta": 0.0,
-   "noise_sigma_graphite": 0.1052665372133079
+   "noise_sigma_graphite": 0.10517412496956596
   }
  },
  "material": {
@@ -254,46 +254,46 @@
  "batch": "Batch_3",
  "site": "0grcilhi",
  "paths": {
-  "BSE": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_0grcilhi_BSE.tif",
-  "Inlens": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_0grcilhi_Inlens.tif",
-  "SE_type": "/Users/Kevin/Documents/GitHub/PMDB/.claude/worktrees/pr29/data/Batch_3/img_0grcilhi_ETD.tif"
+  "BSE": "data/Batch_3/img_0grcilhi_BSE.tif",
+  "Inlens": "data/Batch_3/img_0grcilhi_Inlens.tif",
+  "SE_type": "data/Batch_3/img_0grcilhi_ETD.tif"
  },
- "seconds_norm": 104.1,
+ "seconds_norm": 45.8,
  "harmonisation": {
   "BSE": {
-   "sigma_e_px": 1.5168124551240814,
-   "sigma_t_px": 1.3955730649632416,
+   "sigma_e_px": 1.512561648867406,
+   "sigma_t_px": 1.3962085795872072,
    "sigma_k_px": 0.0,
    "resolution_outlier": false,
-   "sigma_e_after_px": 1.5168124551240814,
+   "sigma_e_after_px": 1.512561648867406,
    "noise_before": {
-    "alpha": 0.03646831689920491,
-    "beta": 0.014130813428844173
+    "alpha": 0.03648111583966425,
+    "beta": 0.014114768371710048
    },
    "noise_target": {
-    "alpha": 0.04506658986444896,
-    "beta": 0.021315812431302882
+    "alpha": 0.04507331353571918,
+    "beta": 0.02134361435082474
    },
    "noise_after": {
-    "alpha": 0.045407670701300744,
-    "beta": 0.020415166906075345
+    "alpha": 0.0454341317672952,
+    "beta": 0.020416051407825344
    },
-   "noise_sigma_graphite_after": 0.25655961803716515,
-   "noise_sigma_graphite_target": 0.25764782610329134,
+   "noise_sigma_graphite_after": 0.2566129053167836,
+   "noise_sigma_graphite_target": 0.25771481891141595,
    "noise_within_10pct": true,
-   "d_alpha": 0.008598272965244048,
-   "d_beta": 0.0071849990024587095,
+   "d_alpha": 0.008592197696054932,
+   "d_beta": 0.007228845979114693,
    "added": true
   },
   "Inlens": {
-   "sigma_e_px": 1.5349431955149493,
-   "sigma_t_px": 1.2142698479797196,
+   "sigma_e_px": 1.5349431843137133,
+   "sigma_t_px": 1.2142698766507591,
    "sigma_k_px": 0.0,
    "resolution_outlier": true,
-   "sigma_e_after_px": 1.5349431955149493,
+   "sigma_e_after_px": 1.5349431843137133,
    "noise_before": {
-    "alpha": 0.00760670187777543,
-    "beta": 0.0009184387208311191
+    "alpha": 0.007606701877775428,
+    "beta": 0.0009184387208311192
    },
    "noise_target": {
     "alpha": 0.01440301509560018,
@@ -301,58 +301,58 @@
    },
    "noise_after": {
     "alpha": 0.014241690360716356,
-    "beta": 8.785470078893951e-05
+    "beta": 8.785470078893982e-05
    },
    "noise_sigma_graphite_after": 0.11970607779684912,
    "noise_sigma_graphite_target": 0.12001256224079286,
    "noise_within_10pct": true,
-   "d_alpha": 0.00679631321782475,
-   "d_beta": -0.0009184387208311191,
+   "d_alpha": 0.006796313217824752,
+   "d_beta": -0.0009184387208311192,
    "added": true
   },
   "SE_type": {
-   "sigma_e_px": 1.574610589099128,
-   "sigma_t_px": 1.2511406818415192,
+   "sigma_e_px": 1.5752720021675115,
+   "sigma_t_px": 1.250251553827863,
    "sigma_k_px": 0.0,
    "resolution_outlier": true,
-   "sigma_e_after_px": 1.574610589099128,
+   "sigma_e_after_px": 1.5752720021675115,
    "noise_before": {
-    "alpha": 0.011081043856880739,
+    "alpha": 0.011061596563113878,
     "beta": 0.0
    },
    "noise_target": {
-    "alpha": 0.0124496511569676,
+    "alpha": 0.012456698059181634,
     "beta": 0.0
    },
    "noise_after": {
-    "alpha": 0.012492009265042259,
+    "alpha": 0.012492086568347365,
     "beta": 0.0
    },
-   "noise_sigma_graphite_after": 0.11176765750896929,
-   "noise_sigma_graphite_target": 0.11157800480815025,
+   "noise_sigma_graphite_after": 0.11176800332987687,
+   "noise_sigma_graphite_target": 0.11160957870712367,
    "noise_within_10pct": true,
-   "d_alpha": 0.0013686073000868607,
+   "d_alpha": 0.0013951014960677556,
    "d_beta": 0.0,
    "added": true
   }
  },
  "targets": {
   "sigma_t": {
-   "BSE": 1.3955730649632416,
-   "Inlens": 1.2142698479797196,
-   "SE_type": 1.2511406818415192
+   "BSE": 1.3962085795872072,
+   "Inlens": 1.2142698766507591,
+   "SE_type": 1.250251553827863
   },
   "noise": {
    "BSE": {
-    "alpha": 0.04506658986444896,
-    "beta": 0.021315812431302882
+    "alpha": 0.04507331353571918,
+    "beta": 0.02134361435082474
    },
    "Inlens": {
     "alpha": 0.01440301509560018,
     "beta": 0.0
    },
    "SE_type": {
-    "alpha": 0.0124496511569676,
+    "alpha": 0.012456698059181634,
     "beta": 0.0
    }
   },
@@ -363,5 +363,5 @@
    "xgj4xftb"
   ]
  },
- "seconds_harm": 34.5
+ "seconds_harm": 21.2
 }
