@@ -669,6 +669,16 @@ EXPECTED_TEST_PARENTS = {"0eryguqq": "h1612_ETD_s1", "fhwrjtet": "h1612_ETD_s1",
                          "fspqbkxl": "h2148_ETD_s1", "soo2ax3r": "h2156_ETD_s2", "y59rxmxl": "h1880_ETD_s1"}
 
 
+def _test_parents() -> dict:
+    """Batch_test site -> parent_id from pmdb.parents.parent_groups (follows the test cache)."""
+    from pmdb.parents import parent_groups
+
+    g = parent_groups()
+    tp = dict(zip(g.loc[g["batch"] == "Batch_test", "site"], g.loc[g["batch"] == "Batch_test", "parent_id"]))
+    assert tp == EXPECTED_TEST_PARENTS, tp  # current cache; update if the test cache changes
+    return tp
+
+
 def _explain_test(root: Path) -> None:
     import pandas as pd
 
@@ -681,11 +691,7 @@ def _explain_test(root: Path) -> None:
     assert lab["parent"].notna().all() and len(lab) == 34
     out = root / "outputs" / "probe_explain"
     K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
-    from pmdb.parents import parent_groups
-
-    g = parent_groups()
-    test_parents = dict(zip(g.loc[g["batch"] == "Batch_test", "site"], g.loc[g["batch"] == "Batch_test", "parent_id"]))
-    assert test_parents == EXPECTED_TEST_PARENTS, test_parents  # current cache; update if the test cache changes
+    test_parents = _test_parents()
     targets = [{"batch": "Batch_test", "site": s, "parent": p} for s, p in test_parents.items()]
     targets += [{"batch": "Batch_heldout", "site": s, "parent": pg[s]} for s in ("3e122cbj", "fn0mhxef", "xrv9xvzb")]
     # test sites have no cached patch KPIs: compute them (the target's own KPIs drive the net_* effects)
@@ -711,7 +717,7 @@ def _evidence(root: Path) -> None:
     lab["parent"] = lab["site"].map(pg)
     pr = pd.read_csv(root / "outputs" / "probe_explain" / "test_final_predictions.csv", dtype={"site": str}).set_index("site")
     targets = [{"batch": "Batch_test", "site": s, "parent": p, "call": pr.loc[s, "call"], "runner_up": pr.loc[s, "runner_up"],
-                "p": float(pr.loc[s, "p_" + pr.loc[s, "call"]])} for s, p in TEST_PARENTS.items()]
+                "p": float(pr.loc[s, "p_" + pr.loc[s, "call"]])} for s, p in _test_parents().items()]
     res = evidence_render.remote("full", lab.to_dict("records"), targets)
     out = root / "demo" / "public" / "evidence"
     for s, b in res["pngs"].items():
