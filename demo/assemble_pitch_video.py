@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Assemble the submission video from the outputs/clips animations + title cards.
+"""Assemble the submission video from the outputs/clips animations + title/result cards.
 
-The four clips (scripts/make_clips.py) carry the ideas and their own headlines;
-this stitches them with matching dark title cards into one <=2 min MP4.
-Edit CARDS below to change the narrative; everything else is mechanical.
+The clips (scripts/make_clips.py) carry the ideas and their own headlines; this
+stitches them with matching dark cards into one <=2 min MP4. Edit SEQUENCE and
+the two results tables below to change the narrative; the rest is mechanical.
 
-    python demo/assemble_pitch_video.py [--out demo/backup/pmdb-submission-v3.mp4]
+    python demo/assemble_pitch_video.py [--out demo/backup/pmdb-submission-v4.mp4]
 """
 from __future__ import annotations
 
@@ -23,26 +23,84 @@ import matplotlib.pyplot as plt  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 CLIPS = ROOT / "outputs" / "clips"
 BG, FG, DIM, ACCENT = "#0d1117", "#f0f3f6", "#8b949e", "#ffcf5c"
+COL = {"Batch 1": "#3d8bfd", "Batch 2": "#ff7a45", "Batch 3": "#22c38e"}
 
-# (kind, payload, seconds). Card payload: (headline, [sublines]); clip payload: filename.
+# Round 1 (3 sites): our round-1 calls vs the organiser-revealed truth.
+ROUND1 = [  # site, called, truth
+    ("fn0mhxef", "Batch 3", "Batch 1"),
+    ("3e122cbj", "Batch 1", "Batch 2"),
+    ("xrv9xvzb", "Batch 2", "Batch 3"),
+]
+# Round 2 (6 sites): the model of record — linear probe on MicroNet patch
+# embeddings, leave-one-parent-out 0.71, permutation p = 0.005.
+# Source: docs/final_predictions.md / outputs/probe_explain/test_final_predictions.csv
+ROUND2 = [  # site, call, confidence
+    ("0eryguqq", "Batch 3", 0.999),
+    ("fhwrjtet", "Batch 3", 0.994),
+    ("fspqbkxl", "Batch 2", 0.72),
+    ("y59rxmxl", "Batch 1", 0.62),
+    ("soo2ax3r", "Batch 1", 0.59),
+    ("4hq27w4c", "Batch 2", 0.57),
+]
+
+# (kind, payload, seconds). card: (headline, [sublines]); clip: filename (seconds
+# = freeze on last frame); image: a render_* function name.
 SEQUENCE = [
     ("card", ("Three batches. Same recipe.\nWho made this electrode?",
-              ["31 labelled SEM cross-sections · 3 unknown sites",
-               "First instinct: train a model on the images. Watch what happens."]), 6.0),
+              ["31 labelled SEM cross-sections · then two rounds of unknowns: 3 images, then 6 more"]), 6.0),
     ("clip", "01_confound_flip.mp4", 1.5),
     ("card", ("The obvious model learns the microscope,\nnot the material.",
               ["Every composition statistic is batch-blind — same silicon, same amounts.",
                "The real difference is arrangement."]), 5.5),
     ("clip", "02_depth_sweep.mp4", 1.5),
     ("card", ("Does arrangement matter?\nWe simulated charging to check.",
-              ["Finite-element lithiation on the real segmented microstructures."]), 4.5),
+              ["Finite-element lithiation on the real microstructures, free lateral expansion."]), 4.5),
     ("clip", "03_fem_swelling.mp4", 1.5),
-    ("card", ("What a manufacturer actually needs:\naccept or reject the shipment.",
-              ["Calibrated confidence — a model that says “I don’t know” when that is the truth."]), 5.0),
-    ("clip", "04_verdict_reject.mp4", 2.0),
-    ("card", ("Can’t be fooled by a brightness knob.\nKnows when it doesn’t know.",
+    ("image", "render_round1", 9.0),
+    ("image", "render_round2", 10.0),
+    ("card", ("Reads the electrode, not the microscope.\nKnows when it doesn’t know.",
               ["github.com/jkz22/PMDB"]), 7.0),
 ]
+
+
+def _base_fig(kicker: str, headline: str):
+    fig = plt.figure(figsize=(16, 9), dpi=120, facecolor=BG)
+    fig.text(0.06, 0.90, kicker, fontsize=20, color=ACCENT, fontweight="bold", family="DejaVu Sans")
+    fig.text(0.06, 0.82, headline, fontsize=40, color=FG, fontweight="bold", family="DejaVu Sans")
+    return fig
+
+
+def render_round1(path: Path) -> None:
+    fig = _base_fig("ROUND 1 · 3 unknown images", "The truth came back. Every model missed.")
+    for i, (site, called, truth) in enumerate(ROUND1):
+        y = 0.62 - i * 0.13
+        fig.text(0.08, y, site, fontsize=26, color=DIM, family="DejaVu Sans Mono")
+        fig.text(0.34, y, f"we said {called}", fontsize=26, color=COL[called], family="DejaVu Sans")
+        fig.text(0.60, y, "→", fontsize=26, color=DIM)
+        fig.text(0.65, y, f"true {truth}", fontsize=26, color=COL[truth], fontweight="bold", family="DejaVu Sans")
+    fig.text(0.06, 0.18, "0/3 — like nearly every team (best: 2/3). Scored fairly on these, today’s model "
+             "gets xrv9xvzb right at 96%.", fontsize=21, color=FG, family="DejaVu Sans")
+    fig.text(0.06, 0.11, "the 34 “sites” are crops of 13 parent electrodes — the batch label follows\n"
+             "the crop, not the material.", fontsize=22, color=ACCENT, family="DejaVu Sans", va="top")
+    fig.savefig(path, facecolor=BG)
+    plt.close(fig)
+
+
+def render_round2(path: Path) -> None:
+    fig = _base_fig("ROUND 2 · 6 new images", "One model of record, honestly validated.")
+    fig.text(0.06, 0.73, "Linear probe on MicroNet patch embeddings — leave-one-PARENT-out 0.71, "
+             "permutation p = 0.005.", fontsize=20, color=DIM, family="DejaVu Sans")
+    for i, (site, call, conf) in enumerate(ROUND2):
+        x = 0.08 + (i // 3) * 0.47
+        y = 0.56 - (i % 3) * 0.12
+        fig.text(x, y, site, fontsize=25, color=DIM, family="DejaVu Sans Mono")
+        fig.text(x + 0.19, y, call, fontsize=25, color=COL[call], fontweight="bold", family="DejaVu Sans")
+        fig.text(x + 0.34, y, f"{conf:.0%}" if conf < 0.99 else f"{conf:.1%}", fontsize=25, color=FG,
+                 family="DejaVu Sans")
+    fig.text(0.06, 0.15, "Parent-aware validation (no sibling-crop leakage), confidence allowed to be low —\n"
+             "the lesson of round 1, applied.", fontsize=21, color=FG, family="DejaVu Sans", va="top")
+    fig.savefig(path, facecolor=BG)
+    plt.close(fig)
 
 
 def render_card(headline: str, sublines: list[str], path: Path) -> None:
@@ -61,7 +119,7 @@ def render_card(headline: str, sublines: list[str], path: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", default="demo/backup/pmdb-submission-v3.mp4")
+    parser.add_argument("--out", default="demo/backup/pmdb-submission-v4.mp4")
     args = parser.parse_args()
     out = (ROOT / args.out).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -72,14 +130,16 @@ def main() -> None:
         segments = []
         for i, (kind, payload, seconds) in enumerate(SEQUENCE):
             seg = tmp / f"seg{i:02d}.mp4"
-            if kind == "card":
+            if kind in ("card", "image"):
                 png = tmp / f"card{i:02d}.png"
-                render_card(*payload, png)
+                if kind == "card":
+                    render_card(*payload, png)
+                else:
+                    globals()[payload](png)
                 cmd = [ffmpeg, "-y", "-loglevel", "error", "-loop", "1", "-t", f"{seconds}",
                        "-i", str(png), "-vf", "fade=t=in:d=0.4,scale=1920:1080,fps=30",
                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "fast", str(seg)]
             else:
-                # play the clip once, then freeze its last frame for `seconds`
                 cmd = [ffmpeg, "-y", "-loglevel", "error", "-i", str(CLIPS / payload),
                        "-vf", f"tpad=stop_mode=clone:stop_duration={seconds},fps=30,scale=1920:1080",
                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "fast", str(seg)]

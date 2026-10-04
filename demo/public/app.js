@@ -21,7 +21,7 @@ const VIEWS = [
   { id: 'confound', title: 'The trap' },
   { id: 'arrangement', title: 'Amount vs arrangement' },
   { id: 'proof', title: 'The proof' },
-  { id: 'calls', title: 'Held-out calls' },
+  { id: 'calls', title: 'Round 1 calls' },
   { id: 'reject', title: 'Reject a shipment' },
   { id: 'explorer', title: 'Site explorer' },
   { id: 'embeddings', title: 'Test calls' },
@@ -244,6 +244,7 @@ R.calls = (root) => {
     fn0mhxef: 'Mid-depth Si in a range only Batch 3 occupies; Batch 1 effectively excluded. Not a clean baseline match: Batch 2 stays typical overall.',
     '3e122cbj': 'Arrangement typical of every batch, so confidence is 0 — the model refuses to manufacture certainty. It differs from Batch 3 in amount: Si fraction z ≈ +8 vs Batch 3, a loading only Batch 1 reaches.',
   };
+  const TRUTH = { fn0mhxef: 'Batch_1', '3e122cbj': 'Batch_2', xrv9xvzb: 'Batch_3' };
   const cards = M.heldLive.map((p) => {
     const j = jk.find((r) => r.site === p.site);
     const hpRows = hp.filter((r) => r.site === p.site);
@@ -252,6 +253,10 @@ R.calls = (root) => {
     return h('div', { class: 'card call' },
       h('div', { class: 'site' }, p.site),
       h('div', { class: `batch b-${p.assigned}` }, short(p.assigned)),
+      h('div', { class: 'note', style: 'margin:4px 0 8px;font-weight:600' },
+        'revealed truth: ',
+        h('span', { class: `b-${TRUTH[p.site]}`, style: 'font-weight:700' }, short(TRUTH[p.site])),
+        p.assigned === TRUTH[p.site] ? ' ✓' : ' ✗ (our call was wrong)'),
       h('div', { class: 'kv' }, h('dt', {}, 'credibility'), h('dd', {}, f3(p.credibility)), h('dt', {}, 'confidence'), h('dd', {}, f3(p.confidence)), h('dt', {}, 'out of distribution'), h('dd', {}, p.ood ? 'yes' : 'no')),
       h('div', { style: 'margin:10px 0 4px', class: 'note' }, 'conformal p-value per batch'),
       pbars(p.p),
@@ -263,8 +268,8 @@ R.calls = (root) => {
     );
   });
   root.append(
-    head('4 · The calls', 'Three held-out sites: a batch, a credibility, a confidence.'),
-    h('p', { class: 'lede' }, 'Credibility = how typical the site is of its assigned batch. Confidence = how firmly every other batch is ruled out. p-values move in steps of 1/8 for a 7-site batch — read them as bins.'),
+    head('4 · Round 1 calls — truth revealed', 'Three held-out sites: our calls scored 0/3, a perfect rotation of the truth.'),
+    h('p', { class: 'lede' }, 'The organisers revealed the labels: every model in the field missed (best team 2/3). The stitching analysis explains why — the batch label follows the crop, not the material. These cards are kept as submitted, with the truth badged. Round 2 (6 new images, the probe model) is in the Test calls view.'),
     h('div', { class: 'calls' }, cards),
     card(null, h('div', { class: `check ${ok ? 'good' : 'bad'}` }, ok
       ? `✓ recomputed live in this browser from outputs/fingerprint/features.csv: identical to outputs/fingerprint/heldout_predictions.csv (max |Δ| = ${maxDiff.toExponential(1)})`

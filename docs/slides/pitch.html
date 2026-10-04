@@ -158,15 +158,16 @@
   <figure><img src="../../outputs/fingerprint/figures/depth_profiles.png" alt="Si depth profiles per batch with held-out sites against batch medians"></figure>
 </section>
 
-<!-- 6 · THE ANSWER -->
+<!-- 6 · ROUND 1 -->
 <section class="slide">
-  <div class="kicker">6 · The answer</div>
-  <h1>That is enough to call the three held-out sites.</h1>
+  <div class="kicker">6 · Round 1, scored</div>
+  <h1>Round 1 cost us 0/3. The new model earns one back.</h1>
   <div class="cards">
-    <div class="call"><div class="site">fn0mhxef</div><div class="batch">Batch 3</div></div>
-    <div class="call"><div class="site">xrv9xvzb</div><div class="batch">Batch 2</div></div>
-    <div class="call"><div class="site">3e122cbj</div><div class="batch">Batch 1</div></div>
+    <div class="call"><div class="site">fn0mhxef</div><div class="batch">we said Batch 3</div><div class="why">true <b>Batch 1</b> &nbsp;&#10007;<br>new model: Batch 2 (53%) &#10007; &mdash; truth is its runner-up (44%)</div></div>
+    <div class="call"><div class="site">xrv9xvzb</div><div class="batch">we said Batch 2</div><div class="why">true <b>Batch 3</b> &nbsp;&#10007;<br>new model: <b>Batch 3 (96%) &#10003;</b></div></div>
+    <div class="call"><div class="site">3e122cbj</div><div class="batch">we said Batch 1</div><div class="why">true <b>Batch 2</b> &nbsp;&#10007;<br>new model: Batch 1 (56%) &#10007; &mdash; truth is its runner-up (43%)</div></div>
   </div>
+  <div class="foot"><span>Round 1 was a perfect rotation of the truth &mdash; nearly every team missed too (best: 2/3). Retrospective but fair: each new-model call is made with the site&rsquo;s whole parent excluded from training. Why were these labels so hard? Next slide.</span><span>outputs/fingerprint/heldout_predictions.csv &middot; outputs/probe_explain/site_explanations.csv</span></div>
 </section>
 
 <section class="slide">
@@ -174,6 +175,21 @@
   <h1>The 34 &ldquo;sites&rdquo; are crops of 13 parent electrodes.</h1>
   <figure><img src="../../outputs/slides/parents_heldout.png" alt="Top three reconstructed parent images: each held-out site abuts at least one labelled crop, and one parent spans several batch labels"></figure>
   <div class="foot"><span>We stitched the dataset back together: 17 seams, z &ge; 5.6, zero false positives across 2,108 wrong pairings. One parent spans several &ldquo;batches&rdquo;, and two of the three held-out sites abut crops whose organiser-released label (not our call above) is <em>different</em> (fn0mhxef has a single confirmed neighbour) &mdash; the label follows the crop, not the material.</span><span>full figure &amp; method: outputs/stitching/</span></div>
+</section>
+
+<!-- 8 · ROUND 2 -->
+<section class="slide">
+  <div class="kicker">8 · Round 2, the lesson applied</div>
+  <h1>Six new images, one model of record.</h1>
+  <div class="cards">
+    <div class="call"><div class="site">0eryguqq</div><div class="batch">Batch 3</div><div class="why">confidence 99.9%</div></div>
+    <div class="call"><div class="site">fhwrjtet</div><div class="batch">Batch 3</div><div class="why">confidence 99.4%</div></div>
+    <div class="call"><div class="site">fspqbkxl</div><div class="batch">Batch 2</div><div class="why">confidence 72%</div></div>
+    <div class="call"><div class="site">y59rxmxl</div><div class="batch">Batch 1</div><div class="why">confidence 62%</div></div>
+    <div class="call"><div class="site">soo2ax3r</div><div class="batch">Batch 1</div><div class="why">confidence 59%</div></div>
+    <div class="call"><div class="site">4hq27w4c</div><div class="batch">Batch 2</div><div class="why">confidence 57%</div></div>
+  </div>
+  <div class="foot"><span>Linear probe on MicroNet patch embeddings &mdash; validated leave-one-<em>parent</em>-out (no sibling-crop leakage): 0.71, permutation p = 0.005. Confidence is allowed to be low &mdash; that is round 1&rsquo;s lesson, applied.</span><span>docs/final_predictions.md &middot; outputs/probe_explain/</span></div>
 </section>
 
 <div class="hud"><span id="counter">1 / 7</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
