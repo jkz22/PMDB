@@ -10,11 +10,13 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseCSV } from './lib/csv.js';
+import { serveFile, upstreamState } from './lib/serve.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const argPort = process.argv.indexOf('--port');
 const PORT = Number(argPort > 0 ? process.argv[argPort + 1] : process.env.PORT || 8080);
+const HOST = process.env.HOST || '127.0.0.1'; // loopback by default; HOST=0.0.0.0 to expose on the LAN
 const POLL_MS = 2000;
 const GIT_POLL_S = Number(process.env.DEMO_GIT_POLL || 0);
 
@@ -108,8 +110,8 @@ async function refreshGit(fetchUpstream) {
   gitState.head = await git(['rev-parse', '--short', 'HEAD']);
   gitState.branch = await git(['rev-parse', '--abbrev-ref', 'HEAD']);
   const log = await git(['log', '--oneline', 'HEAD..origin/main']);
-  gitState.upstreamLog = log ? log.split('\n').filter(Boolean).slice(0, 20) : [];
-  gitState.upstreamAhead = log === null ? null : gitState.upstreamLog.length;
+  const count = await git(['rev-list', '--count', 'HEAD..origin/main']);
+  Object.assign(gitState, upstreamState(log === null ? null : count, log));
   gitState.checked = new Date().toISOString();
 }
 
@@ -119,21 +121,7 @@ function serveStatic(req, res, urlPath) {
     let rel = decodeURIComponent(urlPath.slice(prefix.length)) || 'index.html';
     const abs = path.resolve(dir, rel);
     if (!abs.startsWith(dir + path.sep) && abs !== dir) { res.writeHead(403).end(); return; }
-    fs.stat(abs, (err, st) => {
-      if (err || !st.isFile()) { res.writeHead(404).end('not found'); return; }
-      const type = MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream';
-      const range = req.headers.range;
-      if (range && /^bytes=\d*-\d*$/.test(range)) {
-        let [s, e] = range.slice(6).split('-');
-        const start = s ? Number(s) : 0, end = e ? Number(e) : st.size - 1;
-        res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${start}-${end}/${st.size}`,
-          'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, 'Cache-Control': 'no-cache' });
-        fs.createReadStream(abs, { start, end }).pipe(res);
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Cache-Control': 'no-cache' });
-      fs.createReadStream(abs).pipe(res);
-    });
+    serveFile(req, res, dir, abs, MIME);
     return;
   }
   res.writeHead(404).end();
@@ -177,8 +165,8 @@ if (GIT_POLL_S > 0) {
   }, GIT_POLL_S * 1000);
 }
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   const errs = Object.keys(bundle.errors);
-  console.log(`[demo] PMDB dashboard on http://localhost:${PORT}  (git ${gitState.head}, ${Object.keys(SOURCES).length - errs.length}/${Object.keys(SOURCES).length} result files loaded)`);
+  console.log(`[demo] PMDB dashboard on http://${HOST}:${PORT}  (git ${gitState.head}, ${Object.keys(SOURCES).length - errs.length}/${Object.keys(SOURCES).length} result files loaded)`);
   if (errs.length) console.log('[demo] missing/unreadable:', bundle.errors);
 });

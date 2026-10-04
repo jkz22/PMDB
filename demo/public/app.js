@@ -178,7 +178,7 @@ R.arrangement = (root) => {
     ),
     card(h('span', { style: 'display:flex;justify-content:space-between;align-items:center' }, 'Si depth profile, relative to each site’s mean — the fingerprint', toggles),
       h('div', { class: 'row', style: 'align-items:center' },
-        h('div', { style: 'height:300px;flex:1' }, lineChart({ series, w: 900, h: 300, xTicks: bands, xFmt: (k) => ['top', 'band 1', 'mid-depth', 'band 3', 'bottom'][k], yLabel: 'Si / site mean' })),
+        h('div', { style: 'height:300px;flex:1' }, series.length ? lineChart({ series, w: 900, h: 300, xTicks: bands, xFmt: (k) => ['top', 'band 1', 'mid-depth', 'band 3', 'bottom'][k], yLabel: 'Si / site mean' }) : h('div', { class: 'note' }, 'No batch selected — toggle a batch above to draw its depth profile.')),
         h('div', { class: 'note', style: 'width:260px' }, h('p', {}, h('b', { class: 'b-Batch_3' }, 'Batch 3 (baseline)'), ': flat — uniform through the coating.'), h('br'),
           h('p', {}, h('b', { class: 'b-Batch_2' }, 'Batch 2'), ': top-heavy, depleted mid-depth (drying migration).'), h('br'),
           h('p', {}, h('b', { class: 'b-Batch_1' }, 'Batch 1'), ': bottom-heavy, variable (sedimentation).'), h('br'),
@@ -231,6 +231,7 @@ R.calls = (root) => {
   for (const p of M.heldLive) {
     const s = stored.get(p.site);
     if (!s || s.assigned !== p.assigned || String(s.ood) !== (p.ood ? 'True' : 'False')) sameCalls = false;
+    if (s) maxDiff = Math.max(maxDiff, Math.abs(s.confidence - p.confidence), Math.abs(s.credibility - p.credibility));
     if (s) for (const b of BATCHES) maxDiff = Math.max(maxDiff, Math.abs(s[`p_${b}`] - p.p[b]), Math.abs(s[`score_${b}`] - p.score[b]));
   }
   const ok = sameCalls && maxDiff < 1e-9;
@@ -419,10 +420,12 @@ function connect() {
   const es = new EventSource('/api/events');
   es.addEventListener('update', async (e) => {
     const { changed } = JSON.parse(e.data);
-    await load();
+    try { await load(); } catch (err) { setLive('err', 'failed to load /api/data'); console.error(err); return; }
     toast(`New results loaded: ${changed.join(', ')}`);
   });
-  es.addEventListener('git', (e) => { state.bundle.git = JSON.parse(e.data); describeLive(); if (state.bundle.git.upstreamAhead) toast(`${state.bundle.git.upstreamAhead} new commit(s) on origin/main — git pull to update`); });
+  // retry a failed startup load on the next server event
+  for (const ev of ['hello', 'ping']) es.addEventListener(ev, () => { if (!state.bundle) load().catch((err) => console.error(err)); });
+  es.addEventListener('git', (e) => { if (!state.bundle) return; state.bundle.git = JSON.parse(e.data); describeLive(); if (state.bundle.git.upstreamAhead) toast(`${state.bundle.git.upstreamAhead} new commit(s) on origin/main — git pull to update`); });
   es.onerror = () => setLive('err', 'server unreachable — showing last loaded data');
   es.onopen = () => state.bundle && describeLive();
 }
@@ -459,5 +462,6 @@ buildShell();
 window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (VIEWS.some((x) => x.id === v) && v !== state.view) { state.view = v; render(); } });
 const initial = location.hash.slice(1);
 if (VIEWS.some((v) => v.id === initial)) state.view = initial;
-load().then(() => { connect(); if (new URLSearchParams(location.search).get('autoplay')) autoplay(); })
+connect();
+load().then(() => { if (new URLSearchParams(location.search).get('autoplay')) autoplay(); })
   .catch((e) => { setLive('err', 'failed to load /api/data'); console.error(e); });
