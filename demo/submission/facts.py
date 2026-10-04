@@ -33,7 +33,7 @@ SOURCES = [
 CHALLENGERS = {"fem_fingerprint": "FEM features added to the fingerprint (D21)",
                "xgb_kpi": "XGBoost on screened KPIs (+FEM) (D22)"}
 KNOWN_OUTPUT_DIRS = {"classifier", "clean", "clean_heldout", "clips", "fem", "fem_fingerprint", "fingerprint", "gallery",
-                     "harmonisation", "harmonisation_ext", "heldout", "kpis", "overlays", "overnight", "pooling_checks",
+                     "harmonisation", "harmonisation_ext", "harmonisation_shift", "heldout", "kpis", "overlays", "overnight", "pooling_checks",
                      "xgb_kpi"}
 
 
