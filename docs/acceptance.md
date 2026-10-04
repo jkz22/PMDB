@@ -99,9 +99,10 @@ inside the Batch 3 cloud on all three families, so the functional/joint evidence
 to be rejected from the baseline — their batch labels rest on the fingerprint's Batch 1/2/3 classifier
 alone and should carry its (moderate) confidence, not a one-class rejection.
 
-Caveat worth a follow-up: 3e122cbj's *fingerprint* joint score is lower than any Batch 3 field (0.57)
-although the fingerprint classifier assigns it to Batch 1. A field can be central in the robust-z sense
-on every depth/pair-correlation column individually while its *combination* is Batch 1-like; the RMS-z
-score is per-column and does not see covariance. This is a limitation of the pre-specified score, not
-evidence against the Batch 1 call, but it should be checked against the fingerprint's conformal p for
-that site before anything is quoted.
+Cross-check on 3e122cbj: its per-column fingerprint score is lower than any Batch 3 field (0.57), and
+the fingerprint's own conformal output says the same thing — `outputs/fingerprint/heldout_predictions.csv`
+gives p_Batch_3 = 1.0 with confidence 0.0 for a Batch 1 call of credibility 0.875. The fingerprint
+therefore cannot separate 3e122cbj from the baseline; the evidence that it is *not* a Batch 3 field is
+composition (twice the Si) and lithiation geometry, both at the 100th percentile of Batch 3. That is the
+defensible held-out statement for this site: "Batch 1-like by composition and swelling behaviour,
+arrangement indistinguishable from Batch 3".
