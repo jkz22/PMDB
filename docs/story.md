@@ -63,6 +63,13 @@ of noise destroys the recognition, and occlusion / Grad-CAM attributions sit dif
 graphite matrix in proportion to its area. The visible "batch difference" an unconstrained model
 finds is microscope texture, not microstructure, and six fields are misfiled by every model.
 
+The purest form of this leakage (`docs/decision.md` §1c): a nearest-batch-mean on the harmonised grey-level
+distribution *inside graphite pixels only* — no composition, no arrangement can enter — classifies the batch
+at 0.74 LOSO (p 0.002), above the fingerprint. The hybrid harmonisation matches black level and gain and
+leaves noise width and the non-affine remnant of the Batch 3 artefact (pore pixels at 7 DN vs 3.5–4.3)
+untouched. Any image-based batch accuracy above ~0.68 is therefore suspect until it survives a
+within-phase grey-level control.
+
 ## 6. What the arrangement means for the electrode (`docs/functional.md`, this session)
 The missing layer was function: given where the Si sits, what happens when it lithiates? The
 pore phase does not percolate in any 2D section (0 / 31, 3–5 % porosity), so tortuosity is not

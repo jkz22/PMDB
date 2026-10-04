@@ -85,6 +85,49 @@ Readings (`outputs/tilevote/loso_votes.csv`, `coverage.csv`, `figures/coverage.p
 - Conclusion: the usable confidence remains the field-level conformal p / credibility of the fingerprint,
   which is a statement about *how unusual this field is for each batch*, not about how many sub-images agree.
 
+## 1c. The simplest predictor: nearest batch mean (`scripts/run_mean_predictor.py`, `outputs/meanpred/`)
+
+"Compare the mean of the new image to the mean of each batch." Each field is one small vector, the batch
+means come from the training fields only, a field goes to the nearest mean (Euclidean after standardising on
+the training fold). Leave-one-site-out, 500-permutation null. The flavours differ only in what "the mean of
+the image" is taken over:
+
+| "mean of the image" | p | LOSO acc | perm p | recall B1 / B2 / B3 |
+|---|---|---|---|---|
+| raw BSE grey: moments + 16-bin histogram | 20 | 0.61 | 0.008 | 0.57 / 0.43 / 0.71 |
+| **harmonised** BSE grey, same | 20 | 0.68 | 0.004 | 0.71 / 0.29 / 0.82 |
+| harmonised BSE histogram only | 16 | 0.68 | 0.004 | 0.71 / 0.29 / 0.82 |
+| harmonised BSE grey **inside graphite pixels only** | 19 | **0.74** | 0.002 | 0.86 / 0.71 / 0.71 |
+| harmonised BSE grey inside pore pixels only | 19 | 0.71 | 0.002 | 0.86 / 0.43 / 0.76 |
+| raw BSE mean grey in 15 depth bands | 15 | 0.55 | 0.026 | 0.29 / 0.86 / 0.53 |
+| harmonised, same | 15 | 0.42 | 0.31 | — |
+| segmentation overlay means (Si / graphite / pore / binder fraction) | 4 | 0.48 | 0.12 | 0.29 / 0.43 / 0.59 |
+| overlay Si + graphite depth profiles (15 bands, relative) | 30 | 0.48 | 0.14 | 0.57 / 0.43 / 0.47 |
+| fingerprint 16 features, nearest centroid instead of robust NB | 16 | 0.65 | 0.014 | 0.71 / 0.57 / 0.65 |
+
+Readings (`outputs/meanpred/results.json`, `loso.csv`, `figures/accuracy.png`):
+
+- **The best "classifier" in the repository is the grey-level distribution inside a single phase.** Inside
+  graphite pixels no composition and no arrangement can enter; the vector is noise width, residual gain and
+  quantisation. It reaches 0.74 — above the fingerprint — and it does so *after* the hybrid harmonisation,
+  which by design only matches black level and gain (graphite anchor SD 0.0 in `docs/harmonisation.md`)
+  and leaves the noise and the within-phase distribution alone. What differs by batch: graphite IQR (Batch 2
+  wider, 14 vs 12 DN, KW p 0.02), pore-pixel mean and SD (Batch 3 pores 7 DN vs 3.5–4.3, KW p 1e-4 — the
+  non-affine remnant of the Batch 3 artefact: pixels at 0 cannot be mapped). This is the
+  microscope-session fingerprint v2 found as noise/sharpness leakage, isolated to its purest form.
+- **Composition means are chance** (0.48, p 0.12), as every other route found. The overlay depth profiles
+  as a nearest-centroid are chance too; the fingerprint's 16 engineered features get 0.65 with the same
+  nearest-centroid rule, so the fingerprint result is not model-specific either — it is the features.
+- **Any image-based model with batch accuracy above ~0.68 must be suspected of reading the microscope**, not
+  the electrode. The three held-back calls from the graphite-only vector are B1 / B2 / B3 — it agrees with the
+  consensus on 3e122cbj (whose Si is visible in any statistic), and disagrees on both others (fn0mhxef → B2,
+  xrv9xvzb → B3), which is how a session fingerprint rather than a material fingerprint would behave. Used
+  the other way round, it is a cheap *QC* statistic: "was this image acquired like the Batch 3 images?"
+- Mask-based features (fingerprint, KPIs, functional) are insulated from it only to the extent the segmenter
+  is (Si IoU ≥ 0.992 raw vs harmonised, `docs/story.md` §6); the clean pipeline's noise harmonisation
+  (`docs/clean.md`, arrays rebuilt locally) is the route to test whether the graphite-only signal can be
+  removed at all — not done here.
+
 ## 2. The pipeline (`scripts/run_decision.py`, `outputs/decision/`)
 
 One card per held-back field, every line pointing at a committed file:
@@ -116,7 +159,8 @@ Result (`outputs/decision/heldout_cards.md`, figure `figures/decision.png`):
 ## 3. What not to do, and why
 
 - **No further classifiers on these 31 fields.** Five model families (robust NB, two-stage RF, frozen
-  DINOv2/MicroNet heads, XGBoost, tile voting) land between 0.55 and 0.68; the permutation null's 95th percentile is 0.58.
+  DINOv2/MicroNet heads, XGBoost, tile voting) land between 0.55 and 0.68 on material features; the only
+  thing that scores higher (0.74) is the grey-level distribution inside graphite, i.e. the microscope (§1c); the permutation null's 95th percentile is 0.58.
   Anything higher reported from here on is a search artefact unless pre-registered
   (`docs/eval-plan-oct4.md` showed how that goes).
 - **No accept/reject rule for Batch 3.** Best-of-84 column AUC 0.74 = chance (p 0.50); pre-specified family
