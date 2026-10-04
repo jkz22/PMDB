@@ -53,6 +53,41 @@ Per-site predictions: `predictions.csv`; full metrics: `evaluation.json`.
   parent-preserving null is not well defined here because parents are split across batches. With n = 31 every
   bacc is noisy (one site moves B1/B2 recall by 0.14).
 
+## Organiser rubric (expected score per site, max 2)
+
+`modal run scripts/modal_lopo.py::rubric` -> `rubric_table.md`, `rubric.json`, `predictions_rubric.csv`.
+Rule: "high" iff P(predicted) > 0.5; high and correct = 2, high and wrong = 0, low = 1 whether right or wrong (low-correct = 1 assumed).
+NB probabilities: `fixed` = softmax(-T * score) with T = number of features (16); since the NB score is the
+mean negative Laplace log-likelihood, this is the naive-Bayes posterior with a flat prior. `cal` = T picked from
+{0.25, ..., 64} per outer fold by minimum log-loss of an inner same-protocol CV on that fold's training sites only
+(chosen T = 4-8 for `nb`). RF: its own two-stage probabilities. Reliability bins pool the out-of-fold
+predictions over all folds (per-fold bins would hold 1-4 sites).
+
+| model | probs | protocol | acc | rubric mean (max 2) | n high | acc high | acc low | rel <0.5 n/acc | rel 0.5-0.7 n/acc | rel >0.7 n/acc |
+|---|---|---|---|---|---|---|---|---|---|---|
+| nb | fixed | LOSO | 0.677 | 1.323 | 30 | 0.67 | 1.00 | 1/1.00 | 10/0.60 | 20/0.70 |
+| nb | cal | LOSO | 0.677 | 1.226 | 21 | 0.67 | 0.70 | 10/0.70 | 15/0.73 | 6/0.50 |
+| nb | fixed | LOPO | 0.677 | 1.355 | 29 | 0.69 | 0.50 | 2/0.50 | 7/0.57 | 22/0.73 |
+| nb | cal | LOPO | 0.677 | 1.258 | 20 | 0.70 | 0.64 | 11/0.64 | 17/0.76 | 3/0.33 |
+| nb_parentavg | fixed | LOSO | 0.548 | 1.097 | 29 | 0.55 | 0.50 | 2/0.50 | 3/0.33 | 26/0.58 |
+| nb_parentavg | cal | LOSO | 0.548 | 1.032 | 15 | 0.53 | 0.56 | 16/0.56 | 14/0.57 | 1/0.00 |
+| nb_parentavg | fixed | LOPO | 0.484 | 1.000 | 28 | 0.50 | 0.33 | 3/0.33 | 6/0.33 | 22/0.55 |
+| nb_parentavg | cal | LOPO | 0.484 | 1.032 | 11 | 0.55 | 0.45 | 20/0.45 | 10/0.50 | 1/1.00 |
+| nb_parentctr | fixed | LOSO | 0.452 | 0.903 | 29 | 0.45 | 0.50 | 2/0.50 | 9/0.33 | 20/0.50 |
+| nb_parentctr | cal | LOSO | 0.452 | 1.065 | 18 | 0.56 | 0.31 | 13/0.31 | 15/0.53 | 3/0.67 |
+| nb_parentctr | fixed | LOPO | 0.516 | 1.032 | 31 | 0.52 | - | 0/- | 11/0.55 | 20/0.50 |
+| nb_parentctr | cal | LOPO | 0.516 | 0.935 | 16 | 0.44 | 0.60 | 15/0.60 | 13/0.38 | 3/0.67 |
+| rf_kpi | rf | LOSO | 0.581 | 1.194 | 28 | 0.61 | 0.33 | 3/0.33 | 28/0.61 | 0/- |
+| rf_kpi | rf | LOPO | 0.290 | 0.839 | 21 | 0.38 | 0.10 | 10/0.10 | 19/0.42 | 2/0.00 |
+
+Reading: under this rubric "low" always pays 1, so declaring high is worth it whenever accuracy exceeds 0.5;
+answering "low" everywhere scores 1.00, answering "high" everywhere scores 2 x accuracy. The baseline NB with fixed
+T = 16 is the best model under both protocols (1.323 LOSO, 1.355 LOPO; it says high on 29-30 of 31 sites, which is
+correct behaviour given 0.68 accuracy). Calibrating T inside the folds makes it better calibrated by log-loss but
+less often "high", and it scores lower (1.226 / 1.258), because low-confidence sites it demotes are still right
+~65-70% of the time. No model loses on accuracy but wins on rubric score: both variants and the RF score at or
+below the baseline and the always-low floor of 1.0 under LOPO (RF LOPO 0.839 is below the floor).
+
 ## Held-out sites
 
 No variant beats the baseline, so the baseline `nb` held-out assignment stands (unchanged from

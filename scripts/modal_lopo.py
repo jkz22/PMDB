@@ -2,6 +2,7 @@
 
     modal run scripts/modal_lopo.py                 # 200 label permutations (seeds 0..199)
     modal run scripts/modal_lopo.py --n-perm 4      # smoke test
+    modal run scripts/modal_lopo.py::rubric         # organiser-rubric scores (needs predictions.csv)
 
 The 31 labelled sites are crops of ~13 parent electrode images (organiser info,
 recovered from acquisition fingerprints). LOSO leaves a crop out while its
@@ -95,14 +96,19 @@ def _collapse(x, codes, parents):
     return xs, np.array([c for _, c in pairs])
 
 
-def _nb_fit_score(model, x_tr, c_tr, p_tr, x_te):
+def _nb_scores(model, x_tr, c_tr, p_tr, x_te):
+    """Per-batch NB scores (mean neg. Laplace log-lik over kept features) and the kept-feature count."""
     import numpy as np
     from pmdb import fingerprint as fp
     if model == "nb_parentavg":
         x_tr, c_tr = _collapse(x_tr, c_tr, p_tr)
     center, scale, ok, mu, sb = fp._fit_core(x_tr, c_tr, len(BATCHES))
     z = np.clip((x_te[:, ok] - center[ok]) / scale[ok], -fp.MAX_Z, fp.MAX_Z)
-    return fp._scores(z, mu, sb).argmin(1)
+    return fp._scores(z, mu, sb), int(ok.sum())
+
+
+def _nb_fit_score(model, x_tr, c_tr, p_tr, x_te):
+    return _nb_scores(model, x_tr, c_tr, p_tr, x_te)[0].argmin(1)
 
 
 def _assign(model, protocol, data, codes):
@@ -137,6 +143,77 @@ def _assign(model, protocol, data, codes):
 
 def _bacc(codes, a):
     return float(sum((a[codes == c] == c).mean() for c in range(len(BATCHES))) / len(BATCHES))
+
+
+T_GRID = (0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0)
+
+
+def _softmax_neg(score, t):
+    import numpy as np
+    a = -t * score
+    a = a - a.max(1, keepdims=True)
+    e = np.exp(a)
+    return e / e.sum(1, keepdims=True)
+
+
+def _nb_oof(model, protocol, x, codes, parents):
+    """Out-of-fold NB score matrix (n x batches) and kept-feature count per row."""
+    import numpy as np
+    S, nk = np.empty((len(codes), len(BATCHES))), np.empty(len(codes), dtype=int)
+    for te in _folds(protocol, parents.tolist()):
+        tr = np.setdiff1d(np.arange(len(codes)), te)
+        S[te], nk[te] = _nb_scores(model, x[tr], codes[tr], parents[tr], x[te])
+    return S, nk
+
+
+def _probs(model, protocol, data):
+    """Out-of-fold class probabilities. NB: {'fixed': softmax(-n_features * score),
+    'cal': softmax(-T * score) with T chosen per outer fold by min log-loss of an inner
+    same-protocol CV on the training sites only}. RF: two-stage combined probabilities."""
+    import numpy as np
+    codes = np.asarray(data["codes"])
+    parents = np.asarray(data["site_parent"])
+    n = len(codes)
+    if model in NB_MODELS:
+        x = np.asarray(data["x_ctr" if model == "nb_parentctr" else "x"], float)
+        S, nk = _nb_oof(model, protocol, x, codes, parents)
+        fixed = np.vstack([_softmax_neg(S[i:i + 1], nk[i]) for i in range(n)])
+        cal, t_used = np.empty_like(fixed), np.empty(n)
+        for te in _folds(protocol, parents.tolist()):
+            tr = np.setdiff1d(np.arange(n), te)
+            Si, _ = _nb_oof(model, protocol, x[tr], codes[tr], parents[tr])
+            # inner folds may lack a batch in training: _fit_core then yields NaN medians; skip those rows
+            good = np.isfinite(Si).all(1)
+            ll = [-np.mean(np.log(_softmax_neg(Si[good], t)[np.arange(good.sum()), codes[tr][good]] + 1e-12))
+                  for t in T_GRID]
+            t = T_GRID[int(np.argmin(ll))]
+            cal[te], t_used[te] = _softmax_neg(S[te], t), t
+        return {"fixed": fixed.tolist(), "cal": cal.tolist(), "T_cal": t_used.tolist(),
+                "T_fixed": nk.tolist()}
+    import pandas as pd
+    from pmdb.classify.model import TwoStage, combine
+    feats = data["rf_features"]
+    tiles = pd.DataFrame(np.asarray(data["rf_x"], float), columns=feats)
+    tsite = np.asarray(data["rf_site"])
+    tiles["heldout"] = False
+    P = np.empty((n, len(BATCHES)))
+    for te in _folds(protocol, data["site_parent"]):
+        trm = ~np.isin(tsite, te)
+        tr_tiles = tiles[trm].copy()
+        tr_tiles["batch"] = [BATCHES[codes[s]] for s in tsite[trm]]
+        m = TwoStage(feats).fit(tr_tiles)
+        for s in te:
+            X = tiles.loc[tsite == s, feats].to_numpy(float)
+            p = float(m.stage1.predict_proba(X)[:, list(m.stage1.classes_).index(1)].mean())
+            q = float(m.stage2.predict_proba(X)[:, list(m.stage2.classes_).index(1)].mean())
+            c = combine(p, q)
+            P[s] = [c[f"P_{b}"] for b in BATCHES]
+    return {"rf": P.tolist()}
+
+
+@app.function(**FN_KW)
+def probs(model: str, protocol: str, data: dict) -> dict:
+    return _probs(model, protocol, data)
 
 
 @app.function(**FN_KW)
@@ -273,3 +350,67 @@ def main(n_perm: int = 200, nb_chunk: int = 50, rf_chunk: int = 2, out_dir: str 
     print("\n".join(rows))
     print(hp.to_string(index=False))
     print(f"wrote {out}")
+
+
+def _rubric(codes, P, assigned=None):
+    """Organiser rubric: high (P(pred) > 0.5) correct 2, high wrong 0, low 1 either way."""
+    import numpy as np
+    P = np.asarray(P)
+    a = P.argmax(1) if assigned is None else np.asarray(assigned)
+    pp = P[np.arange(len(a)), a]
+    hi, ok = pp > 0.5, a == codes
+    score = np.where(hi, np.where(ok, 2, 0), 1)
+    bins = {"<0.5": pp < 0.5, "0.5-0.7": (pp >= 0.5) & (pp <= 0.7), ">0.7": pp > 0.7}
+    return {
+        "rubric_mean": float(score.mean()),
+        "acc": float(ok.mean()),
+        "n_high": int(hi.sum()),
+        "acc_high": float(ok[hi].mean()) if hi.any() else None,
+        "acc_low": float(ok[~hi].mean()) if (~hi).any() else None,
+        "reliability": {k: {"n": int(m.sum()), "mean_p": float(pp[m].mean()) if m.any() else None,
+                            "acc": float(ok[m].mean()) if m.any() else None} for k, m in bins.items()},
+    }
+
+
+@app.local_entrypoint()
+def rubric(out_dir: str = "outputs/lopo"):
+    """Organiser-rubric expected score for every model x protocol (observed only, no permutations)."""
+    import numpy as np
+    import pandas as pd
+
+    data, _ = _build_data()
+    codes = np.asarray(data["codes"])
+    configs = [(m, p) for m in MODELS for p in PROTOCOLS]
+    res = dict(zip(configs, probs.starmap([(m, p, data) for m, p in configs])))
+    out = ROOT / out_dir
+    pred = pd.read_csv(out / "predictions.csv")
+    ev = {"rule": "high iff P(predicted) > 0.5; high&correct 2, high&wrong 0, low 1; "
+                  "reliability pooled over out-of-fold predictions",
+          "nb_prob": "fixed: softmax(-T*score), T = number of kept features (16); "
+                     "cal: T in T_GRID chosen per outer fold by min inner same-protocol CV log-loss on training sites",
+          "T_grid": list(T_GRID), "results": {}}
+    rows = ["| model | probs | protocol | acc | rubric mean (max 2) | n high | acc high | acc low | "
+            "rel <0.5 n/acc | rel 0.5-0.7 n/acc | rel >0.7 n/acc |",
+            "|---|---|---|---|---|---|---|---|---|---|---|"]
+    fmt = lambda v: "-" if v is None else f"{v:.2f}"
+    for (m, p), r in res.items():
+        assigned = np.array([BATCHES.index(b) for b in pred[f"{m}_{p}"]])
+        for kind, P in r.items():
+            if kind.startswith("T_"):
+                continue
+            P = np.asarray(P)
+            if m in NB_MODELS:
+                assert (P.argmax(1) == assigned).all(), f"{m}/{p}: argmax P != assigned"
+            # NB assignment is argmin score == argmax P for any T > 0; RF uses its own decision rule
+            rb = _rubric(codes, P, assigned)
+            if kind == "cal":
+                rb["T_cal_values"] = sorted(set(r["T_cal"]))
+            ev["results"][f"{m}/{kind}/{p}"] = rb
+            pred[f"{m}_{kind}_{p}_Ppred"] = P[np.arange(len(assigned)), assigned]
+            rel = " | ".join(f"{v['n']}/{fmt(v['acc'])}" for v in rb["reliability"].values())
+            rows.append(f"| {m} | {kind} | {p.upper()} | {rb['acc']:.3f} | {rb['rubric_mean']:.3f} | "
+                        f"{rb['n_high']} | {fmt(rb['acc_high'])} | {fmt(rb['acc_low'])} | {rel} |")
+    (out / "rubric.json").write_text(json.dumps(ev, indent=2))
+    pred.to_csv(out / "predictions_rubric.csv", index=False)
+    (out / "rubric_table.md").write_text("\n".join(rows) + "\n")
+    print("\n".join(rows))
