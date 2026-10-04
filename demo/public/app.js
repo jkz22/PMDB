@@ -511,7 +511,7 @@ R.embeddings = (root) => {
       h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),
         h('span', { class: 'call-batch', style: `color:${BATCH_COLOR[s.call]}` }, short(s.call)),
         h('span', { class: 'call-p' }, p.toFixed(2),
-          h('span', { class: `conf ${p >= 0.67 ? 'hi' : 'lo'}` }, p >= 0.67 ? 'HIGH' : 'LOW'))),
+          h('span', { class: `conf ${p >= 0.8 ? 'hi' : p >= 0.67 ? 'md' : 'lo'}` }, p >= 0.8 ? 'HIGH' : p >= 0.67 ? 'MEDIUM' : 'LOW'))),
       bars,
       h('div', {},
         h('img', { src: `/evidence/${s.site}.png`, alt: `Evidence map for ${s.site}`, class: 'evidence' })),
