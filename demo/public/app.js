@@ -490,12 +490,14 @@ R.embeddings = (root) => {
     const bars = h('div', { class: 'pbar' }, ...['Batch_1', 'Batch_2', 'Batch_3'].map((b) =>
       h('span', { style: `width:${(+s[`p_${b}`] * 100).toFixed(1)}%;background:${BATCH_COLOR[b]}`, title: `${short(b)} ${(+s[`p_${b}`]).toFixed(2)}` })));
     const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
-    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}` },
+    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', title: 'Click to expand',
+      onclick: (e) => { if (e.target.closest('a')) return; e.currentTarget.classList.toggle('open'); },
+      onkeydown: (e) => { if (e.key === 'Enter') e.currentTarget.classList.toggle('open'); } },
       h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),
         h('span', { class: 'call-batch', style: `color:${BATCH_COLOR[s.call]}` }, short(s.call)),
         h('span', { class: 'call-p' }, p.toFixed(2))),
       bars,
-      h('a', { href: `/evidence/${s.site}.png`, target: '_blank', title: 'Open full size' },
+      h('div', {},
         h('img', { src: `/evidence/${s.site}.png`, alt: `Evidence map for ${s.site}`, class: 'evidence' })),
       h('div', { class: 'src' }, 'red zones support the call · blue argue against · yellow = 3 strongest'),
       h('p', {}, SITE_STORY[s.site]),
