@@ -24,3 +24,4 @@ cache/harmonised_shift/*/half/*.npz
 cache_heldout/harmonised_shift/*/half/*.npz
 cache/harmonised_shift/*/model.npz
 cache_heldout/harmonised_shift/*/model.npz
+data_test/

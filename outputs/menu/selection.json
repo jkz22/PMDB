@@ -1,0 +1,7 @@
+{
+  "option": "ensemble",
+  "confidence_mode": "rule",
+  "rubric": 1.2058823529411764,
+  "rule": "max LOPO expected rubric with the option's flag rule (ties: fewer components, then menu order)",
+  "selected_on": "LOPO, 34 labelled sites, r3 run"
+}
