@@ -1,0 +1,160 @@
+{
+  "n_sites": 31,
+  "n_patches": 1875,
+  "patches_per_site": {
+    "min": 45,
+    "max": 75
+  },
+  "majority_baseline": 0.5483870967741935,
+  "loo": {
+    "n": 31,
+    "accuracy": 0.7096774193548387,
+    "balanced_accuracy": 0.6554621848739496,
+    "macro_f1": 0.6435185185185185,
+    "recall": {
+      "Batch_1": 0.42857142857142855,
+      "Batch_2": 0.7142857142857143,
+      "Batch_3": 0.8235294117647058
+    },
+    "f1": {
+      "Batch_1": 0.5,
+      "Batch_2": 0.5555555555555556,
+      "Batch_3": 0.8749999999999999
+    },
+    "confusion": {
+      "Batch_1": {
+        "Batch_1": 3,
+        "Batch_2": 4,
+        "Batch_3": 0
+      },
+      "Batch_2": {
+        "Batch_1": 1,
+        "Batch_2": 5,
+        "Batch_3": 1
+      },
+      "Batch_3": {
+        "Batch_1": 1,
+        "Batch_2": 2,
+        "Batch_3": 14
+      }
+    }
+  },
+  "loo_mean_pooling": {
+    "n": 31,
+    "accuracy": 0.6451612903225806,
+    "balanced_accuracy": 0.6162464985994398,
+    "macro_f1": 0.6206376155442369,
+    "recall": {
+      "Batch_1": 0.5714285714285714,
+      "Batch_2": 0.5714285714285714,
+      "Batch_3": 0.7058823529411765
+    },
+    "f1": {
+      "Batch_1": 0.6666666666666666,
+      "Batch_2": 0.4210526315789474,
+      "Batch_3": 0.7741935483870968
+    },
+    "confusion": {
+      "Batch_1": {
+        "Batch_1": 4,
+        "Batch_2": 3,
+        "Batch_3": 0
+      },
+      "Batch_2": {
+        "Batch_1": 1,
+        "Batch_2": 4,
+        "Batch_3": 2
+      },
+      "Batch_3": {
+        "Batch_1": 0,
+        "Batch_2": 5,
+        "Batch_3": 12
+      }
+    }
+  },
+  "permutation": {
+    "observed_accuracy": 0.7096774193548387,
+    "null_mean": 0.30064516129032254,
+    "null_p95": 0.4838709677419355,
+    "p_value": 0.000999000999000999,
+    "n_perm": 1000,
+    "seed": 0
+  },
+  "auroc_vs_B3": {
+    "Batch_1": 0.6890756302521008,
+    "Batch_2": 0.4957983193277311
+  },
+  "loo_anomaly_vs_B3": {
+    "Batch_1": {
+      "median": 0.9806421110948904,
+      "min": 0.8828680128767924,
+      "max": 1.6441565711397552
+    },
+    "Batch_2": {
+      "median": 0.9444834650278021,
+      "min": 0.896849087893864,
+      "max": 0.9573407472441713
+    },
+    "Batch_3": {
+      "median": 0.9435515873015874,
+      "min": 0.7722001763668431,
+      "max": 1.1585292351177552
+    }
+  },
+  "shortcut_diagnostic": {
+    "feature": "std of Laplacian of affine2-harmonised BSE (grey/255)",
+    "spearman_rho": 0.22943548387096774,
+    "p_value": 0.21438765275572907,
+    "flag": false
+  },
+  "method": {
+    "backbone": "torchvision resnet50, NASA MicroNet v1.1 (frozen)",
+    "weights_url": "https://nasa-public-data.s3.amazonaws.com/microscopy_segmentation_models/resnet50_pretrained_microscopynet_v1.1.pth.tar",
+    "layers": [
+      "layer2",
+      "layer3"
+    ],
+    "patch_px": 224,
+    "nm_per_px": 50.0,
+    "channels": [
+      "BSE",
+      "Inlens"
+    ],
+    "harmonise": "affine2",
+    "normalise": "fixed",
+    "k_nn": 3,
+    "distance": "cosine",
+    "pool": "top-10% mean (headline); mean (secondary)",
+    "calibration": "ECDF of training-batch leave-site-out distances, leave-one-bank-site-out matched",
+    "softmax_tau": 0.1,
+    "anomalous_u": 0.95
+  },
+  "comparison": {
+    "fingerprint_nb": {
+      "accuracy": 0.6774193548387096,
+      "balanced_accuracy": 0.6358543417366946,
+      "macro_f1": 0.6253713606654783,
+      "recall": {
+        "Batch_1": 0.7142857142857143,
+        "Batch_2": 0.42857142857142855,
+        "Batch_3": 0.7647058823529411
+      },
+      "permutation_p": 0.001996007984031936,
+      "source": "outputs/fingerprint/evaluation.json"
+    },
+    "patch_mil_top10": {
+      "accuracy": 0.7096774193548387,
+      "balanced_accuracy": 0.6554621848739496,
+      "macro_f1": 0.6435185185185185,
+      "recall": {
+        "Batch_1": 0.42857142857142855,
+        "Batch_2": 0.7142857142857143,
+        "Batch_3": 0.8235294117647058
+      },
+      "permutation_p": 0.000999000999000999,
+      "source": "outputs/fingerprint/evaluation.json"
+    },
+    "delta_accuracy": 0.032258064516129115,
+    "delta_balanced_accuracy": 0.019607843137254943
+  }
+}
