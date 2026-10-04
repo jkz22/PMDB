@@ -209,8 +209,11 @@
 <script>
   const slides = [...document.querySelectorAll(".slide")];
   let i = 0;
+  let prev = -1;
   const show = n => {
     i = Math.max(0, Math.min(slides.length - 1, n));
+    if (i === prev) return;  // clamped at a deck boundary: don't restart the slide's video
+    prev = i;
     slides.forEach((s, k) => s.classList.toggle("active", k === i));
     document.getElementById("counter").textContent = `${i + 1} / ${slides.length}`;
     slides.forEach((s, k) => s.querySelectorAll("video").forEach(v => {
