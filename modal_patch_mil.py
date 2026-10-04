@@ -12,6 +12,7 @@ Run:
     modal run modal_patch_mil.py --mode heldout  # embed only missing held-out sites, then distances, eval, lopo
     modal run modal_patch_mil.py --mode menu     # 34-site (31 + 3 held-out truths) LOPO model menu + frozen selection
     modal run modal_test_prep.py::main           # prerequisite of --mode test: preprocess data_test/ on Modal
+    modal run modal_patch_mil.py --mode probe    # supervised linear probe, LOPO, 34 sites
     modal run modal_patch_mil.py --mode test     # embed + score new organiser test sites with the frozen selection
 
 See docs/patch_mil.md.
@@ -55,7 +56,7 @@ image = (
     .pip_install(
         "torch==2.4.1", "torchvision==0.19.1",
         "numpy==1.26.4", "scipy==1.14.1", "scikit-image==0.25.2", "pandas==2.1.4",
-        "Pillow==12.3.0", "tifffile==2025.5.10", "imagecodecs==2025.3.30", "matplotlib==3.9.2",
+        "scikit-learn==1.5.2", "Pillow==12.3.0", "tifffile==2025.5.10", "imagecodecs==2025.3.30", "matplotlib==3.9.2",
     )
     .run_commands(
         "mkdir -p /weights && python -c \"import urllib.request; "
@@ -279,6 +280,52 @@ def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[di
             "test_predictions": test_pred, "elapsed_s": round(time.time() - t0, 2)}
 
 
+@app.function(volumes={"/out": out_vol}, cpu=4.0, memory=16384, timeout=1800)
+def probe_lopo(tag: str, labels: list[dict], parents: list[dict], menu: list[dict], n_perm: int = 200) -> dict:
+    import numpy as np
+    import pandas as pd
+
+    from pmdb import patch_probe as pp
+
+    t0 = time.time()
+    out_vol.reload()
+    X, sb, sp = {}, {}, {}
+    par = pd.DataFrame(parents).drop_duplicates(["batch", "site"]).set_index(["batch", "site"])["parent_id"]
+    for r in labels:
+        f, _, _ = _load_emb(tag, r["batch"], r["site"])
+        X[r["site"]] = f
+        sb[r["site"]] = r["label"]
+        sp[r["site"]] = par[(r["batch"], r["site"])]
+    assert len(X) == 34
+    df = pp.lopo_probe(X, sb, sp)
+    m = pd.DataFrame(menu)
+    pe = [f"p_ens_{b}" for b in pp.BATCHES]
+    ens = m.set_index("site").loc[df["site"]]
+    assert (ens["true"].to_numpy() == df["true"].to_numpy()).all()
+    ens_df = df[["parent_id", "site", "true"]].copy()
+    pens = ens[pe].to_numpy()
+    for i, b in enumerate(pp.BATCHES):
+        ens_df[f"p_{b}"] = pens[:, i]
+    ens_df["call"] = [pp.BATCHES[i] for i in pens.argmax(1)]
+    comb = ens_df.copy()
+    pc = (pens + df[[f"p_{b}" for b in pp.BATCHES]].to_numpy()) / 2
+    for i, b in enumerate(pp.BATCHES):
+        comb[f"p_{b}"] = pc[:, i]
+    comb["call"] = [pp.BATCHES[i] for i in pc.argmax(1)]
+    held = ["3e122cbj", "fn0mhxef", "xrv9xvzb"]
+    out = {"metrics": {"probe": pp.site_metrics(df), "probe+ensemble": pp.site_metrics(comb),
+                       "ensemble": pp.site_metrics(ens_df)},
+           "heldout": {k: d[d["site"].isin(held)].drop(columns="parent_id").to_dict("records")
+                       for k, d in (("probe", df), ("probe+ensemble", comb), ("ensemble", ens_df))}}
+    out["predictions"] = df.assign(
+        **{f"ens_p_{b}": ens_df[f"p_{b}"] for b in pp.BATCHES},
+        **{f"comb_p_{b}": comb[f"p_{b}"] for b in pp.BATCHES}, comb_call=comb["call"], ens_call=ens_df["call"]
+    ).to_dict("records")
+    out["permutation"] = pp.permutation_test(X, sb, sp, n_perm=n_perm)
+    out["elapsed_s"] = round(time.time() - t0, 2)
+    return out
+
+
 def _atomic_write(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -293,9 +340,12 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
     from pmdb.parents import write_parent_groups
     from pmdb.patch_mil import fingerprint_comparison
 
-    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test"):
-        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test")
+    if mode not in ("embed", "distances", "eval", "lopo", "heldout", "all", "menu", "test", "probe"):
+        raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe")
     root = Path(__file__).resolve().parent
+    if mode == "probe":
+        _probe(root)
+        return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
         return
@@ -367,6 +417,27 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
               f"wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
         for r in res["final_heldout"]:
             print(f"  {r['site']} -> {r['assigned']} ({r['confidence_flag']})")
+
+
+def _probe(root: Path) -> None:
+    import pandas as pd
+
+    from pmdb.batch_menu import labelled_sites
+    from pmdb.parents import parent_groups
+
+    t0 = time.time()
+    lab = labelled_sites()
+    menu = pd.read_csv(root / "outputs" / "menu" / "menu_predictions.csv", dtype={"site": str})
+    res = probe_lopo.remote("full", lab.to_dict("records"), parent_groups().to_dict("records"),
+                            menu.to_dict("records"))
+    out = root / "outputs" / "patch_probe"
+    ev = {k: res[k] for k in ("metrics", "heldout", "permutation", "elapsed_s")}
+    _atomic_write(out / "evaluation.json", json.dumps(ev, indent=2).encode())
+    _atomic_write(out / "predictions.csv", pd.DataFrame(res["predictions"]).to_csv(index=False).encode())
+    for k, m in res["metrics"].items():
+        print(f"{k:16s} acc {m['accuracy']:.3f} bal {m['balanced_accuracy']:.3f} f1 {m['macro_f1']:.3f} "
+              f"all-high {m['rubric_all_high']:.3f} flag {m['rubric_flag_pmax_ge_0.5']:.3f}")
+    print(f"perm {res['permutation']}; wall {time.time() - t0:.0f}s, remote {res['elapsed_s']}s")
 
 
 def _menu_or_test(mode: str, root: Path) -> None:
