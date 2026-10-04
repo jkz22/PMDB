@@ -10,7 +10,7 @@ const pct = (v) => `${Math.round(v * 100)}%`;
 const median = (a) => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
 
 const state = {
-  view: 'confound', bundle: null,
+  view: 'confound', bundle: null, rendered: false,
   confound: { site: '4ih2ggld', delta: 0 },
   arrangement: { show: { Batch_1: true, Batch_2: true, Batch_3: true, Batch_heldout: true } },
   reject: { ti: 0 },
@@ -413,7 +413,7 @@ async function load() {
   state.bundle = bundle;
   derive(bundle);
   describeLive();
-  render();
+  render(); state.rendered = true;
   boot();
 }
 
@@ -425,10 +425,10 @@ function connect() {
     toast(`New results loaded: ${changed.join(', ')}`);
   });
   // retry a failed startup load on the next server event
-  for (const ev of ['hello', 'ping']) es.addEventListener(ev, () => { if (!state.bundle) load().catch((err) => console.error(err)); });
-  es.addEventListener('git', (e) => { if (!state.bundle) return; state.bundle.git = JSON.parse(e.data); describeLive(); if (state.bundle.git.upstreamAhead) toast(`${state.bundle.git.upstreamAhead} new commit(s) on origin/main — git pull to update`); });
+  for (const ev of ['hello', 'ping']) es.addEventListener(ev, () => { if (!state.rendered) load().catch((err) => console.error(err)); });
+  es.addEventListener('git', (e) => { if (!state.rendered) return; state.bundle.git = JSON.parse(e.data); describeLive(); if (state.bundle.git.upstreamAhead) toast(`${state.bundle.git.upstreamAhead} new commit(s) on origin/main — git pull to update`); });
   es.onerror = () => setLive('err', 'server unreachable — showing last loaded data');
-  es.onopen = () => state.bundle && describeLive();
+  es.onopen = () => state.rendered && describeLive();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -466,4 +466,4 @@ if (VIEWS.some((v) => v.id === initial)) state.view = initial;
 connect();
 let booted = false;
 const boot = () => { if (booted) return; booted = true; if (new URLSearchParams(location.search).get('autoplay')) autoplay(); };
-load().catch((e) => { if (!state.bundle) setLive('err', 'failed to load /api/data'); console.error(e); });
+load().catch((e) => { if (!state.rendered) setLive('err', 'failed to load /api/data'); console.error(e); });
