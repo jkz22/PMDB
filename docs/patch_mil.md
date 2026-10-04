@@ -190,3 +190,25 @@ bash scripts/score_test_sites.sh
 which runs `modal run modal_test_prep.py::main` (uploads only those TIFFs to `pmdb-data:/test/raw`; on Modal: half cache, affine2 LUTs against the shipped labelled reference, clean, KPIs, fingerprint features; pulls back small CSV/JSON to `cache_test/`, `outputs/clean_test/`, `outputs/test/`) and `modal run modal_patch_mil.py --mode test` (GPU embedding, 34-site distances, frozen-selection prediction). Everything runs on Modal; the prep image pins the labelled KPI run's package versions. Storage on the volume: `/test/raw`, `/test/half`, `/test/harmonised`, `/test/clean`, `/test/kpis`, `/test/features.csv`. Outputs: `outputs/test/final_predictions.csv`, `outputs/test/submission.md`. The selection is frozen in `outputs/menu/selection.json`; do not re-run `--mode menu` after test images arrive.
 
 Rehearsal (the 3 held-out sites copied to `data_test/`, then removed): half cache exact, affine2 LUT exact, parent key equal for all 3; Modal-vs-old held-out feature differences are informational (max 0.45 labelled SD). Prep ~3.3 min wall incl. image build (clean 127 s, KPIs 22 s for 3 sites); `--mode test` ~3 min wall total with script. Expected for 4-6 sites: ~10 min prep, ~10 min test, well under USD 2.
+
+## Supervised linear probe (LOPO, 34 sites)
+
+Method: frozen MicroNet patch embeddings (affine2 BSE+Inlens, 31 labelled + 3 held-out sites with organiser truths, 13 parents). Per leave-one-parent-out fold: StandardScaler, PCA(64) fit on training patches, multinomial `LogisticRegression(C=0.1, class_weight="balanced")`, each patch labelled with its site's batch and weighted 1/n_patches(site). Site probability = softmax of the mean per-patch log-probability. `probe+ensemble` averages the probe with `p_ens_*` of `outputs/menu/menu_predictions.csv` (same folds). One configuration, no tuning. Code: `pmdb/patch_probe.py`, `modal_patch_mil.py --mode probe`; outputs in `outputs/patch_probe/`.
+
+| model | acc | bal acc | macro-F1 | recall B1/B2/B3 | rubric all-high | rubric (high iff max p >= 0.5) |
+|---|---|---|---|---|---|---|
+| probe | 0.706 | 0.630 | 0.622 | 0.38/0.62/0.89 | 1.412 | 1.412 (28 high) |
+| probe+ensemble | 0.706 | 0.630 | 0.627 | 0.62/0.38/0.89 | 1.412 | 1.471 (18 high) |
+| ensemble (reference) | 0.618 | 0.597 | 0.596 | 0.62/0.50/0.67 | 1.235 | 1.294 (20 high) |
+
+Held-out sites, LOPO-fold calls (truth in brackets):
+
+| site | probe | probe+ensemble | ensemble |
+|---|---|---|---|
+| 3e122cbj (B2) | B2 (0.62) | B3 (0.61) | B3 (0.89) |
+| fn0mhxef (B1) | B2 (0.57) | B2 (0.44) | B3 (0.52) |
+| xrv9xvzb (B3) | B3 (0.70) | B3 (0.43) | B2 (0.59) |
+
+Permutation test (probe, 200 site-label permutations, parents fixed, seed 0): observed accuracy 0.706, null mean 0.337, p = 0.005.
+
+Verdict: probe+ensemble beats the ensemble on LOPO rubric all-high (1.412 vs 1.235) and balanced accuracy (0.630 vs 0.597), so by the pre-set criterion it is adopted as the better candidate. Caveats: 34 sites from 13 parents, one configuration, and the improvement is a few sites; Batch 1 recall remains weak for the probe alone (0.38). Prior evidence: the v2 fine-tune reached only 0.64 accuracy with Batch 2 recall 0.20 under field-grouped CV, so a frozen-feature linear probe is the better-behaved supervised route.

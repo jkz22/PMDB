@@ -1,0 +1,184 @@
+{
+  "metrics": {
+    "probe": {
+      "n": 34,
+      "accuracy": 0.7058823529411765,
+      "balanced_accuracy": 0.6296296296296297,
+      "macro_f1": 0.6224974200206398,
+      "recall": {
+        "Batch_1": 0.375,
+        "Batch_2": 0.625,
+        "Batch_3": 0.8888888888888888
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 3,
+          "Batch_2": 5,
+          "Batch_3": 0
+        },
+        "Batch_2": {
+          "Batch_1": 3,
+          "Batch_2": 5,
+          "Batch_3": 0
+        },
+        "Batch_3": {
+          "Batch_1": 1,
+          "Batch_2": 1,
+          "Batch_3": 16
+        }
+      },
+      "rubric_all_high": 1.411764705882353,
+      "rubric_flag_pmax_ge_0.5": 1.411764705882353,
+      "n_high": 28
+    },
+    "probe+ensemble": {
+      "n": 34,
+      "accuracy": 0.7058823529411765,
+      "balanced_accuracy": 0.6296296296296297,
+      "macro_f1": 0.6272238625179801,
+      "recall": {
+        "Batch_1": 0.625,
+        "Batch_2": 0.375,
+        "Batch_3": 0.8888888888888888
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 5,
+          "Batch_2": 2,
+          "Batch_3": 1
+        },
+        "Batch_2": {
+          "Batch_1": 3,
+          "Batch_2": 3,
+          "Batch_3": 2
+        },
+        "Batch_3": {
+          "Batch_1": 1,
+          "Batch_2": 1,
+          "Batch_3": 16
+        }
+      },
+      "rubric_all_high": 1.411764705882353,
+      "rubric_flag_pmax_ge_0.5": 1.4705882352941178,
+      "n_high": 18
+    },
+    "ensemble": {
+      "n": 34,
+      "accuracy": 0.6176470588235294,
+      "balanced_accuracy": 0.5972222222222222,
+      "macro_f1": 0.596078431372549,
+      "recall": {
+        "Batch_1": 0.625,
+        "Batch_2": 0.5,
+        "Batch_3": 0.6666666666666666
+      },
+      "confusion": {
+        "Batch_1": {
+          "Batch_1": 5,
+          "Batch_2": 0,
+          "Batch_3": 3
+        },
+        "Batch_2": {
+          "Batch_1": 1,
+          "Batch_2": 4,
+          "Batch_3": 3
+        },
+        "Batch_3": {
+          "Batch_1": 3,
+          "Batch_2": 3,
+          "Batch_3": 12
+        }
+      },
+      "rubric_all_high": 1.2352941176470589,
+      "rubric_flag_pmax_ge_0.5": 1.2941176470588236,
+      "n_high": 20
+    }
+  },
+  "heldout": {
+    "probe": [
+      {
+        "site": "fn0mhxef",
+        "true": "Batch_1",
+        "call": "Batch_2",
+        "p_Batch_1": 0.3430983543963877,
+        "p_Batch_2": 0.572583374303835,
+        "p_Batch_3": 0.08431827129977734
+      },
+      {
+        "site": "xrv9xvzb",
+        "true": "Batch_3",
+        "call": "Batch_3",
+        "p_Batch_1": 0.23336212737463824,
+        "p_Batch_2": 0.07018755412006437,
+        "p_Batch_3": 0.6964503185052975
+      },
+      {
+        "site": "3e122cbj",
+        "true": "Batch_2",
+        "call": "Batch_2",
+        "p_Batch_1": 0.057099195057950226,
+        "p_Batch_2": 0.6181978589805688,
+        "p_Batch_3": 0.32470294596148097
+      }
+    ],
+    "probe+ensemble": [
+      {
+        "site": "fn0mhxef",
+        "true": "Batch_1",
+        "p_Batch_1": 0.25213759883316245,
+        "p_Batch_2": 0.4443810143709692,
+        "p_Batch_3": 0.3034813867958682,
+        "call": "Batch_2"
+      },
+      {
+        "site": "xrv9xvzb",
+        "true": "Batch_3",
+        "p_Batch_1": 0.23539435683610793,
+        "p_Batch_2": 0.3312068776200331,
+        "p_Batch_3": 0.433398765543859,
+        "call": "Batch_3"
+      },
+      {
+        "site": "3e122cbj",
+        "true": "Batch_2",
+        "p_Batch_1": 0.07859913167906236,
+        "p_Batch_2": 0.3121523433058238,
+        "p_Batch_3": 0.6092485250151137,
+        "call": "Batch_3"
+      }
+    ],
+    "ensemble": [
+      {
+        "site": "fn0mhxef",
+        "true": "Batch_1",
+        "p_Batch_1": 0.1611768432699372,
+        "p_Batch_2": 0.3161786544381035,
+        "p_Batch_3": 0.5226445022919591,
+        "call": "Batch_3"
+      },
+      {
+        "site": "xrv9xvzb",
+        "true": "Batch_3",
+        "p_Batch_1": 0.2374265862975776,
+        "p_Batch_2": 0.5922262011200018,
+        "p_Batch_3": 0.1703472125824205,
+        "call": "Batch_2"
+      },
+      {
+        "site": "3e122cbj",
+        "true": "Batch_2",
+        "p_Batch_1": 0.1000990683001745,
+        "p_Batch_2": 0.0061068276310788,
+        "p_Batch_3": 0.8937941040687465,
+        "call": "Batch_3"
+      }
+    ]
+  },
+  "permutation": {
+    "observed_accuracy": 0.7058823529411765,
+    "n_perm": 200,
+    "null_mean": 0.3367647058823529,
+    "p_value": 0.004975124378109453
+  },
+  "elapsed_s": 371.52
+}
