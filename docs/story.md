@@ -81,8 +81,8 @@ pore. Two readings come out of it, with different standing:
   (B1 < B2 < B3, p = 0.009) and would be the lithiation reading of K15; under the second segmenter
   the difference vanishes (p 0.73). It is not the grey-level artefact (harmonised BSE gives the same
   masks) — it is v0r1's graphite-vs-binder split, a morphological residue rather than a measured
-  phase. Until a binder class is validated it is an observation about one segmentation, not about the
-  electrode.
+  phase, ≈ 1 % of the field with no intensity identity in BSE, Inlens or SE (`docs/reliability.md` §3).
+  It cannot be validated with this data and is not reported as a material result.
 
 Neither column improves batch identification (LOSO 0.71 vs 0.68, same permutation p); they
 explain what the identified difference would do.
@@ -104,9 +104,9 @@ KPI with a real field-level signal, sampling noise is only 12–22 % of the fiel
 fields do not buy power — only more fields do** (K15 needs ≈ 50 per batch even at infinite area).
 The three things that would move the project most are therefore not models: (i) more Batch 1 and
 Batch 2 fields, (ii) the Batch 3 microscope session logs (or one Batch 3 sample re-imaged under
-Batch 1/2 settings) to close the noise/sharpness question, and (iii) a validated binder / carbon
-class (Inlens topography or a labelled patch set) to decide whether the constrained-swelling
-difference is real.
+Batch 1/2 settings) to close the noise/sharpness question, and (iii) a labelled patch set or an
+EDS carbon/fluorine map to give the binder / carbon phase a measured identity — the only way to
+decide whether the constrained-swelling difference is real.
 
 On the held-back sites every method agrees on two of three (`docs/crosswalk.md` §1): 3e122cbj → Batch 1
 (unanimous, and the only field outside the Batch 3 baseline — off on 8 KPIs beyond its own sampling

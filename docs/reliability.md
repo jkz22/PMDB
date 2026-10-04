@@ -117,8 +117,17 @@ Reading:
   level (ρ −0.12); the whole-set correlation with `BSE_D` (ρ 0.47) is batch confounding. What differs
   between the segmenters is the class definition: v0r1's "binder" is the residue of a morphological
   opening (radius `graphite_opening_radius_px`) of the non-dark, non-Si phase plus small removed objects,
-  i.e. thin or fragmented solid, not a BSE intensity class. A segmenter with a *validated* binder/carbon
-  class (Inlens topography, or a labelled patch set) is the experiment that would settle it.
+  i.e. thin or fragmented solid, not a BSE intensity class.
+- **No channel identifies it** (`scripts/run_binder_probe.py`, `outputs/segagree/binder_probe.csv`). The
+  residue is ≈ 1 % of the field (0.8–1.0 % by batch). Pixel-level ROC AUC of residue vs graphite is
+  0.42–0.48 on BSE, 0.44–0.48 on SE and 0.50 / 0.51 / 0.56 (B1 / B2 / B3) on Inlens, with no consistent
+  direction site to site; the only Inlens values near 0.7 are the four strong-artefact Batch 3 sites
+  (`71vgq3fw`, `kbdh4tri`, `tuy3zymq`, `x7u69zsw`), i.e. the known non-affine Inlens artefact, not
+  material. Because the residue hugs graphite edges, 5–10 % of Si growth lands on it although it is 1 % of
+  the area — which is the whole constrained-share batch difference. **Conclusion: with BSE / Inlens / SE at
+  50 nm/px there is no validated binder class, so the constrained-share batch difference should not be
+  reported as a material result.** Settling it needs a labelled patch set or an additional modality
+  (EDS carbon/fluorine map), not another segmenter.
 
 ## 4. More fields or bigger fields? (`scripts/run_power_area.py`, `outputs/reliability/power_area.csv`)
 

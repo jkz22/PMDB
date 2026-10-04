@@ -53,8 +53,10 @@ columns are kept for completeness, they are not new information.
 > written anchored segmenter of the analytical-benchmarks session (KW p 0.015 → 0.73; Spearman between
 > segmenters only 0.38). The effect lives in the graphite-vs-binder allocation of the growth, a BSE
 > grey-level split the alternative segmenter does not make; the pore-avoidance share and pore loss are
-> segmenter-independent (Spearman 0.84 / 0.97). Treat "Batch 3 is the most constrained" as a v0r1
-> segmentation result until a segmenter with a validated binder class confirms it.
+> segmenter-independent (Spearman 0.84 / 0.97). The v0r1 "binder" class is ≈ 1 % of the field and has no
+> intensity identity in BSE, Inlens or SE (`docs/reliability.md` §3), so it cannot be validated with this
+> data: **do not report "Batch 3 is the most constrained" as a material result.** The remaining content of
+> this section (where growth lands, pore loss, held-out comparison) stands.
 At every SOC, **most of the Si growth collides with graphite**: batch medians 0.77 / 0.81 / 0.83 at
 SOC 0.25 and 0.86 / 0.87 / 0.88 at SOC 1 (`figures/swelling_budget.png`). Only 5–6 % of the growth
 finds pore; the rest of the free space is binder / carbon black.
