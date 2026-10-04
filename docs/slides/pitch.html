@@ -105,9 +105,11 @@
     border: 1px solid var(--border); border-radius: 5px; padding: .1em .45em; font-size: .85em;
   }
   /* six-card rows wrap to 3 per line instead of overflowing the slide (Devin review on #131) */
-  .cards { flex-wrap: wrap; align-content: stretch; row-gap: 1.6vh; }
-  .cards .call { flex: 1 1 calc(33.333% - 1.6vw); min-width: 0; min-height: 0; overflow: hidden; }
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr);
+           column-gap: 1.6vw; row-gap: 1.6vh; }  /* rows split the fixed-height panel exactly */
+  .cards .call { min-width: 0; min-height: 0; overflow: hidden; }
   .cards .call .batch { font-size: min(8vh, 4.2vw); }
+  .cards .call .site { font-size: min(2.8vh, 1.9vw); }  /* 8-char ids fit a third of a portrait slide */
 </style>
 </head>
 <body>
