@@ -1,0 +1,4 @@
+batch,site,path,nm_per_px,store_gain,store_offset
+Batch_heldout,3e122cbj,cache_heldout/harmonised_ext/basic/half/Batch_heldout__3e122cbj.npz,50.0,1.0,64.0
+Batch_heldout,fn0mhxef,cache_heldout/harmonised_ext/basic/half/Batch_heldout__fn0mhxef.npz,50.0,1.0,64.0
+Batch_heldout,xrv9xvzb,cache_heldout/harmonised_ext/basic/half/Batch_heldout__xrv9xvzb.npz,50.0,1.0,64.0

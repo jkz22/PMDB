@@ -1,0 +1,50 @@
+{
+ "BSE": {
+  "working_shape": [
+   256,
+   896
+  ],
+  "settings": {
+   "working_shape": [
+    256,
+    896
+   ],
+   "smoothness_flatfield": 1.0,
+   "smoothness_darkfield": 1.0,
+   "fitting_mode": "approximate",
+   "max_reweight_iterations": 10
+  }
+ },
+ "Inlens": {
+  "working_shape": [
+   256,
+   896
+  ],
+  "settings": {
+   "working_shape": [
+    256,
+    896
+   ],
+   "smoothness_flatfield": 1.0,
+   "smoothness_darkfield": 1.0,
+   "fitting_mode": "approximate",
+   "max_reweight_iterations": 10
+  }
+ },
+ "SE_type": {
+  "working_shape": [
+   256,
+   896
+  ],
+  "settings": {
+   "working_shape": [
+    256,
+    896
+   ],
+   "smoothness_flatfield": 1.0,
+   "smoothness_darkfield": 1.0,
+   "fitting_mode": "approximate",
+   "max_reweight_iterations": 10
+  }
+ }
+}
