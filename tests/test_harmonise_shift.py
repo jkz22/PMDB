@@ -128,6 +128,32 @@ def test_corner_frequencies_do_not_enter_the_nyquist_bin():
     assert bins.max() == S.N_BINS and (bins == S.N_BINS).sum() > 0
 
 
+def _eval_script():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "eval_harmonise_ext.py"
+    spec = importlib.util.spec_from_file_location("eval_harmonise_ext_script", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_figures_only_methods_come_from_saved_summary(tmp_path):
+    import pandas as pd
+
+    mod = _eval_script()
+    pd.DataFrame({"method": ["none", "spectrum", "fda"]}).to_csv(tmp_path / "summary.csv", index=False)
+    assert mod.resolve_methods(None, True, tmp_path) == ["none", "spectrum", "fda"]
+    assert mod.resolve_methods(["none", "fda"], True, tmp_path) == ["none", "fda"]
+    assert mod.resolve_methods(None, False, tmp_path) == ["none", "nyul", "basic", "hybrid"]
+
+
+def test_figures_only_without_summary_fails_clearly(tmp_path):
+    with pytest.raises(SystemExit):
+        _eval_script().resolve_methods(None, True, tmp_path)
+
+
 def test_hybrid_spectrum_is_a_spectrum_model_and_lists_as_a_method(tmp_path):
     assert "hybrid_spectrum" in S.METHODS and "hybrid_spectrum" in S.SPECTRUM_METHODS
     rng = np.random.default_rng(0)

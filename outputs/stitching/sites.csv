@@ -1,0 +1,35 @@
+site,batch,H,W,art_left,art_right,parent
+4ih2ggld,Batch_1,2316,6996,[],[],G2316
+5n1q8atc,Batch_1,2316,7000,[],[],G2316
+f1vzngrs,Batch_1,2148,7000,[0],[],G2148
+ffwubibz,Batch_1,2080,7000,[],[0],G2080
+fzrt2k6r,Batch_1,2156,7000,"[0, 1]","[0, 1, 2, 3, 4, 5]",G2156
+iv6g2oq0,Batch_1,1780,6960,[],[],G1780
+uhdslk0o,Batch_1,1880,7000,[],[0],G1880
+3806gxp0,Batch_2,2048,7000,[],[],G2048
+avn74qx1,Batch_2,2048,7000,[],[0],G2048
+b3esycq1,Batch_2,2156,7000,[],[],G2156
+epqdaau9,Batch_2,2148,7000,[],[],G2148
+i9jiqjwl,Batch_2,2272,7000,[0],[],G2272
+r17byphk,Batch_2,2080,7000,[],[],G2080
+rxax5ozo,Batch_2,2068,7000,[],[],G2068SE
+0grcilhi,Batch_3,1904,7000,[],"[0, 1]",G1904
+71vgq3fw,Batch_3,2060,7000,[],"[0, 1]",G2060
+9luzk4jm,Batch_3,2088,7000,[],[],G2088
+cfe5vt7s,Batch_3,2080,7000,[],[],G2080
+hawkfj64,Batch_3,1904,7000,[],[],G1904
+hzumfsms,Batch_3,2088,7000,[],[],G2088
+kbdh4tri,Batch_3,2060,7000,[],[],G2060
+mgxahqnk,Batch_3,1904,7000,[],[0],G1904
+pl8uabbv,Batch_3,2272,7000,[],[],G2272
+ptg8lmto,Batch_3,1612,7000,[],[0],G1612
+tuy3zymq,Batch_3,2060,7000,[],[],G2060
+ufdvpb81,Batch_3,2088,7000,"[0, 1, 2, 3]",[],G2088
+utfgcjfa,Batch_3,2068,6996,[],[],G2068SE
+vc2whyaq,Batch_3,2068,7000,[0],[],G2068SE
+x77cy643,Batch_3,2068,6996,[],"[2, 3, 4, 5]",G2068SE
+x7u69zsw,Batch_3,2060,7000,[0],[],G2060
+xgj4xftb,Batch_3,1612,7000,[0],[],G1612
+3e122cbj,Batch_heldout,2316,6996,[],[],G2316
+fn0mhxef,Batch_heldout,2048,7000,[0],[],G2048
+xrv9xvzb,Batch_heldout,2088,7000,[],[],G2088
