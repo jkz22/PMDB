@@ -419,13 +419,18 @@ def probe_explain_test_fit(tag: str, labels: list[dict], kpi_records: list[dict]
         pc, _ = pe.pc_kpi_regression(np.concatenate([Zs[s] for s in train]), pd.concat(parts, ignore_index=True), pe.KPI_COLS)
         kept = pe._kept(pc)
         expl = pc["explained"].to_numpy(bool)
-        Bz = pc[[f"b_{k}" for k in kept]].to_numpy()
+        BB = pc[[f"B_{k}" for k in kept]].to_numpy()
+        ok = K[kept].notna().all(axis=1) & K["site"].isin(train)
+        tr_mean, tr_sd = K.loc[ok, kept].mean().to_numpy(), K.loc[ok, kept].std(ddof=0).to_numpy()
         for t in [t for t in targets if t["parent"] == par]:
             feat = _load_emb(tag, t["batch"], t["site"])[0]
             Zt = pca.transform(sc.transform(feat))
             e = pe.explain_site(Zt, clf, pc)
             c = e.pop("contrib")
-            net = (c[expl, None] * Bz[expl]).sum(0)
+            kt = K[K["site"] == t["site"]][kept].dropna()
+            assert len(kt) > 0, f"no patch KPIs for {t['site']}"
+            ci, ri = pp.BATCHES.index(e["call"]), pp.BATCHES.index(e["runner_up"])
+            net = pe.kpi_effects(clf.coef_[ci] - clf.coef_[ri], BB, expl, kt.mean().to_numpy(), tr_mean, tr_sd)
             pred.append({"site": t["site"], "batch": t["batch"], "parent": par, "n_train_sites": len(train),
                          **{k: v for k, v in e.items() if k not in ("sentence", "top_pcs")},
                          **{f"net_{k}": float(v) for k, v in zip(kept, net)}})
@@ -660,8 +665,8 @@ def _explain(root: Path) -> None:
     print(f"wall {time.time() - t0:.0f}s, remote fit {res['elapsed_s']}s")
 
 
-TEST_PARENTS = {"0eryguqq": "h1612_ETD_s1", "fhwrjtet": "h1612_ETD_s1", "4hq27w4c": "h2148_ETD_s1",
-                "fspqbkxl": "h2148_ETD_s1", "soo2ax3r": "h2156_ETD_s2", "y59rxmxl": "h1880_ETD_s1"}
+EXPECTED_TEST_PARENTS = {"0eryguqq": "h1612_ETD_s1", "fhwrjtet": "h1612_ETD_s1", "4hq27w4c": "h2148_ETD_s1",
+                         "fspqbkxl": "h2148_ETD_s1", "soo2ax3r": "h2156_ETD_s2", "y59rxmxl": "h1880_ETD_s1"}
 
 
 def _explain_test(root: Path) -> None:
@@ -676,8 +681,16 @@ def _explain_test(root: Path) -> None:
     assert lab["parent"].notna().all() and len(lab) == 34
     out = root / "outputs" / "probe_explain"
     K = pd.read_csv(out / "patch_kpis.csv", dtype={"site": str})
-    targets = [{"batch": "Batch_test", "site": s, "parent": p} for s, p in TEST_PARENTS.items()]
+    from pmdb.parents import parent_groups
+
+    g = parent_groups()
+    test_parents = dict(zip(g.loc[g["batch"] == "Batch_test", "site"], g.loc[g["batch"] == "Batch_test", "parent_id"]))
+    assert test_parents == EXPECTED_TEST_PARENTS, test_parents  # current cache; update if the test cache changes
+    targets = [{"batch": "Batch_test", "site": s, "parent": p} for s, p in test_parents.items()]
     targets += [{"batch": "Batch_heldout", "site": s, "parent": pg[s]} for s in ("3e122cbj", "fn0mhxef", "xrv9xvzb")]
+    # test sites have no cached patch KPIs: compute them (the target's own KPIs drive the net_* effects)
+    Kt = [r for t in targets if t["batch"] == "Batch_test" for r in patch_kpis_site.remote("full", t["batch"], t["site"])]
+    K = pd.concat([K, pd.DataFrame(Kt)], ignore_index=True)
     res = probe_explain_test_fit.remote("full", lab.to_dict("records"), K.to_dict("records"), targets)
     pr = pd.DataFrame(res["predictions"])
     cols = ["site", "parent", "call", "runner_up", "p_Batch_1", "p_Batch_2", "p_Batch_3", "margin", "intercept_term",

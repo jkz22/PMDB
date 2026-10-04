@@ -8,3 +8,6 @@ scores, which come from the Modal embeddings (not committed). Rerun:
     modal run modal_patch_mil.py --mode explain
 
 then `--mode explain-test` for `test_*.csv`. Delete this file after regenerating.
+
+`test_final_predictions.csv` `net_*` columns (and `test_contributions.csv`) predate the fix that weights each KPI by the
+target's own standardised KPI deviation (Devin review on #108). Rerun: `modal run modal_patch_mil.py --mode explain-test`.
