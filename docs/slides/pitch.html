@@ -102,7 +102,7 @@
         <span class="arrow">→ +7 →</span>
         <span class="chip">4ih2ggld → Batch 3 ✗</span>
       </div>
-      <div class="note">it learned the black level of a Batch-3 imaging session (present in only 10/17 Batch 3 sites)</div>
+      <div class="note">it learned the black level of a Batch-3 imaging session (elevated in 9 of 17 Batch 3 sites, 0 of 14 in Batches 1–2)</div>
     </div>
   </div>
   <div class="foot"><span>Any pixel- or embedding-trained model inhales this confound. Ours is built from segmentation geometry only — a flat offset cannot move a single feature.</span><span>live demo in 90 s</span></div>
@@ -117,9 +117,25 @@
   <div class="foot"><span>Drying migration vs. sedimentation — physics you can act on, not a pixel artifact.</span><span>16 curve-shape features</span></div>
 </section>
 
-<!-- 3 · THE PROOF -->
+<!-- 3 · THE PHYSICS -->
 <section class="slide">
-  <div class="kicker">3 · The proof</div>
+  <div class="kicker">3 · The physics</div>
+  <h1>Same silicon, same swelling. The signal is the arrangement.</h1>
+  <p class="sub">We simulated lithiation inside every real microstructure: 34 sites × 2 collector orientations = 68 FEM runs on Modal, 0 failures, $2.61 total.</p>
+  <div style="display:flex;gap:1.6vw;flex:1;min-height:0">
+    <figure style="flex:1.5"><img src="../../outputs/fem/figures/swelling_vs_si.png" alt="Simulated swelling at 100% SOC vs Si area fraction, R² = 0.97"></figure>
+    <div style="flex:1;display:flex;flex-direction:column;gap:1.6vh">
+      <div class="tile"><div class="label">Swelling vs Si area fraction</div><div class="value accent">R² = 0.97</div><div class="note">swelling is set by how much Si there is</div></div>
+      <div class="tile"><div class="label">Si fraction across batches</div><div class="value">p = 0.38</div><div class="note">Kruskal–Wallis: the batches hold the same amount</div></div>
+      <div class="tile"><div class="label">FEM features added to the fingerprint</div><div class="value">rejected</div><div class="note">pre-registered rule ≥ 23/31: got 20/31 and 17/31</div></div>
+    </div>
+  </div>
+  <div class="foot"><span>Median swelling: Batch 1 0.132 · Batch 2 0.125 · Batch 3 0.125 — amount explains swelling; it cannot tell batches apart.</span><span>outputs/fem/ · outputs/fem_fingerprint/</span></div>
+</section>
+
+<!-- 4 · THE PROOF -->
+<section class="slide">
+  <div class="kicker">4 · The proof</div>
   <h1>Small model, adversarially validated.</h1>
   <p class="sub">Robust per-batch naive Bayes + conformal p-values — 31 sites forbid fitted weights, so every claim is stress-tested instead.</p>
   <div class="tiles">
@@ -147,9 +163,9 @@
   <div class="foot"><span>Caveats stated in the repo before you ask: features explored on labelled data; conformal grid coarse at n=7.</span><span>docs/fingerprint.md · docs/eval-plan-oct4.md</span></div>
 </section>
 
-<!-- 4 · THE CALLS -->
+<!-- 5 · THE CALLS -->
 <section class="slide">
-  <div class="kicker">4 · The calls</div>
+  <div class="kicker">5 · The calls</div>
   <h1>Three held-out sites, assigned with honest confidence.</h1>
   <div class="cards">
     <div class="call">
@@ -174,7 +190,7 @@
   <div class="foot"><span>And when a shipment matches <em>no</em> batch, the same p-values say REJECT — that’s the live demo.</span><span>cards: outputs/fingerprint/figures/</span></div>
 </section>
 
-<div class="hud"><span id="counter">1 / 4</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
+<div class="hud"><span id="counter">1 / 5</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
 
 <script>
   const slides = [...document.querySelectorAll(".slide")];

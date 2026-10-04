@@ -1,0 +1,11 @@
+{
+  "name": "pmdb-demo",
+  "private": true,
+  "type": "module",
+  "description": "PMDB hackathon demo dashboard (zero dependencies)",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test"
+  },
+  "engines": { "node": ">=18" }
+}
