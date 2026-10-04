@@ -2,7 +2,9 @@
 
 Train on the 31 labelled sites, validate on the 3 held-back sites whose batches the
 organisers released (3e122cbj = Batch_2, fn0mhxef = Batch_1, xrv9xvzb = Batch_3).
-C is picked by stratified 5-fold CV on the training sites only.
+C is picked by stratified 5-fold CV on the training sites only, with imputer and scaler refitted inside
+every fold. The LOO accuracy is nested: C is re-selected inside each leave-one-out fold, so a left-out
+site's label never influences its own penalty.
 
     python scripts/heldout_materials_kpis.py   # once, writes held-out mat_ KPIs
     python scripts/lasso_logreg.py
@@ -15,8 +17,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
-from sklearn.model_selection import LeaveOneOut, StratifiedKFold, cross_val_predict
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, LeaveOneOut, StratifiedKFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -48,13 +50,16 @@ def main() -> None:
     Xtr, ytr = train[cols].to_numpy(float), train["batch"].to_numpy()
     Xte = test[cols].to_numpy(float)
 
-    cv = StratifiedKFold(5, shuffle=True, random_state=0)
-    search = pipe(LogisticRegressionCV(
-        Cs=CS, cv=cv, penalty="l1", solver="saga", class_weight="balanced",
-        scoring="balanced_accuracy", max_iter=20000, random_state=0)).fit(Xtr, ytr)
-    C = float(search[-1].C_[0])
+    def search() -> GridSearchCV:
+        # imputer + scaler inside the searched pipeline: refitted on each CV training split
+        return GridSearchCV(pipe(l1_logreg(1.0)), {"logisticregression__C": CS},
+                            cv=StratifiedKFold(5, shuffle=True, random_state=0),
+                            scoring="balanced_accuracy", n_jobs=-1)
 
-    loo = cross_val_predict(pipe(l1_logreg(C)), Xtr, ytr, cv=LeaveOneOut())
+    C = float(search().fit(Xtr, ytr).best_params_["logisticregression__C"])
+
+    # nested LOO: the whole C search is rerun without the left-out site
+    loo = cross_val_predict(search(), Xtr, ytr, cv=LeaveOneOut())
     loo_bacc = np.mean([np.mean(loo[ytr == c] == c) for c in np.unique(ytr)])
 
     fit = pipe(l1_logreg(C)).fit(Xtr, ytr)
