@@ -48,9 +48,6 @@ def main() -> int:
     kh = pd.read_csv(O / "heldout" / "kpis" / "site_kpis.csv")
     fp = pd.read_csv(O / "fingerprint" / "features.csv")
     fh = pd.read_csv(O / "fingerprint" / "heldout_features.csv")
-    fu = pd.read_csv(O / "functional" / "site_functional.csv")
-    fuh = pd.read_csv(O / "functional" / "heldout_site_functional.csv")
-    nl = pd.read_csv(O / "functional" / "null_relocation.csv")
 
     fig, axes = plt.subplots(1, 5, figsize=(21, 4.6))
     ax = axes[0]
@@ -74,23 +71,36 @@ def main() -> int:
     axes[2].set_title("3. Arrangement: differs\nLOSO 0.68 vs 0.55 majority, perm p = 0.003", fontsize=10)
 
     ax = axes[3]
-    strip(ax, fu, "F02_soc100_into_graphite", fuh, "SOC-1 Si growth landing on graphite")
-    for i, b in enumerate(BATCHES):
-        y = nl.loc[nl.batch == b, "null_mean_into_graphite"].to_numpy()
-        ax.scatter(i + rng.uniform(-0.18, 0.18, y.size), y, s=14, color="grey", alpha=0.6, zorder=2,
-                   label="random-relocation null" if i == 0 else None)
-    ax.legend(frameon=False, fontsize=8, loc="lower left")
-    ax.set_title("4. Consequence on lithiation\nconstrained share: B3 highest (p = 0.009 @ SOC 0.5)\nall fields above null; excess is batch-free", fontsize=10)
+    gv = pd.read_csv(O / "crosswalk" / "geometric_vs_fem.csv")
+    for b in BATCHES:
+        g = gv[gv.batch == b]
+        ax.scatter(g["F02_soc100_pore_loss"], g["pore_closed_frac"], s=22, color=COL[b], alpha=0.8, zorder=3, label=b.replace("_", " "))
+    for site, mk in HELD.items():
+        g = gv[gv.site == site]
+        if len(g):
+            ax.scatter(g["F02_soc100_pore_loss"], g["pore_closed_frac"], marker=mk, s=70, facecolor="none", edgecolor="k", lw=1.5, zorder=5)
+    ax.set_xlabel("geometric pore loss at SOC 1 (13 s, 2D mask growth)")
+    ax.set_ylabel("FEM pore cells closed at SOC 1")
+    ax.legend(frameon=False, fontsize=8, loc="upper left")
+    ax.grid(alpha=0.3)
+    ax.set_title("4. Consequence on lithiation\ngeometric pore loss predicts FEM pore closure (rho = 0.73, 34 sites)\nhigh-Si fields + 3e122cbj are the pore-closure risk", fontsize=10)
 
     ax = axes[4]
-    pw = pd.read_csv(O / "functional" / "power.csv")
-    pw = pw.sort_values("power_n7", ascending=False).drop_duplicates("column").head(8)
-    ax.barh(pw["column"].str.slice(0, 24) + "  (" + pw["contrast"].astype(str) + ")", pw["power_n7"], color="#555")
-    ax.axvline(0.8, color="k", ls="--", lw=1)
-    ax.set_xlabel("power with 7 fields per batch")
-    ax.set_title("5. The limit is fields, not models\n(dashed: power 0.8)", fontsize=10)
-    ax.tick_params(axis="y", labelsize=7)
-    ax.set_xlim(0, 1)
+    pg = pd.read_csv(O / "reliability" / "power_area_grid.csv")
+    for kpi, c in (("K15_si_graphite_contact_frac", "#333"), ("K03_ecd_d50_um", "#888")):
+        for k, ls, lab in ((1.0, "-", "current field area"), (1e9, "--", "infinite field area")):
+            g = pg[(pg.kpi == kpi) & (pg.area_factor == k)].sort_values("n_per_group")
+            ax.plot(g.n_per_group, g.power, ls=ls, color=c, lw=1.8, label=f"{kpi.split('_')[0]} {kpi.split('_')[1]}, {lab}")
+    ax.axhline(0.8, color="k", ls=":", lw=1)
+    ax.axvline(7, color="k", ls=":", lw=1)
+    ax.set_xscale("log")
+    ax.set_xticks([5, 7, 10, 20, 50, 100], ["5", "7", "10", "20", "50", "100"])
+    ax.set_xlabel("fields per batch (dotted: the 7 we have)")
+    ax.set_ylabel("power to detect the largest batch difference")
+    ax.set_ylim(0, 1)
+    ax.legend(frameon=False, fontsize=7, loc="upper left")
+    ax.grid(alpha=0.3)
+    ax.set_title("5. The limit is fields, not models or field size\nbigger fields barely move the curves", fontsize=10)
 
     fig.suptitle("PMDB in one line: correct the imaging, composition is equal, arrangement differs, and that arrangement sets "
                  "how Si swells against graphite  (open markers: held-out sites ^ 3e122cbj, s fn0mhxef, D xrv9xvzb)", fontsize=10.5)

@@ -68,11 +68,24 @@ The missing layer was function: given where the Si sits, what happens when it li
 pore phase does not percolate in any 2D section (0 / 31, 3–5 % porosity), so tortuosity is not
 measurable from a slice and is recorded as such rather than reported. What is measurable is the
 swelling budget: grown to its lithiated area, 77–88 % of Si growth lands on graphite, 5–6 % on
-pore. The constrained share is the one functional quantity that differs by batch (B1 < B2 < B3,
-p = 0.009) and it is the lithiation reading of the K15 contact fraction that the fingerprint
-already uses; pore loss (13–25 %) is a function of Si fraction alone, so the high-Si Batch 1
-fields are the pore-closure risk. These columns do not improve batch identification (LOSO 0.71
-vs 0.68, same permutation p); they explain what the identified difference would do.
+pore. Two readings come out of it, with different standing:
+
+- **Pore loss (13–25 %) is robust.** It is a function of Si fraction alone, it reproduces under an
+  independently written segmenter (ρ 0.97, `docs/reliability.md` §3), and it predicts the FEM's
+  pore closure across 34 sites (ρ 0.73; 0.49 after removing Si fraction, `docs/crosswalk.md` §2).
+  Split by depth it follows the fingerprint's depth profile — Batch 2's mid-depth Si depletion is a
+  mid-depth pore-loss minimum (p = 0.003), Batch 3 is flat, Batch 1 bottom-heavy — so the
+  arrangement difference *is* a depth profile of pore-closure risk. The high-Si Batch 1 fields (and
+  held-out 3e122cbj) are the pore-closure risk.
+- **The constrained share is segmenter-dependent.** Under `pmdb.segment` v0r1 it differs by batch
+  (B1 < B2 < B3, p = 0.009) and would be the lithiation reading of K15; under the second segmenter
+  the difference vanishes (p 0.73). It is not the grey-level artefact (harmonised BSE gives the same
+  masks) — it is v0r1's graphite-vs-binder split, a morphological residue rather than a measured
+  phase. Until a binder class is validated it is an observation about one segmentation, not about the
+  electrode.
+
+Neither column improves batch identification (LOSO 0.71 vs 0.68, same permutation p); they
+explain what the identified difference would do.
 
 ## 7. From geometry to mechanics (`docs/fem/literature-review.md`, `analytical_benchmarks/`)
 The FEM review sets out the plane-strain finite-strain lithiation model (eigenstrain, neo-Hookean,
@@ -85,17 +98,27 @@ The chain is consistent — artefacts removed, composition equal, arrangement di
 difference material rather than textural, its functional consequence identified — but every link
 runs on 7 fields per batch. A plug-in power analysis (`outputs/functional/power.csv`) says the
 strongest KPI effects need ≈ 10–15 fields per batch for 80 % power and most need more than 50;
-with the current sample the power to confirm even the largest effect is ≈ 0.6. The two things
-that would move the project most are therefore not models: (i) more Batch 1 and Batch 2 fields,
-and (ii) the Batch 3 microscope session logs (or one Batch 3 sample re-imaged under Batch 1/2
-settings) to close the noise/sharpness question. On the held-back sites the fingerprint assigns
-3e122cbj → Batch 1 (robust under jackknife), fn0mhxef → Batch 3 and xrv9xvzb → Batch 2
-(`outputs/fingerprint/heldout_predictions.csv`, `outputs/overnight/stability/`); the functional
-columns agree on the first and are too weak to vote on the other two — but they do say *why*
-3e122cbj is not Batch 3: twice the Si of any baseline field, crowded (H0 lifetimes a third of
-Batch 3), swelling past the graphite into free space, the functional twin of the two high-Si
-Batch 1 fields; the other two sit inside the Batch 3 range on every functional column
-(`docs/functional.md` §2.5).
+with the current sample the power to confirm even the largest effect is ≈ 0.6. Splitting the
+variance into sampling and field components (`docs/reliability.md` §4) adds the direction: for every
+KPI with a real field-level signal, sampling noise is only 12–22 % of the field variance, so **bigger
+fields do not buy power — only more fields do** (K15 needs ≈ 50 per batch even at infinite area).
+The three things that would move the project most are therefore not models: (i) more Batch 1 and
+Batch 2 fields, (ii) the Batch 3 microscope session logs (or one Batch 3 sample re-imaged under
+Batch 1/2 settings) to close the noise/sharpness question, and (iii) a validated binder / carbon
+class (Inlens topography or a labelled patch set) to decide whether the constrained-swelling
+difference is real.
+
+On the held-back sites every method agrees on two of three (`docs/crosswalk.md` §1): 3e122cbj → Batch 1
+(unanimous, and the only field outside the Batch 3 baseline — off on 8 KPIs beyond its own sampling
+noise: twice the Si, denser, closer-packed, less graphite contact; `docs/acceptance.md` §5),
+fn0mhxef → Batch 3 (6 of 7). xrv9xvzb splits along the story's own fault line: methods that read depth
+arrangement (fingerprint, RF arms with FEM curves) say Batch 2 and its depth-resolved pore loss shows
+the Batch 2 mid-depth dip; scalar composition/geometry methods say Batch 3, and on every resolvable
+KPI it sits inside the Batch 3 cloud — as do fn0mhxef and, apart from the two high-Si fields, most
+Batch 1 and Batch 2 fields: at KPI level an off-baseline field deviates from Batch 3 on as many
+columns (median 1) as a Batch 3 field does from the rest of Batch 3. The per-field "why" has to come
+from arrangement, and should be presented as such.
+
 The functional layer inherits the first link of the chain directly: the segmenter is anchored on
 each image's own p1/p50/p99, so the Batch 3 affine artefact does not reach it — segmenting the
 hybrid-harmonised BSE instead of the raw one gives Si masks with IoU ≥ 0.992 on the four
@@ -133,6 +156,10 @@ swelling QC sheets for all 31 labelled fields: `outputs/functional/figures/swell
 | Representation learning, classification, attribution | `devin/1791038010-v2-representation` | `outputs/v2/RESULTS.md`, `src/v2/` |
 | FEM lithiation model review | `fem-lit-review`, `fem-sim` | `docs/fem/literature-review.md` |
 | Functional morphology | this session | `pmdb/functional.py`, `docs/functional.md`, `outputs/functional/` |
+| Cross-session crosswalk, depth swelling | this session | `docs/crosswalk.md`, `outputs/crosswalk/`, `outputs/functional/depth_swelling.csv` |
+| Reliability: ICC, sectioning, second segmenter, fields vs area | this session | `docs/reliability.md`, `outputs/{reliability,sectioning,segagree}/` |
+| Acceptance vs Batch 3, per-field deviation table | this session | `docs/acceptance.md`, `outputs/acceptance/` |
+| FEM production, two-stage RF classifier, pitch clips | main (fem-sim, classifier, status sessions) | `outputs/fem/`, `docs/fem/results.md`, `docs/classifier/`, `outputs/clips/` |
 
 **Addendum (pretrained spine on the swelling targets, `docs/spine.md`).** Asked whether a frozen vision
 backbone (as in v2) is the right model for the lithiation geometry: no. The constrained share is read off
