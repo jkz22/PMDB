@@ -482,47 +482,52 @@ function pcStory(label, r2, explained) {
 
 R.embeddings = (root) => {
   const P = M.D.probeTest || [], C = M.D.probeContrib || [];
-  const test = P.filter((r) => SITE_STORY[r.site]);
-  root.append(head('Final model · supervised probe on MicroNet patch embeddings', 'Why each test image got its call'));
-  const byPc = {};
-  for (const r of C) (byPc[r.pc] ||= []).push(Math.abs(+r.contribution));
-  const order = Object.keys(byPc).sort((a, b) => {
-    const ea = C.find((r) => r.pc === a).explained === 'True', eb = C.find((r) => r.pc === b).explained === 'True';
-    if (ea !== eb) return ea ? -1 : 1;
-    return byPc[b].reduce((x, y) => x + y) - byPc[a].reduce((x, y) => x + y);
-  });
-  const max = Math.max(...C.map((r) => Math.abs(+r.contribution)));
-  const tip = h('div', { class: 'emb-tip', hidden: true });
-  const grid = h('div', { class: 'emb-grid', style: `grid-template-columns: 220px repeat(${order.length}, minmax(10px, 1fr))` });
-  grid.append(h('div', { class: 'emb-corner' }, 'image · call · confidence'));
-  order.forEach((pc) => grid.append(h('div', { class: 'emb-pc' }, pc.slice(2))));
-  for (const s of test) {
-    const p = +s[`p_${s.call}`];
-    grid.append(h('div', { class: 'emb-row' }, h('b', { class: 'mono' }, s.site), ' ',
-      h('span', { style: `color:${BATCH_COLOR[s.call]};font-weight:650` }, short(s.call)), ` · ${p.toFixed(2)}`));
-    for (const pc of order) {
-      const r = C.find((x) => x.site === s.site && x.pc === pc);
-      const c = +r.contribution, a = Math.min(1, Math.abs(c) / max) ** 0.5;
-      const cell = h('div', { class: 'emb-cell', style: `background:${c >= 0 ? `rgba(201,52,52,${a})` : `rgba(42,120,214,${a})`}` });
-      cell.addEventListener('mouseenter', (e) => {
-        tip.hidden = false;
-        tip.replaceChildren(h('b', {}, `${pc} · ${s.site}`), h('div', {}, pcStory(r.label, +r.r2, r.explained === 'True')),
-          h('div', { class: 'mono' }, `${c >= 0 ? 'pushes toward' : 'pushes away from'} ${short(s.call)} (vs ${short(s.runner_up)}): ${c.toFixed(2)} logit`));
-        tip.style.left = `${e.clientX + 14}px`; tip.style.top = `${e.clientY + 14}px`;
-      });
-      cell.addEventListener('mouseleave', () => { tip.hidden = true; });
-      grid.append(cell);
-    }
-  }
-  root.append(card('64 embedding dimensions × 6 test images — red pushes toward the call, blue against; KPI-explained dimensions on the left',
-    h('div', { class: 'emb-wrap' }, grid)), tip);
+  const test = P.filter((r) => SITE_STORY[r.site]).sort((a, b) => +b[`p_${b.call}`] - +a[`p_${a.call}`]);
+  root.append(head('Final model · supervised probe on MicroNet patch embeddings', 'Test calls and why'));
+  // 1. call cards
   root.append(h('div', { class: 'emb-stories' }, ...test.map((s) => {
+    const p = +s[`p_${s.call}`], ex = +s.explained_share;
+    const bars = h('div', { class: 'pbar' }, ...['Batch_1', 'Batch_2', 'Batch_3'].map((b) =>
+      h('span', { style: `width:${(+s[`p_${b}`] * 100).toFixed(1)}%;background:${BATCH_COLOR[b]}`, title: `${short(b)} ${(+s[`p_${b}`]).toFixed(2)}` })));
     const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
-    return card(`${s.site} → ${short(s.call)} · confidence ${(+s[`p_${s.call}`]).toFixed(2)}`,
+    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}` },
+      h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),
+        h('span', { class: 'call-batch', style: `color:${BATCH_COLOR[s.call]}` }, short(s.call)),
+        h('span', { class: 'call-p' }, p.toFixed(2))),
+      bars,
       h('p', {}, SITE_STORY[s.site]),
-      h('p', { class: 'src' }, `${Math.round(+s.explained_share * 100)}% of the judgement maps onto measured microstructure · strongest: ` +
-        nets.map(([k, v]) => `${v >= 0 ? '+' : '−'}${KPI_NAME[k]}`).join(', ')));
+      h('div', { class: 'chips' }, ...nets.map(([k, v]) => h('span', { class: 'chip' }, `${v >= 0 ? '▲' : '▼'} ${KPI_NAME[k]}`))),
+      h('div', { class: 'split' }, h('span', { style: `width:${ex * 100}%`, class: 'meas' }), h('span', { style: `width:${(1 - ex) * 100}%`, class: 'tex' })),
+      h('div', { class: 'src' }, `${Math.round(ex * 100)}% measured microstructure · ${Math.round((1 - ex) * 100)}% fine texture`));
   })));
+  // 2. compact heatmap: top 12 dims + rest
+  const tot = {};
+  for (const r of C) tot[r.pc] = (tot[r.pc] || 0) + Math.abs(+r.contribution);
+  const top = Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, 12);
+  const cell = (s, pc) => C.find((x) => x.site === s && x.pc === pc);
+  const max = Math.max(...C.filter((r) => top.includes(r.pc)).map((r) => Math.abs(+r.contribution)));
+  const tip = h('div', { class: 'emb-tip', hidden: true });
+  const grid = h('div', { class: 'emb-grid', style: `grid-template-columns: 110px repeat(${top.length + 1}, minmax(54px, 1fr))` });
+  grid.append(h('div', {}));
+  top.forEach((pc) => { const r = C.find((x) => x.pc === pc); grid.append(h('div', { class: 'emb-pc', title: pcStory(r.label, +r.r2, r.explained === 'True') },
+    pc, h('br'), r.explained === 'True' ? r.label.split(',')[0].replace('+', '↑ ').replace('-', '↓ ') : 'texture')); });
+  grid.append(h('div', { class: 'emb-pc' }, 'other 52', h('br'), 'dims'));
+  for (const s of test) {
+    grid.append(h('div', { class: 'emb-row' }, h('b', { class: 'mono' }, s.site), h('br'), h('span', { style: `color:${BATCH_COLOR[s.call]}` }, short(s.call))));
+    const addCell = (c, story, label) => {
+      const a = Math.min(1, Math.abs(c) / max) ** 0.6;
+      const n = h('div', { class: 'emb-cell', style: `background:${c >= 0 ? `rgba(201,52,52,${a})` : `rgba(42,120,214,${a})`}` }, c.toFixed(1));
+      n.addEventListener('mouseenter', (e) => { tip.hidden = false; tip.replaceChildren(h('b', {}, `${label} · ${s.site}`), h('div', {}, story),
+        h('div', { class: 'mono' }, `${c >= 0 ? 'pushes toward' : 'pushes away from'} ${short(s.call)} vs ${short(s.runner_up)}: ${c.toFixed(2)}`));
+        tip.style.left = `${e.clientX + 14}px`; tip.style.top = `${e.clientY + 14}px`; });
+      n.addEventListener('mouseleave', () => { tip.hidden = true; });
+      grid.append(n);
+    };
+    top.forEach((pc) => { const r = cell(s.site, pc); addCell(+r.contribution, pcStory(r.label, +r.r2, r.explained === 'True'), pc); });
+    const rest = C.filter((x) => x.site === s.site && !top.includes(x.pc)).reduce((t, x) => t + +x.contribution, 0);
+    addCell(rest, 'Sum of the remaining 52 embedding dimensions, mostly fine texture.', 'other dims');
+  }
+  root.append(card('Which embedding dimensions drove each call (red = toward the call, blue = against; hover for meaning)', h('div', { class: 'emb-wrap' }, grid)), tip);
 };
 
 buildShell();
