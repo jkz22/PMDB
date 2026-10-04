@@ -1,0 +1,4 @@
+batch,site,arm,extra_features,assigned,confidence,p_Batch_1,p_Batch_2,p_Batch_3
+Batch_heldout,3e122cbj,X1,,Batch_1,0.90373194,0.90373194,0.0063462863,0.08992176
+Batch_heldout,fn0mhxef,X1,,Batch_2,0.7017225,0.18429928,0.7017225,0.113978274
+Batch_heldout,xrv9xvzb,X1,,Batch_2,0.7142312,0.02065355,0.7142312,0.2651153

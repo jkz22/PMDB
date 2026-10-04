@@ -41,6 +41,7 @@ from sklearn.preprocessing import StandardScaler  # noqa: E402
 from pmdb import clean as C  # noqa: E402
 from pmdb import harmonise as H  # noqa: E402
 from pmdb import harmonise_ext as X  # noqa: E402
+from pmdb import harmonise_shift as S  # noqa: E402
 from pmdb.io import get_cache_root, list_clean_sites  # noqa: E402
 from pmdb.segment import V0_PARAMS, segment_bse  # noqa: E402
 
@@ -79,6 +80,8 @@ def _load(method: str, batch: str, site: str, raw: dict, hybrid_root: Path | Non
         # LUT route: apply the per-site LUT to the same raw grey (so masks/coordinates coincide)
         lut = H.load_lut(hybrid_root, "hybrid", batch, site)
         return H.apply_lut(raw["image"], lut), raw["mask"]
+    if method in S.METHODS:
+        return S.load_shift(batch, site, method)
     img, msk = X.load_ext(batch, site, method)
     return img, msk
 
@@ -144,7 +147,32 @@ def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict
     out["seg_f_pore"] = float(masks.pore[v0].mean())
     out["seg_f_si"] = float(masks.si[v0].mean())
     out["mean_abs_change"] = float(np.mean(np.abs(img[..., 0][v0].astype(np.int16) - raw_img[..., 0][v0].astype(np.int16))))
+    for c, d in enumerate(X.DETECTORS):
+        out.update({f"{d}_{k}": v for k, v in _texture(img[..., c], valid[c]).items()})
     return out
+
+
+TEXTURE = ("hf_ratio", "noise_sigma", "grad_p90", "edge_sigma_px")
+
+
+def _texture(ch: np.ndarray, valid: np.ndarray) -> dict[str, float]:
+    """Non-intensity (shift) statistics of one detector, on the invalid-filled image:
+    hf_ratio = radial amplitude 0.35–0.5 c/px over 0.05–0.15 c/px (blur/noise texture),
+    noise_sigma = robust sigma of the Laplacian (pixel noise), grad_p90 = 90th percentile of the
+    gradient magnitude (sharpness), edge_sigma_px = fitted Gaussian blur width from the amplitude
+    roll-off between 0.1 and 0.4 c/px (log-amplitude slope vs f^2)."""
+    f = S.fill_invalid(ch, valid)
+    a = S.radial_amplitude(f, valid)
+    fc = S.bin_centres()
+    lo, hi = a[(fc >= 0.05) & (fc < 0.15)].mean(), a[(fc >= 0.35) & (fc <= 0.5)].mean()
+    sel = (fc >= 0.1) & (fc <= 0.4)
+    slope = np.polyfit(fc[sel] ** 2, np.log(np.maximum(a[sel], 1e-9)), 1)[0]  # log A ≈ -2 pi^2 sigma^2 f^2
+    sig = float(np.sqrt(max(-slope, 0.0) / (2 * np.pi ** 2)))
+    lap = ndimage.laplace(f)
+    gy, gx = np.gradient(f)
+    g = np.hypot(gx, gy)
+    return {"hf_ratio": float(hi / lo), "noise_sigma": float(1.4826 * np.median(np.abs(lap[valid] - np.median(lap[valid]))) / np.sqrt(20)),
+            "grad_p90": float(np.percentile(g[valid], 90)), "edge_sigma_px": sig}
 
 
 def _shortcut_pred(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> np.ndarray | None:
@@ -201,6 +229,16 @@ def _summarise(site_df: pd.DataFrame) -> pd.DataFrame:
         row["shortcut_batch_acc"] = _shortcut(d, cols, d.batch.to_numpy())
         row["shortcut_batch3_recall"] = _shortcut_recall(d, cols, (d.batch == "Batch_3").to_numpy())
         row["shortcut_strong_vs_rest_b3"] = _shortcut(b3, cols, (b3.group == "strong").to_numpy())
+        tcols = [f"{d}_{k}" for d in X.DETECTORS for k in TEXTURE]
+        for det in X.DETECTORS:
+            row[f"hf_ratio_gap_strong_{det}"] = float(strong[f"{det}_hf_ratio"].mean() / rest[f"{det}_hf_ratio"].mean() - 1)
+            row[f"hf_ratio_cv_{det}"] = float(d[f"{det}_hf_ratio"].std() / d[f"{det}_hf_ratio"].mean())
+            row[f"noise_sigma_cv_{det}"] = float(d[f"{det}_noise_sigma"].std() / d[f"{det}_noise_sigma"].mean())
+            row[f"edge_sigma_sd_{det}"] = float(d[f"{det}_edge_sigma_px"].std())
+        row["texture_shortcut_batch_acc"] = _shortcut(d, tcols, d.batch.to_numpy())
+        row["texture_shortcut_strong_vs_rest_all"] = _shortcut(d, tcols, (d.group == "strong").to_numpy())
+        row["texture_shortcut_batch3_recall"] = _shortcut_recall(d, tcols, (d.batch == "Batch_3").to_numpy())
+        row["all_shortcut_batch_acc"] = _shortcut(d, cols + tcols, d.batch.to_numpy())
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -451,7 +489,7 @@ def main() -> None:
 
 def _figures(out: Path, methods, sites, hs, hrows, loader, site_df, summary) -> None:
     print("  figures", flush=True)
-    ext_methods = [m for m in methods if m in ("none", "nyul", "basic")]
+    ext_methods = [m for m in methods if m in ("none", "nyul", "basic") or m in S.METHODS]
     for det in range(3):
         _fig_effects(sites, ext_methods, loader, det, out / f"effects_{X.DETECTORS[det]}.png")
     _fig_examples(loader, out / "effects_examples.png", hs)

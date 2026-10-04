@@ -1,0 +1,63 @@
+arm,batch,site,true,xgb_assigned,fingerprint_assigned,category
+X2e,Batch_1,4ih2ggld,Batch_1,Batch_1,Batch_1,both right
+X2e,Batch_1,5n1q8atc,Batch_1,Batch_1,Batch_3,only XGB right
+X2e,Batch_1,f1vzngrs,Batch_1,Batch_2,Batch_1,only fingerprint right
+X2e,Batch_1,ffwubibz,Batch_1,Batch_3,Batch_3,both wrong
+X2e,Batch_1,fzrt2k6r,Batch_1,Batch_2,Batch_1,only fingerprint right
+X2e,Batch_1,iv6g2oq0,Batch_1,Batch_2,Batch_1,only fingerprint right
+X2e,Batch_1,uhdslk0o,Batch_1,Batch_2,Batch_1,only fingerprint right
+X2e,Batch_2,3806gxp0,Batch_2,Batch_1,Batch_2,only fingerprint right
+X2e,Batch_2,avn74qx1,Batch_2,Batch_3,Batch_2,only fingerprint right
+X2e,Batch_2,b3esycq1,Batch_2,Batch_1,Batch_1,both wrong
+X2e,Batch_2,epqdaau9,Batch_2,Batch_1,Batch_1,both wrong
+X2e,Batch_2,i9jiqjwl,Batch_2,Batch_1,Batch_3,both wrong
+X2e,Batch_2,r17byphk,Batch_2,Batch_1,Batch_2,only fingerprint right
+X2e,Batch_2,rxax5ozo,Batch_2,Batch_1,Batch_1,both wrong
+X2e,Batch_3,0grcilhi,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,71vgq3fw,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,9luzk4jm,Batch_3,Batch_2,Batch_3,only fingerprint right
+X2e,Batch_3,cfe5vt7s,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,hawkfj64,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,hzumfsms,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,kbdh4tri,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,mgxahqnk,Batch_3,Batch_3,Batch_1,only XGB right
+X2e,Batch_3,pl8uabbv,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,ptg8lmto,Batch_3,Batch_2,Batch_2,both wrong
+X2e,Batch_3,tuy3zymq,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,ufdvpb81,Batch_3,Batch_2,Batch_1,both wrong
+X2e,Batch_3,utfgcjfa,Batch_3,Batch_3,Batch_2,only XGB right
+X2e,Batch_3,vc2whyaq,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,x77cy643,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,x7u69zsw,Batch_3,Batch_3,Batch_3,both right
+X2e,Batch_3,xgj4xftb,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_1,4ih2ggld,Batch_1,Batch_1,Batch_1,both right
+X3e,Batch_1,5n1q8atc,Batch_1,Batch_3,Batch_3,both wrong
+X3e,Batch_1,f1vzngrs,Batch_1,Batch_2,Batch_1,only fingerprint right
+X3e,Batch_1,ffwubibz,Batch_1,Batch_3,Batch_3,both wrong
+X3e,Batch_1,fzrt2k6r,Batch_1,Batch_3,Batch_1,only fingerprint right
+X3e,Batch_1,iv6g2oq0,Batch_1,Batch_3,Batch_1,only fingerprint right
+X3e,Batch_1,uhdslk0o,Batch_1,Batch_3,Batch_1,only fingerprint right
+X3e,Batch_2,3806gxp0,Batch_2,Batch_3,Batch_2,only fingerprint right
+X3e,Batch_2,avn74qx1,Batch_2,Batch_3,Batch_2,only fingerprint right
+X3e,Batch_2,b3esycq1,Batch_2,Batch_1,Batch_1,both wrong
+X3e,Batch_2,epqdaau9,Batch_2,Batch_3,Batch_1,both wrong
+X3e,Batch_2,i9jiqjwl,Batch_2,Batch_1,Batch_3,both wrong
+X3e,Batch_2,r17byphk,Batch_2,Batch_2,Batch_2,both right
+X3e,Batch_2,rxax5ozo,Batch_2,Batch_3,Batch_1,both wrong
+X3e,Batch_3,0grcilhi,Batch_3,Batch_2,Batch_3,only fingerprint right
+X3e,Batch_3,71vgq3fw,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,9luzk4jm,Batch_3,Batch_2,Batch_3,only fingerprint right
+X3e,Batch_3,cfe5vt7s,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,hawkfj64,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,hzumfsms,Batch_3,Batch_2,Batch_3,only fingerprint right
+X3e,Batch_3,kbdh4tri,Batch_3,Batch_1,Batch_3,only fingerprint right
+X3e,Batch_3,mgxahqnk,Batch_3,Batch_1,Batch_1,both wrong
+X3e,Batch_3,pl8uabbv,Batch_3,Batch_1,Batch_3,only fingerprint right
+X3e,Batch_3,ptg8lmto,Batch_3,Batch_3,Batch_2,only XGB right
+X3e,Batch_3,tuy3zymq,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,ufdvpb81,Batch_3,Batch_2,Batch_1,both wrong
+X3e,Batch_3,utfgcjfa,Batch_3,Batch_3,Batch_2,only XGB right
+X3e,Batch_3,vc2whyaq,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,x77cy643,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,x7u69zsw,Batch_3,Batch_3,Batch_3,both right
+X3e,Batch_3,xgj4xftb,Batch_3,Batch_2,Batch_3,only fingerprint right

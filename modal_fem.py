@@ -143,7 +143,7 @@ def budget_check(mode: str, tag: str, items: list, cpu: float, memory_mb: int, t
     """P22 rules (a)-(d). Returns "go" or "skip"; raises SystemExit(3) on a cap refusal."""
     budget = _load_budget()
     budget.setdefault("launched", [])
-    if mode in ("probe", "unit", "bench", "window"):
+    if mode in ("probe", "unit", "bench", "window", "refeature"):
         if mode == "window" and tag.startswith("stage2") and budget["drop_stage2"]:
             print("stage2 dropped by budget")
             return "skip"
@@ -286,6 +286,49 @@ def run_case_remote(case: dict, tag: str, threads: int, crop_um: float = 0.0, re
                          "heldout": batch == "Batch_heldout", "wall_s": time.time() - t0,
                          "error": f"{type(e).__name__}: {e}"},
                 "site_rows": [], "tile_rows": [], "gif": None}
+
+
+REFEATURE_CPU, REFEATURE_MEM, REFEATURE_TIMEOUT = 2.0, 8192, 1800
+
+
+@app.function(cpu=REFEATURE_CPU, memory=REFEATURE_MEM, timeout=REFEATURE_TIMEOUT, retries=0,
+              volumes={"/out": out_vol})
+def refeature_case(case: dict, tag: str, z_edge_um: float) -> dict:
+    """Re-reduce one stored production fields npz with z_edge_um excluded; write curves under /results/<tag>."""
+    batch, site, orientation = case["batch"], case["site"], case["orientation"]
+    t0 = time.time()
+    try:
+        from pmdb.fem.config import load_params
+        from pmdb.fem.features import run_curves
+        from pmdb.fem.result import load_npz
+
+        out_vol.reload()
+        stale = Path(_case_path("/out/results", tag, orientation, batch, site))
+        if stale.exists():  # a failed rerun must not leave an older successful result behind
+            stale.unlink()
+            out_vol.commit()
+        r = load_npz(Path(f"/out/fields/full/{orientation}/{batch}__{site}.npz"))
+        site_rows, tile_rows = run_curves(r, orientation, load_params(), window=False, z_edge_um=z_edge_um)
+        key = {"batch": batch, "site": site, "heldout": batch == "Batch_heldout", "orientation": orientation}
+        for row in site_rows + tile_rows:
+            row.update(key)
+        meta = {**key, "z_edge_um": z_edge_um, "H": int(r.labels.shape[0]), "W": int(r.labels.shape[1]),
+                "wall_s": time.time() - t0}
+        p = Path(_case_path("/out/results", tag, orientation, batch, site))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps({"meta": meta, "site_rows": site_rows, "tile_rows": tile_rows}))
+        out_vol.commit()
+        return meta
+    except Exception as e:  # noqa: BLE001
+        err = f"{type(e).__name__}: {e}"
+        try:
+            p = Path(_case_path("/out/results", tag, orientation, batch, site))
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(json.dumps({"meta": {**case, "error": err}, "site_rows": [], "tile_rows": []}))
+            out_vol.commit()
+        except Exception:  # noqa: BLE001
+            pass
+        return {**case, "wall_s": time.time() - t0, "error": err}
 
 
 @app.function(cpu=0.25, memory=1024, timeout=86400, retries=0, volumes={"/out": out_vol})
@@ -624,6 +667,36 @@ def _mode_bench(cpu: float, memory: int, timeout: int) -> int:
     return 1 if any(d["meta"].get("error") for tg in ("bench", "bench_cpu8") for d in _load_results(tg)) else 0
 
 
+def _mode_refeature(sites: str, tag: str, z_edge_um: float) -> int:
+    tag = tag or "edge5"
+    cases = [c for o in ("bottom", "top") for c in _manifest_cases(o, sites)]
+    if budget_check("refeature", tag, cases, REFEATURE_CPU, REFEATURE_MEM, REFEATURE_TIMEOUT) == "skip":
+        return 0
+    t0 = time.time()
+    outs = list(refeature_case.starmap([({k: c[k] for k in ("batch", "site", "orientation")}, tag, z_edge_um)
+                                        for c in cases], return_exceptions=True))
+    stamp = _utc()
+    rows, bad = [], []
+    for c, o in zip(cases, outs):
+        err = f"{type(o).__name__}: {o}" if isinstance(o, BaseException) else o.get("error")
+        wall = float(REFEATURE_TIMEOUT if isinstance(o, BaseException) else o["wall_s"])
+        if err:
+            bad.append(f"{c['batch']}/{c['site']}/{c['orientation']}: {err}")
+        rows.append(dict(utc=stamp, mode="refeature", tag=tag, batch=c["batch"], site=c["site"],
+                         orientation=c["orientation"], attempt=1, cpu=REFEATURE_CPU, memory_mb=REFEATURE_MEM,
+                         timeout_s=REFEATURE_TIMEOUT, wall_s=round(wall, 1),
+                         cost_usd=round(cost_usd(wall, REFEATURE_CPU, REFEATURE_MEM), 4),
+                         status="error" if err else "ok"))
+    append_ledger(rows)
+    got = _pull(modal.Volume.from_name("pmdb-fem-out"), f"/results/{tag}", FEM_DIR / "results" / tag, ".json")
+    print(f"refeature {tag}: {len(cases)} cases, {len(bad)} failed, {len(got)} result files pulled, "
+          f"wall {time.time() - t0:.0f}s, ledger total ${ledger_total():.3f}")
+    for b in bad:
+        print("FAILED", b)
+    print(f"SYNC DONE {tag}")
+    return 1 if bad else 0
+
+
 def _mode_full(orientation: str, sites: str, tag: str, cpu: float, memory: int, timeout: int,
                solver_overrides: str) -> int:
     if orientation not in ("bottom", "top"):
@@ -648,7 +721,7 @@ def _mode_full(orientation: str, sites: str, tag: str, cpu: float, memory: int, 
 @app.local_entrypoint()
 def main(mode: str, k: str = "", orientation: str = "both", sites: str = "", crop_um: float = 0.0,
          res_nm: float = 0.0, tag: str = "", cpu: float = 4.0, memory: int = 16384, timeout: int = 7200,
-         solver_overrides: str = ""):
+         solver_overrides: str = "", z_edge_um: float = 5.0):
     if mode == "probe":
         code = _mode_probe()
     elif mode == "unit":
@@ -659,6 +732,8 @@ def main(mode: str, k: str = "", orientation: str = "both", sites: str = "", cro
         code = _mode_bench(cpu, 16384, 21600)
     elif mode == "full":
         code = _mode_full(orientation, sites, tag, cpu, memory, timeout, solver_overrides)
+    elif mode == "refeature":
+        code = _mode_refeature(sites, tag, z_edge_um)
     elif mode == "diag":
         runs = json.loads(solver_overrides)
         t0 = time.time()

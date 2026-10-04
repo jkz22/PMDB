@@ -1,0 +1,34 @@
+[
+ {
+  "table": "fingerprint",
+  "n_features": 16,
+  "session_loo_acc_before": 0.5806451612903226,
+  "strong_vs_rest_loo_acc_before": 0.8064516129032258,
+  "batch_loo_acc_logreg_before": 0.5806451612903226,
+  "fingerprint_loo_acc_before": 0.6774193548387096,
+  "session_loo_acc_after": 0.45161290322580644,
+  "strong_vs_rest_loo_acc_after": 0.8064516129032258,
+  "batch_loo_acc_logreg_after": 0.6451612903225806,
+  "fingerprint_loo_acc_after": 0.5806451612903226,
+  "session_sizes": {
+   "clean": 22,
+   "mild": 5,
+   "strong": 4
+  }
+ },
+ {
+  "table": "kpis",
+  "n_features": 42,
+  "session_loo_acc_before": 0.6451612903225806,
+  "strong_vs_rest_loo_acc_before": 0.967741935483871,
+  "batch_loo_acc_logreg_before": 0.5483870967741935,
+  "session_loo_acc_after": 0.45161290322580644,
+  "strong_vs_rest_loo_acc_after": 0.7419354838709677,
+  "batch_loo_acc_logreg_after": 0.6451612903225806,
+  "session_sizes": {
+   "clean": 22,
+   "mild": 5,
+   "strong": 4
+  }
+ }
+]

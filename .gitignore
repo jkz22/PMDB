@@ -18,3 +18,9 @@ outputs/clean*/qc_report.html
 
 # imported harmonisation pipelines: half-res arrays are rebuilt with scripts/build_harmonise_ext.py (~6 min)
 cache*/harmonised_ext/*/half/*.npz
+
+# shift-harmonised arrays are rebuilt with scripts/build_harmonise_shift.py
+cache/harmonised_shift/*/half/*.npz
+cache_heldout/harmonised_shift/*/half/*.npz
+cache/harmonised_shift/*/model.npz
+cache_heldout/harmonised_shift/*/model.npz
