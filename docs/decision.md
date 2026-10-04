@@ -20,6 +20,15 @@ separate material and imaging columns**, a **per-field explanation that quotes o
 the field's measurement noise**, and a **lithiation-consequence reading (pore loss) validated against the
 FEM** — all three label-independent. Do not report a three-class batch accuracy from this dataset.
 
+*Addendum (`docs/parents.md`).* The 34 fields are crops of 13 parent images and the pixels confirm it
+(adjacent, non-overlapping tiles; adjacent tiles of one image carry different labels). Under
+leave-one-parent-out the fingerprint is unchanged on the 31 fields (0.677; its drop to 0.47 on 34 is the
+three truths), the graphite-grey reader of §1c collapses (0.74 → 0.58: it read the parent), KPI trees
+fall below chance (0.16), and the pore-floor grey level is the only quantity that holds (0.68 everywhere).
+The best single two-cutpoint rule for all 34 labels over 246 scalars is the SE-detector dark level
+(27/34, max-stat p 0.009), compatible with 12/13 within-parent splits; no morphological feature competes.
+The labels follow pore-floor brightness between and within parents.
+
 ## 1. XGBoost on the reliable set (`scripts/run_xgb_reliable.py`, `outputs/xgb/`)
 
 Asked directly: does a non-linear learner on *only the reliable inputs* beat the robust naive-Bayes

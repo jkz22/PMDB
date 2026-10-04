@@ -224,3 +224,20 @@ co-varies with the imaging session at least as much as with any mask-derived qua
 deliverable is an off/baseline card with separate *material* and *imaging* columns (3e122cbj: off/off;
 fn0mhxef: baseline/off; xrv9xvzb: baseline/baseline), no three-class accuracy, and one question to the
 organiser: which feature were the batches built from?
+
+## 10. The parent images (`docs/parents.md`)
+
+Main's `outputs/parent_groups.csv` supplied the last missing piece: the 31 fields are crops of 13 wider
+electrode images, and the pixels prove it — 15 same-key pairs are adjacent, non-overlapping tiles
+(edge-strip r 0.54–0.79; 0 of 527 cross-key controls), and the reconstructed tile order puts different
+labels on neighbouring tiles of one image (`5n1q8atc (B1) – 3e122cbj (B2) – 4ih2ggld (B1)`). An electrode
+does not change batch every 100 µm, so the label is a per-crop quantity. Re-scoring with parents held out
+together, the arrangement fingerprint of §3 was not inflated by siblings (0.677 either way on 31; the drop
+to 0.47 on 34 is the three truths), the graphite-grey reader of §5 was (0.74 → 0.58), KPI trees anti-predict
+across parents (0.16), and only the pore-floor grey level holds (0.68). Hunting the organiser's feature over
+246 scalars, the SE-detector dark level reproduces 27/34 labels (max-stat p 0.009) and orders 12 of 13
+within-parent splits, which no morphological feature does; thirteen pairs cannot prove it is *the* feature,
+but every alternative we compute is weaker. The chain therefore ends where §9 pointed: the batches track how
+bright the pore floors are, between and within parent images; the material readings (§2, §6, §7) stand as
+label-independent descriptions of the electrode, and the question to the organiser is now concrete — was
+the grouping feature an intensity statistic computed on each crop?
