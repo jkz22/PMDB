@@ -103,6 +103,10 @@
     font-family: ui-monospace, Consolas, monospace; background: var(--surface-1);
     border: 1px solid var(--border); border-radius: 5px; padding: .1em .45em; font-size: .85em;
   }
+  /* six-card rows wrap to 3 per line instead of overflowing the slide (Devin review on #131) */
+  .cards { flex-wrap: wrap; align-content: flex-start; }
+  .cards .call { flex: 1 1 calc(33.333% - 1.6vw); min-width: 0; }
+  .cards .call .batch { font-size: min(8vh, 4.2vw); }
 </style>
 </head>
 <body>
