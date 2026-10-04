@@ -451,7 +451,7 @@ def main() -> None:
 
     if args.figures_only:
         site_df = pd.read_csv(out / "site_metrics.csv")
-        summary = pd.read_csv(out / "summary.csv")
+        summary = pd.read_csv(out / "summary.csv") if (out / "summary.csv").exists() else _summarise(site_df)
         hrows = pd.read_csv(out / "heldout_metrics.csv").to_dict("records") if (out / "heldout_metrics.csv").exists() else []
         hs = list_clean_sites(heldout=True) if hrows else None
         _figures(out, methods, sites, hs, hrows, loader, site_df, summary)
@@ -506,7 +506,7 @@ def resolve_methods(methods, figures_only: bool, out: Path) -> list[str]:
     if figures_only:
         summ = out / "summary.csv"
         if not summ.exists():
-            raise SystemExit(f"--figures-only: cannot determine methods, {summ} is missing; pass --methods")
+            raise SystemExit(f"--figures-only: cannot determine methods, {summ} is missing; pass --methods (site_metrics.csv is then required and the summary is recomputed from it)")
         return list(pd.read_csv(summ)["method"])
     return ["none", "nyul", "basic", "hybrid"]
 
