@@ -118,9 +118,17 @@
   <h1>Which batch is this sample from?</h1>
 </section>
 
-<!-- 2 · THE TRAP -->
+<!-- 2 · WHY IT'S HARD -->
 <section class="slide">
-  <div class="kicker">2 · The trap</div>
+  <div class="kicker">2 · Why it&rsquo;s hard</div>
+  <h1>The imaging varies more than the material.</h1>
+  <figure><img src="../../outputs/slides/particle_closeups.webp" alt="The same kind of Si-rich particle across six sites and three co-registered detectors: edge sharpness, noise and brightness all differ per site"></figure>
+  <div class="foot"><span>Six sites, three co-registered detectors, native 25 nm pixels, each centred on a Si-rich particle. Edge width runs 52&ndash;90 nm and mean grey shifts from &minus;2.5 to +3.3 between sites &mdash; acquisition differences a model can latch onto long before it sees the material.</span><span>per-site stats: outputs/clean/summary.csv</span></div>
+</section>
+
+<!-- 3 · THE TRAP -->
+<section class="slide">
+  <div class="kicker">3 · The trap</div>
   <h1>The obvious model learns the microscope, not the material.</h1>
   <div class="tiles fill">
     <div class="tile">
@@ -138,16 +146,16 @@
   </div>
 </section>
 
-<!-- 3 · THE AMOUNT -->
+<!-- 4 · THE AMOUNT -->
 <section class="slide">
-  <div class="kicker">3 · The amount</div>
+  <div class="kicker">4 · The amount</div>
   <h1>Every batch has the same amount of silicon.</h1>
   <figure><img src="../../outputs/slides/kpi_distributions_by_batch.png" alt="Per-batch porosity and Si fraction distributions, analytical benchmark vs materials classifier"></figure>
 </section>
 
-<!-- 4 · THE SWELLING -->
+<!-- 5 · THE SWELLING -->
 <section class="slide">
-  <div class="kicker">4 · The swelling</div>
+  <div class="kicker">5 · The swelling</div>
   <h1>So every batch swells the same.</h1>
   <div class="gifs">
     <div class="col"><figure><img src="../../outputs/fem/free_lateral/gifs/Batch_1__5n1q8atc.gif" alt="Simulated charge 0 to 100%, Batch 1 site 5n1q8atc"></figure><div class="cap">Batch 1</div></div>
@@ -156,31 +164,16 @@
   </div>
 </section>
 
-<!-- 5 · ROUND 1 -->
+<!-- 6 · THE MODEL -->
 <section class="slide">
-  <div class="kicker">5 · Round 1</div>
-  <h1>Three held-out images, scored against the revealed truth.</h1>
+  <div class="kicker">6 · The model</div>
+  <h1>A linear probe on MicroNet patch embeddings.</h1>
   <div class="cards">
-    <div class="call"><div class="site">fn0mhxef</div><div class="batch">Batch 2</div><div class="why">true <b>Batch 1</b> &nbsp;&#10007;</div></div>
-    <div class="call"><div class="site">xrv9xvzb</div><div class="batch">Batch 3</div><div class="why">true <b>Batch 3</b> &nbsp;&#10003;</div></div>
-    <div class="call"><div class="site">3e122cbj</div><div class="batch">Batch 1</div><div class="why">true <b>Batch 2</b> &nbsp;&#10007;</div></div>
+    <div class="call"><div class="batch">See</div><div class="why">Frozen MicroNet embeddings of image patches &mdash; microstructure texture, not grey levels.</div></div>
+    <div class="call"><div class="batch">Decide</div><div class="why">A single linear layer on top. No capacity to memorise sites.</div></div>
+    <div class="call"><div class="batch">Prove</div><div class="why">Validated leave-one-<em>parent</em>-out, so sibling crops never leak: accuracy 0.71, permutation p = 0.005.</div></div>
   </div>
-  <div class="foot"><span>The model&rsquo;s calls, each made with the image&rsquo;s entire parent electrode excluded from training. These labels were hard for everyone: no team scored 3/3, one scored 2/3.</span><span>outputs/probe_explain/site_explanations.csv</span></div>
-</section>
-
-<!-- 6 · ROUND 2 -->
-<section class="slide">
-  <div class="kicker">6 · Round 2</div>
-  <h1>Six new images.</h1>
-  <div class="cards">
-    <div class="call"><div class="site">0eryguqq</div><div class="batch">Batch 3</div></div>
-    <div class="call"><div class="site">fhwrjtet</div><div class="batch">Batch 3</div></div>
-    <div class="call"><div class="site">fspqbkxl</div><div class="batch">Batch 2</div></div>
-    <div class="call"><div class="site">y59rxmxl</div><div class="batch">Batch 1</div></div>
-    <div class="call"><div class="site">soo2ax3r</div><div class="batch">Batch 1</div></div>
-    <div class="call"><div class="site">4hq27w4c</div><div class="batch">Batch 2</div></div>
-  </div>
-  <div class="foot"><span>Linear probe on MicroNet patch embeddings &mdash; validated leave-one-<em>parent</em>-out, so no sibling-crop leakage: accuracy 0.71, permutation p = 0.005.</span><span>docs/final_predictions.md &middot; outputs/probe_explain/</span></div>
+  <div class="foot"><span>One model for both rounds of unknowns; every call ships with a KPI-level explanation of what the probe saw.</span><span>docs/final_predictions.md &middot; outputs/probe_explain/</span></div>
 </section>
 
 <section class="slide">

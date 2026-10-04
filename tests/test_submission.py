@@ -55,3 +55,14 @@ def test_check_matches_committed_facts():
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "facts.json matches outputs/" in result.stdout
+
+
+def test_committed_outputs_match_templates():
+    """Generated files must equal their template render; edit demo/submission/templates/, not the output."""
+    import json
+
+    import build
+
+    rendered = build.render_outputs(build.display(json.loads(build.FACTS_JSON.read_text())))
+    drifted = [str(t) for t, text in rendered.items() if (ROOT / t).read_text() != text]
+    assert not drifted, f"edited without updating demo/submission/templates/: {drifted}"
