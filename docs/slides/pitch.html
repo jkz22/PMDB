@@ -188,22 +188,49 @@
       <p style="font-size:min(3.8vh,2vw)"><b>Leave-one-parent-out: accuracy 0.71 &middot; p = 0.005.</b></p>
     </div>
   </div>
-  <div style="display:flex;align-items:center;justify-content:center;gap:0.9vw;margin-top:7vh;font-size:min(2.9vh,1.5vw);font-weight:600;flex-wrap:nowrap">
-    <span style="padding:1.3vh 1.3vw;border:2px solid #d0d7de;border-radius:12px;white-space:nowrap">Segmentation</span>
-    <span style="color:#8b949e">&rarr;</span>
-    <span style="padding:1.3vh 1.3vw;border:2px solid #0969da;border-radius:12px;color:#0969da;white-space:nowrap">MicroNet embeddings</span>
-    <span style="color:#8b949e">&rarr;</span>
-    <span style="padding:1.3vh 1.3vw;border:2px solid #d0d7de;border-radius:12px;white-space:nowrap">PCA</span>
-    <span style="color:#8b949e">&rarr;</span>
-    <span style="padding:1.3vh 1.3vw;border:2px solid #d0d7de;border-radius:12px;white-space:nowrap">Logistic regression</span>
-    <span style="color:#8b949e">&rarr;</span>
-    <span style="padding:1.3vh 1.3vw;border:2px solid #d0d7de;border-radius:12px;white-space:nowrap">Consensus</span>
+</section>
+
+<!-- 8 · THE ARCHITECTURE -->
+<section class="slide">
+  <div class="kicker">8 · Under the hood</div>
+  <h1>Five stages. One is NASA&rsquo;s. Four are ours.</h1>
+  <div style="display:flex;align-items:stretch;justify-content:center;gap:0.8vw;margin-top:5vh">
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
+      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">01 &middot; SEE</div>
+      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">Patches</div>
+      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">224 px &middot; 11 &micro;m fields<br>BSE + InLens, harmonised grey</div>
+    </div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
+    <div style="flex:1;border:2px solid #0969da;border-radius:14px;padding:2vh 1vw;background:#f0f6ff">
+      <div style="font-size:min(2.2vh,1.1vw);color:#0969da;font-weight:700">02 &middot; EMBED</div>
+      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0;color:#0969da">MicroNet</div>
+      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">NASA ResNet-50 v1.1, frozen<br>layers 2+3 &rarr; 1536-d</div>
+    </div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
+      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">03 &middot; CENTRE</div>
+      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">Parent-mean</div>
+      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">subtract each parent&rsquo;s mean<br>&mdash; imaging offsets cancel</div>
+    </div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
+      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">04 &middot; DECIDE</div>
+      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">PCA + linear</div>
+      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">64 components &rarr; logistic head<br>batch-balanced weights</div>
+    </div>
+    <div style="align-self:center;color:#8b949e;font-size:min(3vh,1.5vw)">&rarr;</div>
+    <div style="flex:1;border:2px solid #d0d7de;border-radius:14px;padding:2vh 1vw;background:#fff">
+      <div style="font-size:min(2.2vh,1.1vw);color:#8b949e;font-weight:700">05 &middot; AGREE</div>
+      <div style="font-size:min(3.2vh,1.6vw);font-weight:800;margin:0.8vh 0">Consensus</div>
+      <div style="font-size:min(2.4vh,1.2vw);color:#57606a;line-height:1.5">patch votes pooled<br>&rarr; one call per image</div>
+    </div>
   </div>
+  <div class="foot"><span>Stage 03 is the twist slide turned into code: subtracting each parent&rsquo;s mean embedding erases per-session imaging fingerprints before the classifier ever votes. Trained and scored leave-one-parent-out.</span><span>pmdb/patch_probe.py &middot; modal_patch_mil.py</span></div>
 </section>
 
 <!-- 8 · OUTRO -->
 <section class="slide">
-  <div class="kicker">8 · 48 hours</div>
+  <div class="kicker">9 · 48 hours</div>
   <h1>How it was built.</h1>
   <figure><video src="../../outputs/clips/repo_progress_cat.mp4" loop muted playsinline style="max-width:100%;max-height:70vh"></video></figure>
   <div class="foot"><span>The repository over the hackathon &mdash; thank you!</span><span>github.com/jkz22/PMDB</span></div>
