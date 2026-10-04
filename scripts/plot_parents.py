@@ -32,11 +32,36 @@ CHAIN_GAP_UM = 25.0
 # Categorical slots 1-4 of the dataviz reference palette (validated: CVD dE 9.1, normal 22.9)
 COLORS = {"Batch_1": "#2a78d6", "Batch_2": "#eb6834", "Batch_3": "#1baf7a", "Batch_test": "#7a3fb8"}
 LABELS = {"Batch_1": "Batch 1", "Batch_2": "Batch 2", "Batch_3": "Batch 3", "Batch_test": "test site"}
-# Organiser-released ground truth for the held-out sites (2026-10-04); drawn dashed in the true colour.
+# Organiser-released labels for the held-out sites (2026-10-04); NOT the model's assignment
+# (docs/pitch-brief.md differs). Drawn dotted in the label colour.
 HELDOUT_TRUTH = {"3e122cbj": "Batch_2", "fn0mhxef": "Batch_1", "xrv9xvzb": "Batch_3"}
 # Held-out parents first, then parents split across batches, then single-batch parents.
 ORDER = ["G2316", "G2088", "G2048", "G2080", "G2068SE", "G2148", "G2156", "G2272",
          "G2060", "G1904", "G1612", "G1780", "G1880"]
+
+
+def _art_score(cell) -> int:
+    """+1 if the chain ends in a right-edge artefact, -1 for left-edge, 0 otherwise."""
+    right = str(cell["art_right_of_last"]).strip("[] ") != ""
+    left = str(cell["art_left_of_first"]).strip("[] ") != ""
+    return int(right) - int(left)
+
+
+def order_chains(chain_rows: list[dict], verdicts: list[tuple[str, str]]) -> list[dict]:
+    """Left-to-right order of one parent's chains (dicts with chain, art_left_of_first, art_right_of_last).
+
+    verdicts are (left_site, right_site) pairs from same_parent_verdicts.csv. A chain is ranked by
+    how many other chains are known to lie to its left; ties fall back to the artefact side
+    (left-edge artefact first, right-edge last), then to the input order.
+    """
+    members = [[s.strip() for s in str(c["chain"]).split("|")] for c in chain_rows]
+
+    def n_left(i: int) -> int:
+        return sum(any((a, b) in verdicts for a in members[j] for b in members[i])
+                   for j in range(len(members)) if j != i)
+
+    idx = sorted(range(len(chain_rows)), key=lambda i: (n_left(i), _art_score(chain_rows[i]), i))
+    return [chain_rows[i] for i in idx]
 
 
 def _bse(batch: str, site: str) -> np.ndarray:
@@ -49,13 +74,15 @@ def _bse(batch: str, site: str) -> np.ndarray:
 
 def main() -> None:
     chains = pd.read_csv(ROOT / "outputs/stitching/chains.csv")
-    parents = {p: g for p, g in chains.groupby("parent")}
+    ver = pd.read_csv(ROOT / "outputs/stitching/same_parent_verdicts.csv")
+    pairs = list(zip(ver["left"], ver["right"]))
+    parents = {p: order_chains(g.to_dict("records"), pairs) for p, g in chains.groupby("parent")}
     assert set(parents) == set(ORDER), sorted(set(parents) ^ set(ORDER))
 
     rows = []
     for p in ORDER:
         x, items, gaps, n_seams = 0.0, [], [], 0
-        for k, (_, ch) in enumerate(parents[p].iterrows()):
+        for k, ch in enumerate(parents[p]):
             if k:
                 gaps.append((x, x + CHAIN_GAP_UM))
                 x += CHAIN_GAP_UM
@@ -89,12 +116,12 @@ def main() -> None:
         for s, b, x0, w, hh, img in items:
             ax.imshow(img, cmap="gray", vmin=0, vmax=1, extent=(x0, x0 + w, hh, 0),
                       interpolation="bilinear")
-            # three site kinds: known (solid, batch colour), held-out with revealed truth (dotted, true
+            # three site kinds: known (solid, batch colour), held-out with organiser label (dotted, label
             # batch colour), test-day unknown (dashed purple + purple tint)
             kind = {"Batch_heldout": "held", "Batch_test": "test"}.get(b, "known")
             true_b = HELDOUT_TRUTH[s] if kind == "held" else b
             label = {"known": f"{s} · {LABELS.get(b)}",
-                     "held": f"{s} · held-out → revealed {LABELS[true_b]}",
+                     "held": f"{s} · held-out, organiser label {LABELS[true_b]}",
                      "test": f"{s} · UNKNOWN (test day)"}[kind]
             ls = {"known": "-", "held": ":", "test": "--"}[kind]
             if kind == "test":
@@ -117,7 +144,7 @@ def main() -> None:
     handles = [Patch(fc="white", ec=COLORS[b], lw=3, label=f"{LABELS[b]} (known, solid)")
                for b in COLORS if b != "Batch_test"]
     handles.append(Patch(fc="white", ec="#555555", lw=3, ls=":",
-                         label="held-out, truth revealed (dotted, true batch colour)"))
+                         label="held-out, organiser label (dotted, label colour)"))
     handles.append(Patch(fc="#d9c9ec", ec=COLORS["Batch_test"], lw=3, ls="--",
                          label="test-day unknown (dashed purple, tinted)"))
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1 - 0.6 / fig_h), ncol=5,
