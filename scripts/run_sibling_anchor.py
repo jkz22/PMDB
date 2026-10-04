@@ -119,13 +119,13 @@ def main(feature: str = "SE_type_D") -> None:
         fb = two_cut_predict(r.f, c1_full, c2_full)
         pr = anchored_probs(r.f, sibs, delta, fb) if len(sibs) else np.eye(3)[fb]
         sib_txt = "; ".join(f"{s.site} ({s.label[-1]}) {s.f:+.2f}" for _, s in sibs.iterrows())
-        # chosen call = cross-parent cut rule; low confidence if within one SD of a cut or every labelled
-        # sibling contradicts the rule at its own feature value
+        # chosen call = cross-parent cut rule; low confidence if within one SD of a cut, every labelled
+        # sibling contradicts the rule at its own feature value, or the sibling-anchored cross-check disagrees
         near_cut = min(abs(r.f - c1_full), abs(r.f - c2_full)) <= delta
         contradicted = len(sibs) > 0 and all(
             two_cut_predict(s.f, c1_full, c2_full) != CLASSES.index(s.label) for _, s in sibs.iterrows())
         trows.append(dict(site=r.site, parent=r.parent, f=r.f, assigned=CLASSES[fb],
-                          confidence="low" if (near_cut or contradicted) else "high",
+                          confidence="low" if (near_cut or contradicted or int(pr.argmax()) != fb) else "high",
                           cut_rule_call=CLASSES[fb], anchored_call=CLASSES[int(pr.argmax())],
                           anchored_p_B1=pr[0], anchored_p_B2=pr[1], anchored_p_B3=pr[2], siblings=sib_txt))
     tp = pd.DataFrame(trows)

@@ -1,5 +1,5 @@
 site,parent,f,assigned,confidence,cut_rule_call,anchored_call,anchored_p_B1,anchored_p_B2,anchored_p_B3,siblings
-0eryguqq,G1612,4.775155584542071,Batch_3,high,Batch_3,Batch_2,0.0,0.5762642212963891,0.42373577870361084,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
+0eryguqq,G1612,4.775155584542071,Batch_3,low,Batch_3,Batch_2,0.0,0.5762642212963891,0.42373577870361084,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
 4hq27w4c,G2148,-10.254555606620546,Batch_1,high,Batch_1,Batch_1,1.0,0.0,0.0,f1vzngrs (1) -9.01; epqdaau9 (2) -8.80
 fhwrjtet,G1612,5.881497303284582,Batch_3,high,Batch_3,Batch_3,0.0,0.0,1.0,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
 fspqbkxl,G2148,-11.24701020312808,Batch_1,high,Batch_1,Batch_1,1.0,0.0,0.0,f1vzngrs (1) -9.01; epqdaau9 (2) -8.80
