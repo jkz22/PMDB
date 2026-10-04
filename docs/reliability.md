@@ -111,3 +111,11 @@ Reading:
   graphite/binder boundary, not demonstrably about the electrode. It is downgraded accordingly in
   `docs/functional.md` and `docs/story.md`; the depth-independence of the constrained share
   (`docs/crosswalk.md` §3) is unaffected because it holds within every segmenter.
+- **It is not the grey-level artefact.** Re-segmenting hybrid-harmonised BSE (`scripts/run_swelling_harmonised.py`,
+  `outputs/segagree/harmonised_swelling.csv`) gives the same graphite masks (IoU ≥ 0.997), the same
+  constrained share (ρ 0.99, KW p 0.015 → 0.014), and within Batch 3 the share does not track the black
+  level (ρ −0.12); the whole-set correlation with `BSE_D` (ρ 0.47) is batch confounding. What differs
+  between the segmenters is the class definition: v0r1's "binder" is the residue of a morphological
+  opening (radius `graphite_opening_radius_px`) of the non-dark, non-Si phase plus small removed objects,
+  i.e. thin or fragmented solid, not a BSE intensity class. A segmenter with a *validated* binder/carbon
+  class (Inlens topography, or a labelled patch set) is the experiment that would settle it.

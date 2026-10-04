@@ -1,0 +1,8 @@
+{
+  "graphite_iou_min": 0.9971453488616856,
+  "into_graphite_rho_raw_harm": 0.994758064516129,
+  "kw_into_graphite_raw": 0.014945053576423598,
+  "kw_into_graphite_harm": 0.014007978497302875,
+  "rho_into_graphite_vs_BSE_D_all": 0.46612903225806457,
+  "rho_into_graphite_vs_BSE_D_within_B3": -0.11764705882352941
+}
