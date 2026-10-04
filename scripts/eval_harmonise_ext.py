@@ -83,6 +83,7 @@ def _load(method: str, batch: str, site: str, raw: dict, hybrid_root: Path | Non
     return img, msk
 
 
+CROP_GALLERY_STATS_FRAC = 0.05  # a field enters the crop gallery when > 5 % of a detector's interior is excluded
 SMOOTH_BINS = np.arange(0, 255.5, 0.25)
 
 
@@ -108,37 +109,64 @@ def _fixed_fractions(site_df: pd.DataFrame) -> pd.DataFrame:
     return out.drop(columns=["_hist_smooth"])
 
 
+def _fill_invalid(ch: np.ndarray, valid: np.ndarray) -> np.ndarray:
+    """Replace excluded pixels by the median of the valid ones so they cannot move percentiles or thresholds."""
+    f = ch.astype(np.float64)
+    if not valid.all():
+        f[~valid] = np.median(f[valid]) if valid.any() else 0.0
+    return f
+
+
 def _site_metrics(img: np.ndarray, msk: np.ndarray, raw_img: np.ndarray) -> dict:
+    """All statistics, anchors and segmentation thresholds are derived from the stats-valid pixels of each detector;
+    excluded pixels (border, bad bands, charging, clipping) are filled with the valid median before any filtering or
+    percentile, and phase fractions are counted over KPI-valid pixels only."""
     out: dict = {}
+    valid = [C.valid_for_stats(msk[..., c]) for c in range(3)]
     for c, d in enumerate(X.DETECTORS):
-        v = C.valid_for_stats(msk[..., c])
-        for k, val in _stats(img[..., c][v].astype(np.float32)).items():
+        for k, val in _stats(img[..., c][valid[c]].astype(np.float32)).items():
             out[f"{d}_{k}"] = float(val)
-    anchors, _ = H.estimate_anchors(img, NM)
-    for d in X.DETECTORS:
+    bse = _fill_invalid(img[..., 0], valid[0])
+    masks = segment_bse(bse, NM)  # percentile thresholds from the filled BSE = valid pixels only
+    for c, d in enumerate(X.DETECTORS):
+        ch, v = img[..., c], valid[c]
+        anchors = {"black": float(np.percentile(ch[v], 0.5))}
+        for a in ("pore", "graphite", "si"):
+            sel = getattr(masks, a) & v
+            anchors[a] = float(np.median(ch[sel])) if sel.any() else float("nan")
         for a in H.ANCHOR_NAMES:
-            out[f"{d}_anchor_{a}"] = anchors[d][a]
-        b, g, s = anchors[d]["black"], anchors[d]["graphite"], anchors[d]["si"]
+            out[f"{d}_anchor_{a}"] = anchors[a]
+        b, g, s = anchors["black"], anchors["graphite"], anchors["si"]
         out[f"{d}_contrast_ratio"] = (s - b) / (g - b) if g > b else float("nan")
     v0 = C.valid_for_kpis(msk[..., 0])
-    g = ndimage.gaussian_filter(img[..., 0].astype(np.float64), V0_PARAMS["gauss_sigma_px"])
+    g = ndimage.gaussian_filter(bse, V0_PARAMS["gauss_sigma_px"])
     out["_hist_smooth"] = np.histogram(g[v0], bins=SMOOTH_BINS)[0] / v0.sum()  # fixed-threshold fractions later
-    masks = segment_bse(img[..., 0].astype(np.float64), NM)
     out["seg_f_pore"] = float(masks.pore[v0].mean())
     out["seg_f_si"] = float(masks.si[v0].mean())
     out["mean_abs_change"] = float(np.mean(np.abs(img[..., 0][v0].astype(np.int16) - raw_img[..., 0][v0].astype(np.int16))))
     return out
 
 
-def _shortcut(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
+def _shortcut_pred(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> np.ndarray | None:
     if len(np.unique(y)) < 2:
-        return float("nan")
+        return None
     Xm = np.nan_to_num(df[cols].to_numpy(dtype=float))
     clf = make_pipeline(StandardScaler(), LogisticRegression(max_iter=5000, C=1.0))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        pred = cross_val_predict(clf, Xm, y, cv=LeaveOneOut())
-    return float((pred == y).mean())
+        return cross_val_predict(clf, Xm, y, cv=LeaveOneOut())
+
+
+def _shortcut(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
+    """Leave-one-out accuracy of a logistic regression on grey statistics only."""
+    pred = _shortcut_pred(df, cols, y)
+    return float("nan") if pred is None else float((pred == y).mean())
+
+
+def _shortcut_recall(df: pd.DataFrame, cols: list[str], y: np.ndarray) -> float:
+    """Leave-one-out recall of the positive class (fraction of positives predicted positive)."""
+    pred = _shortcut_pred(df, cols, y)
+    return float("nan") if pred is None or not y.any() else float(pred[y].mean())
 
 
 def _summarise(site_df: pd.DataFrame) -> pd.DataFrame:
@@ -171,7 +199,7 @@ def _summarise(site_df: pd.DataFrame) -> pd.DataFrame:
         row["mean_abs_change_clean"] = float(clean.mean_abs_change.mean())
         row["mean_abs_change_strong"] = float(strong.mean_abs_change.mean())
         row["shortcut_batch_acc"] = _shortcut(d, cols, d.batch.to_numpy())
-        row["shortcut_batch3_recall"] = _shortcut(d, cols, (d.batch == "Batch_3").to_numpy())
+        row["shortcut_batch3_recall"] = _shortcut_recall(d, cols, (d.batch == "Batch_3").to_numpy())
         row["shortcut_strong_vs_rest_b3"] = _shortcut(b3, cols, (b3.group == "strong").to_numpy())
         rows.append(row)
     return pd.DataFrame(rows)
@@ -254,11 +282,11 @@ def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
             row["frac_invalid_stats_inner"] = float((~C.valid_for_stats(m))[inner].mean())
             rows.append(row)
     table = pd.DataFrame(rows)
-    # poorly imaged fields: anything beyond border + clipping (bad bands, charging, cracks) on any detector,
-    # plus the three most saturated Inlens fields as the clipping example
-    bad = table[(table.frac_invalid_kpi_inner > 0.001) | (table.frac_crack > 0)]
-    sat = table[table.detector == "Inlens"].sort_values("frac_clip_high", ascending=False).head(3)
-    keys = sorted({(r.batch, r.site) for r in pd.concat([bad, sat]).itertuples()})
+    # poorly imaged fields, same rule on every detector: > CROP_GALLERY_STATS_FRAC of the interior excluded from
+    # statistics (clipping included), or any KPI-invalid interior pixel (bad band / charging), or a crack flag
+    bad = table[(table.frac_invalid_stats_inner > CROP_GALLERY_STATS_FRAC) | (table.frac_invalid_kpi_inner > 0.001)
+                | (table.frac_crack > 0)]
+    keys = sorted({(r.batch, r.site) for r in bad.itertuples()})
     if not keys:
         return table
     fig, axes = plt.subplots(len(keys), 3, figsize=(16, 1.6 * len(keys)), squeeze=False)
@@ -272,8 +300,9 @@ def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
             axes[i, c].set_title(f"{b}/{s} {d}: {100 * t.frac_invalid_stats_inner:.1f} % of interior excluded"
                                  + (f" – {why}" if why else " – nothing beyond the border"), fontsize=7)
     _legend(fig)
-    fig.suptitle("What the mask cuts out of the poorly imaged fields and why (no Cu collector / free surface in any field; "
-                 "border + colour-marker columns are the only fixed crop)", fontsize=11)
+    fig.suptitle("What the mask cuts out of the poorly imaged fields and why\n"
+                 f"(fields with > {100 * CROP_GALLERY_STATS_FRAC:.0f} % of a detector's interior excluded, any charging / bad band, or a "
+                 "crack; no Cu collector / free surface in any field – border + colour-marker columns are the only fixed crop)", fontsize=10)
     fig.tight_layout(rect=(0, 0.02, 1, 0.98))
     fig.savefig(out, dpi=80)
     plt.close(fig)
@@ -460,7 +489,7 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
           "  with the segmenter. Nyúl matches 11 landmarks per site, which by construction forces equal percentile positions and so pulls phase",
           "  fractions towards a common value (the known limitation of histogram standardisation).",
           "* `mean_abs_change_*`: |method − raw| per pixel in stored uint8 units; for `nyul` (standard scale) and `basic` (raw − bᵢ + 64) this includes the scale change itself.",
-          "* `shortcut_*`: leave-one-out accuracy of a logistic regression on grey statistics only (chance: 0.45 batch, 0.55 Batch-3, 0.76 strong-vs-rest).", ""]
+          "* `shortcut_*`: leave-one-out logistic regression on grey statistics only; `_acc`/`_b3` = accuracy (chance 0.45 batch, 0.76 strong-vs-rest), `batch3_recall` = fraction of Batch-3 sites predicted Batch 3.", ""]
     L += ["## What is cut out ('crops')", "",
           "No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so",
           "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where the mask excludes more than 0.2 % of the interior and why", ""]

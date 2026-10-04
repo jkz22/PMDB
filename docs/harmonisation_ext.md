@@ -63,17 +63,18 @@ figures there: `effects_examples.png` (strong / mild / clean / Batch-1 / held-ou
 `crops_gallery.png` (what is cut out of the poorly imaged fields and why), `hist_by_method.png`,
 `black_level_by_method.png`, `fractions_by_method.png`.
 
-Headline numbers (31 labelled sites; `none` = raw grey at the same coordinates, `hybrid` = in-house LUT route):
+Headline numbers (31 labelled sites; `none` = raw grey at the same coordinates, `hybrid` = in-house LUT route; all
+anchors, segmentation thresholds and percentiles are computed on the stats-valid pixels of each detector only):
 
 | metric | none | nyul | basic | hybrid |
 |---|---|---|---|---|
 | BSE black-level gap, 4 strong Batch-3 sites − rest of Batch 3 (grey) | 22.0 | 0.0* | 15.8 | 1.2 |
 | SE_type black-level gap (grey) | 19.3 | 0.0* | 10.8 | 0.3 |
 | BSE p90−p10 width gap strong − rest (gain artefact, grey) | −9.3 | 0.0* | −9.1 | 3.9 |
-| Si/graphite contrast ratio, relative change on Batch 1/2 sites | 0 | 0.054 | 0.006 | 0.002 |
-| across-site SD of the contrast ratio (material spread kept?) | 0.161 | 0.129 | 0.159 | 0.159 |
+| Si/graphite contrast ratio, relative change on Batch 1/2 sites | 0 | 0.072 | 0.008 | 0.003 |
+| across-site SD of the contrast ratio (material spread kept?) | 0.199 | 0.129 | 0.199 | 0.196 |
 | fixed-threshold Si-fraction gap strong − rest | 0.016 | 0.008 | 0.002 | 0.026 |
-| fixed-threshold vs segmenter Si fraction, r | 0.94 | 0.70 | 0.95 | 0.91 |
+| fixed-threshold vs segmenter Si fraction, r | 0.94 | 0.69 | 0.95 | 0.91 |
 | shortcut batch classifier (grey statistics only), LOO accuracy | 0.61 | 0.65 | 0.55 | 0.55 |
 | shortcut strong-vs-rest within Batch 3 | 1.00 | 0.94 | 1.00 | 1.00 |
 
@@ -85,8 +86,8 @@ What this says:
 
 * **Nyúl–Udupa** removes the Batch-3 offset *and* gain, as histogram standardisation must, but it does
   so by forcing the percentile positions of every site to coincide: the Si/graphite contrast of clean
-  sites moves by 5 %, the across-site spread of material contrast shrinks (0.161 → 0.129), and the
-  fixed-threshold Si fraction no longer tracks the segmenter (r 0.94 → 0.70) because a site with more Si
+  sites moves by 7 %, the across-site spread of material contrast shrinks (0.199 → 0.129), and the
+  fixed-threshold Si fraction no longer tracks the segmenter (r 0.94 → 0.69) because a site with more Si
   has its bright landmarks pulled down. The grey statistics still identify the batch about as well as
   before (0.65 vs 0.61 LOO accuracy) – the standardised histograms differ in *shape* between landmarks.
   This is the documented behaviour of the method on images whose tissue/phase composition differs
@@ -95,7 +96,7 @@ What this says:
   Inlens, i.e. a real large-scale brightness gradient), so its correction reduces to the per-image
   baseline *bᵢ*. Because the strong sites' +22 offset is largely compensated by their 0.69× gain at the
   mean grey, *bᵢ* barely differs between groups and the black-level gap only falls from 22 to 16; the
-  gain is untouched. BaSiC leaves material contrast essentially untouched (0.6 % change) – it simply
+  gain is untouched. BaSiC leaves material contrast essentially untouched (0.8 % change) – it simply
   does not model this artefact.
 * Neither imported pipeline removes the strong-site imaging fingerprint (strong-vs-rest classifier
   0.94–1.00); the LUT route (`hybrid`/`affine2`) and the physics route (`docs/clean.md`) remain the
