@@ -32,7 +32,8 @@ def manifest() -> pd.DataFrame:
 
 
 HARM_METHODS = ("hybrid", "affine2", "histmatch", "offset", "affine3")  # PR #16 per-site LUTs, materialised uint8
-CLEAN_METHODS = ("clean_norm", "clean_harm")  # PR #27 physical route (pmdb.clean), see src/v2/materialise_clean.py
+CLEAN_METHODS = ("clean_norm", "clean_harm",  # PR #27 physical route (pmdb.clean), see src/v2/materialise_clean.py
+                 "clean2_norm", "clean2_harm")  # same route rebuilt on PR #33 (edge-connected collector, contributor-only half-res mask bits)
 
 
 def harm_method(h) -> str:
@@ -60,8 +61,8 @@ def load_half_clean(batch: str, site: str, harm: str) -> tuple[np.ndarray, np.nd
     """Physical-clean arrays (PR #27) materialised by src.v2.materialise_clean: uint8 (H,W,3) with
     pore 0 / graphite 100 (Inlens 40) / Si free, fixed physical scale (z x 100, Inlens z x 40), invalid pixels zeroed, plus the
     per-detector validity mask (bool, H,W,3)."""
-    kind = harm.split("_", 1)[1]
-    root = CACHE.parent / "clean" / kind / "half"
+    tag, kind = harm.split("_", 1)  # clean_norm -> cache/clean/norm, clean2_harm -> cache/clean2/harm
+    root = CACHE.parent / tag / kind / "half"
     z = np.load(root / f"{batch}__{site}.npz")
     im, valid = z["image"].copy(), z["valid"]
     im[~valid] = 0

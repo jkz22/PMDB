@@ -12,6 +12,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.v2.augment import patch_mask
+from src.v2.data import PHASE_GRAPHITE, PHASE_PORE, PHASE_SI
+
+PHASE_MASKS = ("none", "inpaint", "weight")  # KPI-phase-driven VAE reconstruction (user request)
 
 IMNET_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
 IMNET_STD = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
@@ -38,9 +41,11 @@ class VAE(nn.Module):
 
     CH = (32, 64, 128, 256, 256)
 
-    def __init__(self, variant="A", zdim=128, n_kpi=0, mask_ratio=0.0, beta=1.0, aux_weight=10.0):
+    def __init__(self, variant="A", zdim=128, n_kpi=0, mask_ratio=0.0, beta=1.0, aux_weight=10.0, phase_mask="none"):
         super().__init__()
         self.variant, self.zdim, self.mask_ratio, self.beta, self.aux_w = variant, zdim, mask_ratio, beta, aux_weight
+        assert phase_mask in PHASE_MASKS, phase_mask
+        self.phase_mask = phase_mask
         self.n_cond = 2 * n_kpi if variant == "B" else 0  # value + missing indicator
         ch = (3,) + self.CH
         self.enc = nn.Sequential(*[_down(ch[i], ch[i + 1]) for i in range(len(self.CH))])
@@ -75,11 +80,39 @@ class VAE(nn.Module):
         z = mu + torch.randn_like(mu) * (0.5 * logvar).exp() if sample else mu
         return self.decode(z, kpi), mu, logvar
 
+    def _phase_weights(self, x, phase):
+        """Per-pixel reconstruction weights (mean 1 per crop) from the KPI phase labels of the crop.
+        'inpaint': hide one minority phase (Si or pore, chosen per crop) in the input; hidden and visible
+        pixels each carry half the loss. 'weight': input intact, Si / graphite / pore each carry a third
+        of the loss regardless of area, unassigned pixels none. Returns (model input, weights (B,1,H,W))."""
+        B = x.shape[0]
+        ph = phase[:, None].to(x.device)
+        if self.phase_mask == "inpaint":
+            pick = torch.where(torch.rand(B, device=x.device) < 0.5, PHASE_SI, PHASE_PORE).view(B, 1, 1, 1)
+            absent = (ph == pick).float().mean((1, 2, 3), keepdim=True) < 0.01  # crop lacks that phase: take the other
+            pick = torch.where(absent, PHASE_SI + PHASE_PORE - pick, pick)
+            hide = F.max_pool2d((ph == pick).float(), 5, 1, 2)  # 2-px dilation: no phase-edge leak
+            fh = hide.mean((1, 2, 3), keepdim=True).clamp(1e-3, 1 - 1e-3)
+            w = torch.where(hide > 0, 0.5 / fh, 0.5 / (1 - fh))
+            return x * (1 - hide), w
+        w = torch.zeros_like(ph, dtype=x.dtype)
+        for k in (PHASE_SI, PHASE_GRAPHITE, PHASE_PORE):
+            on = ph == k
+            f = on.float().mean((1, 2, 3), keepdim=True)
+            w = w + on.to(x.dtype) * (1.0 / 3.0) / f.clamp_min(1e-3)
+        return x, w.clamp_max(50.0)
+
     def loss(self, batch):
         x, kpi = batch["x"], batch.get("kpi")
         xin = patch_mask(x, self.mask_ratio)[0] if self.mask_ratio > 0 else x
+        w = None
+        if self.phase_mask != "none":
+            xin, w = self._phase_weights(xin, batch["phase"])
         rec, mu, logvar = self(xin, kpi)
-        mse = F.mse_loss(rec.float(), x.float(), reduction="sum") / x.shape[0]
+        if w is None:
+            mse = F.mse_loss(rec.float(), x.float(), reduction="sum") / x.shape[0]
+        else:
+            mse = (w.float() * (rec.float() - x.float()) ** 2).sum() / x.shape[0]
         kl = (-0.5 * (1 + logvar - mu ** 2 - logvar.exp()).sum(1)).mean()
         loss = mse + self.beta * kl
         logs = {"mse_px": mse.item() / x[0].numel(), "kl": kl.item()}
@@ -229,9 +262,9 @@ TRAINABLE = ("vae_a", "vae_b", "vae_c", "mae_adapted", "mae_scratch", "dino_ft")
 OFF_THE_SHELF = ("ots_dinov2", "ots_vitmae", "ots_micronet")
 
 
-def build(family: str, n_kpi: int = 0, vae_mask: float = 0.0, mae_mask: float = 0.75) -> nn.Module:
+def build(family: str, n_kpi: int = 0, vae_mask: float = 0.0, mae_mask: float = 0.75, phase_mask: str = "none") -> nn.Module:
     if family.startswith("vae_"):
-        return VAE(family[-1].upper(), n_kpi=n_kpi, mask_ratio=vae_mask)
+        return VAE(family[-1].upper(), n_kpi=n_kpi, mask_ratio=vae_mask, phase_mask=phase_mask)
     if family == "mae_adapted":
         return MAE("adapted", mae_mask)
     if family == "mae_scratch":

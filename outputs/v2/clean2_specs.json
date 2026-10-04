@@ -1,0 +1,87 @@
+[
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean2_norm",
+  "stage": "CLEAN2"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean2_harm",
+  "stage": "CLEAN2"
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "clean2_harm",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLEAN2",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "clean2_harm",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLEAN2",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "clean2_harm",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLEAN2",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "clean2_harm",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLEAN2",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "clean2_harm",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLEAN2",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean2_harm",
+  "phase_mask": "inpaint",
+  "stage": "PHASE"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean2_harm",
+  "phase_mask": "weight",
+  "stage": "PHASE"
+ }
+]

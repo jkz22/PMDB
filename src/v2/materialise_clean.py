@@ -45,10 +45,11 @@ def main():
     ap.add_argument("--cache-root", default=str(CACHE.parent))
     ap.add_argument("--kinds", nargs="+", default=["norm", "harm"])
     ap.add_argument("--only-kind", default=None)
+    ap.add_argument("--tag", default="clean", help="cache sub-directory: clean (PR #27/#28 build) or clean2 (PR #33 rebuild)")
     a = ap.parse_args()
     root = Path(a.clean_root)
     for kind in a.kinds:
-        out = Path(a.cache_root) / "clean" / kind / "half"
+        out = Path(a.cache_root) / a.tag / kind / "half"
         out.mkdir(parents=True, exist_ok=True)
         for site_dir in sorted(p for p in root.glob("Batch_*/*") if (p / f"BSE_{kind}.tif").exists()):
             f = out / f"{site_dir.parent.name}__{site_dir.name}.npz"

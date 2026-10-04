@@ -98,7 +98,8 @@ def run(cfg: dict, status_cb=None) -> Path:
     torch.manual_seed(c["seed"]); np.random.seed(c["seed"])
 
     fields = train_fields(c)
-    store = FieldStore(fields, c["input"], harmonise=c["harmonise"])
+    phase_mask = c.get("phase_mask", "none")  # absent from DEFAULTS so earlier run hashes are unchanged
+    store = FieldStore(fields, c["input"], harmonise=c["harmonise"], phase=phase_mask != "none")
     kcols = kpi_cols(c.get("kpi_set"))
     kpis, kpi_norm = kpi_table(fields, kcols)
     cond = c["family"] in ("vae_b", "vae_c")
@@ -107,7 +108,7 @@ def run(cfg: dict, status_cb=None) -> Path:
     g = torch.Generator().manual_seed(c["seed"])
     dl = GPUCropLoader(ds, c["batch_size"], dev, g)
 
-    model = build(c["family"], n_kpi=len(kcols), vae_mask=c["vae_mask"], mae_mask=c["mae_mask"]).to(dev)
+    model = build(c["family"], n_kpi=len(kcols), vae_mask=c["vae_mask"], mae_mask=c["mae_mask"], phase_mask=phase_mask).to(dev)
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=c["lr"], weight_decay=0.05)
     warm = max(1, c["steps"] // 20)
     sched = torch.optim.lr_scheduler.LambdaLR(

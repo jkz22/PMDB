@@ -71,3 +71,44 @@ def test_selection_gates_runs_without_kpi_signal():
                        "lift_shift": [0.0, 0.5], "recon_kpi_err": [np.nan, np.nan]})
     s = selection_score(lb)
     assert s[1] < s[0]
+
+
+def test_phase_mask_weights():
+    """KPI-phase-driven VAE loss: 'inpaint' hides one minority phase (dilated) and splits the loss half/half
+    between hidden and visible pixels; 'weight' keeps the input and gives each phase a third of the loss."""
+    import torch
+    from src.v2.data import PHASE_GRAPHITE, PHASE_PORE, PHASE_SI
+    from src.v2.models import VAE
+    torch.manual_seed(0)
+    x = torch.rand(2, 3, 64, 64)
+    ph = torch.full((2, 64, 64), PHASE_GRAPHITE, dtype=torch.uint8)
+    ph[:, :16, :16] = PHASE_SI
+    ph[:, 40:, 40:] = PHASE_PORE
+    ph[1, :16, :16] = PHASE_GRAPHITE  # crop 1 has no Si: the inpaint mask must fall back to pores
+    xin, w = VAE("A", phase_mask="inpaint")._phase_weights(x, ph)
+    hidden = (xin == 0).all(1)
+    assert hidden[0].float().mean() > 0.05 and hidden[1].float().mean() > 0.05
+    assert torch.allclose(w.mean((1, 2, 3)), torch.ones(2), atol=1e-3)
+    assert torch.allclose(w[:, 0][hidden].sum() / w.numel(), torch.tensor(0.5), atol=1e-3)
+    xin, w = VAE("A", phase_mask="weight")._phase_weights(x, ph)
+    assert torch.equal(xin, x)
+    assert abs(w[0, 0][ph[0] == PHASE_SI].sum() / w[0].numel() - 1 / 3) < 1e-3
+    assert abs(w[0, 0][ph[0] == PHASE_PORE].sum() / w[0].numel() - 1 / 3) < 1e-3
+    assert abs(w[1].mean() - 2 / 3) < 1e-3  # a missing phase simply contributes nothing
+
+
+def test_naive_transform_rescales_and_is_deterministic():
+    import torch
+    from src.v2.data import NAIVE_SIGMA, naive_transform
+
+    x = torch.rand(2, 3, 64, 64) * 0.3 + 0.2  # low-contrast crops on different grey ranges
+    x[1] = x[1] * 0.5 + 0.4
+    g = torch.Generator().manual_seed(0)
+    y = naive_transform(x, g)
+    y2 = naive_transform(x, torch.Generator().manual_seed(0))
+    assert torch.equal(y, y2)
+    clean = naive_transform(x, torch.Generator().manual_seed(0), sigma=0.0)
+    for b in range(2):
+        q = torch.quantile(clean[b].flatten(1), torch.tensor([0.01, 0.99]), dim=1)
+        assert torch.allclose(q[0], torch.zeros(3), atol=0.02) and torch.allclose(q[1], torch.ones(3), atol=0.02)
+    assert abs(float((y - clean).std()) - NAIVE_SIGMA) < 0.01

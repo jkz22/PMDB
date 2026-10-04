@@ -1,0 +1,44 @@
+[
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "input": "naive",
+  "harmonise": "none",
+  "train_set": "all_fields",
+  "stage": "NAIVE"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "input": "naive",
+  "harmonise": "none",
+  "train_set": "all_fields",
+  "stage": "NAIVE"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "input": "naive",
+  "harmonise": "none",
+  "train_set": "all_fields",
+  "stage": "NAIVE"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "phase_mask": "inpaint",
+  "input": "naive",
+  "harmonise": "none",
+  "train_set": "all_fields",
+  "stage": "NAIVE"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "view": "BSE",
+  "input": "naive",
+  "harmonise": "none",
+  "train_set": "all_fields",
+  "stage": "NAIVE"
+ }
+]

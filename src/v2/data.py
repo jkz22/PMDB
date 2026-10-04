@@ -76,12 +76,13 @@ class FieldStore:
     raw counts; or a pmdb.harmonise LUT method ('hybrid', 'affine2', 'histmatch', ...) read from
     cache/harmonised/<method>/half (PR #16)."""
 
-    def __init__(self, fields: pd.DataFrame, input_mode: str = "raw", harmonise=False):
-        assert input_mode in ("raw", "norm")
+    def __init__(self, fields: pd.DataFrame, input_mode: str = "raw", harmonise=False, phase: bool = False):
+        assert input_mode in ("raw", "norm", "naive")
         self.fields = fields.reset_index(drop=True)
+        self.naive = input_mode == "naive"
         self.harm = harm_method(harmonise)
         hp = harmonise_params().set_index(["group_id", "channel"]) if self.harm == "gmm" else None
-        self.images, self.valid = [], []
+        self.images, self.valid, self.phase = [], [], ([] if phase else None)
         for b, s, gid in self.fields[["batch", "site", "group_id"]].itertuples(index=False, name=None):
             if self.harm in CLEAN_METHODS:
                 a, v = load_half_clean(b, s, self.harm)
@@ -94,7 +95,42 @@ class FieldStore:
                 for c in range(3):
                     g, o = hp.loc[(gid, c), ["gain", "offset"]]
                     a[..., c] = np.clip(g * a[..., c] + o, 0, 255)
+            if phase or self.naive:
+                lab = phase_labels(a[..., 0])
+                if phase:
+                    self.phase.append(lab)
+                if self.naive:  # keep only pore / Si / graphite pixels; everything else -> 0 (pore level)
+                    a[lab == 0] = 0.0
             self.images.append(normalise_percentile(a) if input_mode == "norm" else a / 255.0)
+
+
+NAIVE_SIGMA = 0.1  # ~25 grey levels of Gaussian noise on the per-crop p1-p99 rescaled [0,1] image
+
+
+def naive_transform(x: torch.Tensor, gen: torch.Generator, sigma: float = NAIVE_SIGMA) -> torch.Tensor:
+    """Naive harmonisation baseline, applied per crop and channel at train *and* test time: rescale to the
+    crop's own p1-p99 (clipped to [0,1], ~min-max) and add N(0, sigma) noise so that grey level, gain and
+    the fine noise/sharpness texture are all swamped. ``x``: (B, C, H, W) float in [0,1]."""
+    flat = x.flatten(2)
+    q = torch.quantile(flat, torch.tensor([0.01, 0.99], device=x.device, dtype=x.dtype), dim=2)
+    lo, hi = q[0][..., None, None], q[1][..., None, None]
+    y = ((x - lo) / (hi - lo).clamp_min(1e-3)).clamp(0, 1)
+    return y + sigma * torch.randn(y.shape, generator=gen, device=y.device, dtype=y.dtype)
+
+
+PHASE_SI, PHASE_GRAPHITE, PHASE_PORE = 1, 2, 3  # 0 = artefact / unassigned
+
+
+def phase_labels(bse: np.ndarray) -> np.ndarray:
+    """Teammate KPI segmentation (pmdb.segment at the pinned KPI commit) of a whole BSE field on the grey
+    scale the model sees (harmonised / clean), as a uint8 label map: 1 Si, 2 graphite, 3 pore, 0 other."""
+    from src.v2.kpi_adapter import segment
+    m = segment(bse, 50.0)
+    lab = np.zeros(bse.shape, np.uint8)
+    lab[m.graphite] = PHASE_GRAPHITE
+    lab[m.pore] = PHASE_PORE
+    lab[m.si] = PHASE_SI
+    return lab
 
 
 class GPUCropLoader:
@@ -109,6 +145,11 @@ class GPUCropLoader:
         self.idx = torch.tensor(ds.index, dtype=torch.long)
         self.hw = torch.tensor([im.shape[:2] for im in ds.store.images], dtype=torch.long)
         self.kpi = torch.from_numpy(ds.kpi).to(dev) if ds.kpi is not None else None
+        self.phase = [torch.from_numpy(p).to(dev) for p in ds.store.phase] if getattr(ds.store, "phase", None) else None
+        self.naive = getattr(ds.store, "naive", False)
+        if self.naive:
+            self.ng = torch.Generator(device=dev)
+            self.ng.manual_seed(int(torch.randint(0, 2**31 - 1, (1,), generator=generator)))
 
     def __len__(self):
         return len(self.ds) // self.bs
@@ -125,8 +166,12 @@ class GPUCropLoader:
                 y = torch.minimum((y + o[0]).clamp_min(0), h - S); x = torch.minimum((x + o[1]).clamp_min(0), w - S)
             xs = torch.stack([self.images[a][:, b:b + S, c:c + S] for a, b, c in zip(i.tolist(), y.tolist(), x.tolist())])
             out = {"x": xs.index_select(1, self.ch), "idx": j.to(self.dev)}
+            if self.naive:
+                out["x"] = naive_transform(out["x"], self.ng)
             if self.kpi is not None:
                 out["kpi"] = self.kpi[j.to(self.dev)]
+            if self.phase is not None:
+                out["phase"] = torch.stack([self.phase[a][b:b + S, c:c + S] for a, b, c in zip(i.tolist(), y.tolist(), x.tolist())])
             yield out
 
 
@@ -163,7 +208,11 @@ class CropDataset(Dataset):
             g = torch.randint(-STRIDE_TRAIN // 2, STRIDE_TRAIN // 2 + 1, (2,))
             y = int(np.clip(y + g[0], 0, h - self.size)); x = int(np.clip(x + g[1], 0, w - self.size))
         c = torch.from_numpy(np.ascontiguousarray(im[y:y + self.size, x:x + self.size][..., self.ch])).permute(2, 0, 1)
+        if getattr(self.store, "naive", False):  # deterministic per-crop noise at evaluation time
+            c = naive_transform(c[None], torch.Generator().manual_seed(1_000_003 * j + 17))[0]
         out = {"x": c, "idx": j}
         if self.kpi is not None:
             out["kpi"] = torch.from_numpy(self.kpi[j])
+        if getattr(self.store, "phase", None):
+            out["phase"] = torch.from_numpy(np.ascontiguousarray(self.store.phase[i][y:y + self.size, x:x + self.size]))
         return out
