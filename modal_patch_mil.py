@@ -344,7 +344,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
         raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe")
     root = Path(__file__).resolve().parent
     if mode == "probe":
-        _probe(root)
+        _probe(root, n_perm)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -419,7 +419,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
             print(f"  {r['site']} -> {r['assigned']} ({r['confidence_flag']})")
 
 
-def _probe(root: Path) -> None:
+def _probe(root: Path, n_perm: int = 200) -> None:
     import pandas as pd
 
     from pmdb.batch_menu import labelled_sites
@@ -429,7 +429,7 @@ def _probe(root: Path) -> None:
     lab = labelled_sites()
     menu = pd.read_csv(root / "outputs" / "menu" / "menu_predictions.csv", dtype={"site": str})
     res = probe_lopo.remote("full", lab.to_dict("records"), parent_groups().to_dict("records"),
-                            menu.to_dict("records"))
+                            menu.to_dict("records"), n_perm)
     out = root / "outputs" / "patch_probe"
     ev = {k: res[k] for k in ("metrics", "heldout", "permutation", "elapsed_s")}
     _atomic_write(out / "evaluation.json", json.dumps(ev, indent=2).encode())
