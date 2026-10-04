@@ -24,9 +24,11 @@ suspect.
 4. **The validation.** LOO 0.677 vs 0.548 baseline; **10,000-permutation p = 0.0025**
    (null mean 0.373; the null's 95th percentile is exactly the majority baseline).
    Stability: 1,496 jackknife refits and 45 hyperparameter configs barely move the
-   held-out assignments. State the honest caveats out loud (feature families were
-   explored on the labelled data; conformal grid is coarse at n_b = 7) — before
-   anyone asks.
+   held-out assignments. And the discipline exhibit: we pre-registered a single
+   extension of the feature set (`docs/eval-plan-oct4.md`, committed before the
+   run) — it failed its own rule (LOO 0.613, p 0.019) and was rejected, no second
+   attempt. State the honest caveats out loud (feature families were explored on
+   the labelled data; conformal grid is coarse at n_b = 7) — before anyone asks.
 5. **The calls** (cards from `outputs/fingerprint/figures/`):
    - `fn0mhxef` → Batch 3 (mid-band Si in a region only Batch 3 occupies).
    - `xrv9xvzb` → Batch 2 (see the defense below).
