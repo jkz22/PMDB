@@ -261,13 +261,44 @@ def collect(results_dir: Path) -> int:
     return 0
 
 
+def collect_edge(results_dir: Path, out_dir: Path) -> int:
+    """Assemble outputs/fem/edge5/{site,tile}_curves.csv from the `refeature` per-case results (same schema)."""
+    p = load_params()
+    site_rows, tile_rows, missing = [], [], []
+    for man in _manifest():
+        for o in ("bottom", "top"):
+            rp = results_dir / o / f"{man['batch']}__{man['site']}.json"
+            d = json.loads(rp.read_text()) if rp.exists() else None
+            if d is None or d["meta"].get("error"):
+                missing.append(f"{man['batch']}/{man['site']}/{o}")
+                site_rows += _missing_rows(man, o, p, False)
+                tile_rows += _missing_rows(man, o, p, True)
+            else:
+                site_rows += d["site_rows"]
+                tile_rows += d["tile_rows"]
+    keep = set(META_COLUMNS) | set(METRIC_NAMES)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for rows, keys, tiles, name in ((site_rows, ["batch", "site", "frame"], False, "site_curves.csv"),
+                                    (tile_rows, ["batch", "site", "tile", "frame"], True, "tile_curves.csv")):
+        df = pd.DataFrame(rows)
+        df = symmetrise(df[[c for c in df.columns if c in keep]], keys)
+        df = _order(df, tiles)
+        df.to_csv(out_dir / name, index=False, float_format="%.6g")
+        print(f"{name}: {len(df)} rows x {df.shape[1]}")
+    print(f"missing cases: {missing}")
+    return 1 if missing else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--edge", nargs=2, metavar=("RESULTS_DIR", "OUT_DIR"))
     ap.add_argument("--g2", nargs=2, metavar=("DIR100", "DIR50"))
     ap.add_argument("--results", metavar="DIR")
     args = ap.parse_args()
     if args.g2:
         return g2(Path(args.g2[0]), Path(args.g2[1]))
+    if args.edge:
+        return collect_edge(Path(args.edge[0]), Path(args.edge[1]))
     if args.results:
         return collect(Path(args.results))
     ap.error("give --g2 or --results")

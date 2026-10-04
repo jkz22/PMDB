@@ -1,6 +1,6 @@
 # FEM lithiation-swelling simulation — decisions so far (pre-spec)
 
-Status: scoping. Literature review complete: `docs/fem/literature-review.md` (parameter table, SOC→Si/graphite mapping, validation bands, accepted risks; evidence in `docs/fem/evidence/`). Full spec to follow.
+Status: DONE 2026-10-04 — 68/68 simulations, 34 GIFs, classifier ablation + held-out predictions, pitch brief (docs/pitch-brief.md), PR #32. Literature review complete: `docs/fem/literature-review.md` (parameter table, SOC→Si/graphite mapping, validation bands, accepted risks; evidence in `docs/fem/evidence/`). Full spec to follow.
 
 ## Decided by user
 - D1 Free/open-source Python: FEniCSx (finite strain needs a nonlinear solver; scikit-fem dropped).
@@ -76,6 +76,38 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 - D17 (user, 2026-10-03: "this is a hackathon, not a scientific paper") SCOPE CUT: D13 SiOx full run and D14 robustness
   sweeps are REMOVED. Only the default pure-Si configuration runs (34 sites × 2 foil orientations). D13/D14 above are
   superseded; no SiOx gate (G4x), no sweep config/mode, no Spearman robustness filter. Prefer pragmatic scope.
+- D22 (user request 2026-10-04: "xgboost on our merged and filtered KPI list, then augment with FEM; the fingerprint
+  naive Bayes is the one to beat"; PRE-REGISTERED before any run).
+  Inputs: outputs/kpis/screen/site_kpis_filtered.csv (26 screened KPIs, 31 sites) MINUS A02_curtaining_index and
+  A03_height_um (imaging/acquisition, not material: milling streaks; frame height of an interior window) -> 24 KPIs.
+  Held-out values from outputs/heldout/kpis/site_kpis.csv. Site level.
+  Model (fixed, no tuning): xgboost XGBClassifier(objective="multi:softprob", n_estimators=300, max_depth=2,
+  learning_rate=0.05, subsample=0.8, colsample_bytree=0.8, min_child_weight=1, reg_lambda=1.0, tree_method="hist",
+  random_state=0, n_jobs=1), sample_weight = inverse class frequency (training fold). Single-stage 3-class.
+  Arms: X1 = 24 KPIs; X2 = X1 + the D21 A1 physics FEM features (swell_resid in-fold on K01, si_stress_spread);
+  X3 = X1 + top-2 raw FEM site metrics selected in-fold exactly as D21 A2; X2e/X3e = same on outputs/fem/edge5
+  (sensitivity only, never final).
+  Comparator: Leo's fingerprint A0 = 21/31 (outputs/fem_fingerprint/main).
+  RULE: an XGB arm BEATS the fingerprint iff LOO correct >= 22/31 AND permutation p <= 0.05 (>= 1000 label
+  permutations, all in-fold steps rerun per permutation, seed per permutation index). Among passing arms pick highest
+  LOO correct; tie -> fewer features (X1 < X2 < X3). If none passes, the fingerprint stays classifier of record.
+  Also report balanced accuracy, confusion, and per-site agreement with the fingerprint (both right / only XGB right /
+  only NB right / both wrong). Held-out scored after the rule with the chosen arm, plus X1 for reference.
+- D21 (user chose "Steps 0-3", 2026-10-04; PRE-REGISTERED before any run) FEM-ON-FINGERPRINT TEST. Diagnosis:
+  .claude/checkpoint/reports/fem-why.synthesiser.md. Base model = Leo's fingerprint (pmdb/fingerprint.py, 16 site
+  features, robust naive Bayes, argmin score, LOO 21/31 = 0.677). Arms (all LOO over 31 labelled sites, refit per fold):
+    A0 Leo 16 (reproduce 21/31 exactly first);
+    A1 Leo 16 + 2 physics features from outputs/fem/site_curves.csv (sym, s = 1): swell_resid = swelling minus its
+       in-fold OLS fit on K01_si_frac_adm; si_stress_spread = (q75_vm_si - q25_vm_si) / q50_vm_si;
+    A2 Leo 16 + top-2 raw FEM metrics selected INSIDE each fold on training sites only (Kruskal-Wallis on the 160
+       site-level raw metrics at s = 0.5 and 1.0; drop near-duplicates |Spearman| > 0.9 within the training fold);
+    A3 (Step 3 sensitivity only, never selected as final) A1 and A2 recomputed from features that exclude a 5 µm band
+       at the top and bottom image edges (fields re-reduced on Modal).
+  DECISION RULE: an FEM arm "adds value" iff LOO correct >= 23/31 AND a permutation test (>= 1000 label permutations,
+  rerunning any in-fold selection inside every permutation) gives p <= 0.05. If both A1 and A2 pass, choose the higher
+  LOO accuracy, tie -> A1 (fewer, physics-motivated). Otherwise Leo's A0 remains the classifier of record. Report
+  accuracy AND balanced accuracy for every arm. Held-out sites scored only after the rule is applied. Excluded by rule
+  from any FEM feature set: si_yield_frac, Si stress/pressure/J magnitudes, sxx_mean, surface_rough.
 - D20 (Claude under delegated physics judgment + full autonomy, 2026-10-04 ~01:00) MECHANICS MODEL SWITCH: production
   uses SMALL-STRAIN LINEAR ELASTICITY with LOGARITHMIC eigenstrain (ε* = ln λ per axis, out-of-plane ε*_yy -> σ_yy,
   plane strain), one linear MUMPS solve per SOC frame, phase properties evaluated at each frame's s. Supersedes the

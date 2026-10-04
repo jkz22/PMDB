@@ -23,3 +23,4 @@ outputs/spine/extract.log
 
 # imported harmonisation pipelines: half-res arrays are rebuilt with scripts/build_harmonise_ext.py (~6 min)
 cache*/harmonised_ext/*/half/*.npz
+data_test/

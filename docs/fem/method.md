@@ -10,7 +10,7 @@ flowchart LR
     B --> C["coarsened label map"]
     C --> D["quad mesh (one cell per pixel)"]
     D --> E["lithiation over SOC frames"]
-    E --> F["Newton solve on Modal"]
+    E --> F["linear solve per SOC frame on Modal"]
     F --> G["fields: J, stresses, von Mises, displacement"]
     G --> H["tile and site features (tile_curves.csv, site_curves.csv)"]
     H --> I["classifier (separate plan)"]
@@ -20,13 +20,17 @@ flowchart LR
 - SEM site to label map: `pmdb.segment` segments the un-harmonised BSE image with the same rule as the KPI pipeline (D4, P24).
 - Label map to coarsened label map: `pmdb.fem.geometry` coarsens by a majority vote with a fixed phase priority, so thin pores and rare Si survive.
 - Coarsened label map to mesh and lithiation: `pmdb.fem.solver` builds one quadrilateral cell per pixel and assigns per-phase eigenstretches and moduli from `pmdb.fem.materials` at each SOC step.
-- Mesh to fields: `pmdb.fem.solver` runs the load-stepped Newton solve with a direct linear solver; `modal_fem.py` runs it in the pinned dolfinx image on Modal.
+- Mesh to fields: `pmdb.fem.solver` solves one linear small-strain problem per SOC frame with a direct solver (`mechanics: linear`, D20); `modal_fem.py` runs it in the pinned dolfinx image on Modal. A finite-strain Newton path exists in the same module as a reference for the analytic tests but is not used in production.
 - Fields to features: `pmdb.fem.features` reduces the fields on a fixed tile grid and for the central site region.
 - Fields to GIF: `pmdb.fem.gif` warps the BSE image by the displacement and overlays the von Mises stress on solid cells.
 
 ## 2. Physics assumptions
 
-The model is plane strain with finite-strain kinematics. The total deformation gradient is split multiplicatively into an elastic part and an eigenstretch (lithiation) part. Silicon swells isotropically, graphite swells anisotropically with its c-axis along the thickness direction, and binder, pores and segmentation artefacts do not swell. Lithiation is uniform within each phase at a given SOC. The material response is elastic only; the silicon yield stress is evaluated as a flag and does not enter the solve. Pores are modelled as an ersatz soft material, which is a numerical choice rather than a measured property.
+The production model is plane strain with small-strain linear elasticity and a logarithmic eigenstrain: each phase's lithiation stretch enters as its logarithm, the in-plane elastic strain is the symmetric displacement gradient minus that eigenstrain, and the out-of-plane eigenstrain produces an out-of-plane stress (decision D20, plan P31). One linear solve is made per SOC frame with the phase moduli at that frame's SOC.
+
+Why not finite strain: the literature review calls for finite-strain kinematics because silicon swells far beyond the small-strain range, and that was the original design (multiplicative split of the deformation gradient, neo-Hookean energy). On the real microstructures it could not be solved: silicon next to thin pore slivers crushes the soft ersatz pore cells towards zero volume within the first few percent of SOC, and the Newton solve stalls there. Finer steps, stiffer pores, a different line search and a pore compaction barrier all failed (evidence in `docs/fem/results.md` and the plan's Revision log). The linear model always solves and keeps the mesh, phases, SOC schedule, boundary conditions and outputs unchanged; its cost is accuracy of absolute magnitudes (see Limitations). The parameter table below is the literature basis for both paths; its kinematics and energy rows describe the finite-strain reference, and the eigenstretch values feed the linear model through their logarithms.
+
+Silicon swells isotropically, graphite swells anisotropically with its c-axis along the thickness direction, and binder, pores and segmentation artefacts do not swell. Lithiation is uniform within each phase at a given SOC. The material response is elastic only; the silicon yield stress is evaluated as a flag and does not enter the solve. Pores are modelled as an ersatz soft material, which is a numerical choice rather than a measured property.
 
 <!-- AUTO:physics -->
 | Assumption | Model choice | Source | Evidence strength |
@@ -118,6 +122,8 @@ All finite-element code runs on Modal in a pinned container image. Production ru
 
 ## 9. Limitations
 
+- Small-strain linear mechanics (D20) for an eigenstrain far outside the small-strain range: absolute silicon stresses saturate and are not physical, so stress features are relative and weak; swelling, pore and strain features carry most of the signal. Values are in `docs/fem/results.md`.
+- Linear volume ratio in pores can fall to zero or below ("over-closure"); the closed-pore flag catches it, but closure depth is not physical.
 - Two-dimensional plane strain; no out-of-plane variation.
 - No electrochemistry or rate effects; the state of charge is imposed uniformly per phase.
 - Elastic only; plasticity and fracture are not modelled.

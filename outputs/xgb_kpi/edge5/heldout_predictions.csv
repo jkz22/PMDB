@@ -1,0 +1,7 @@
+batch,site,arm,extra_features,assigned,confidence,p_Batch_1,p_Batch_2,p_Batch_3
+Batch_heldout,3e122cbj,X2e,swell_resid;si_stress_spread,Batch_1,0.96003926,0.96003926,0.009734419,0.030226309
+Batch_heldout,fn0mhxef,X2e,swell_resid;si_stress_spread,Batch_2,0.7781334,0.10454629,0.7781334,0.11732031
+Batch_heldout,xrv9xvzb,X2e,swell_resid;si_stress_spread,Batch_2,0.8266413,0.02794891,0.8266413,0.14540975
+Batch_heldout,3e122cbj,X3e,q25_vm_binder@s0.5;q5_J_gr@s0.5,Batch_1,0.89044905,0.89044905,0.011186454,0.09836449
+Batch_heldout,fn0mhxef,X3e,q25_vm_binder@s0.5;q5_J_gr@s0.5,Batch_1,0.4770267,0.4770267,0.4132976,0.10967573
+Batch_heldout,xrv9xvzb,X3e,q25_vm_binder@s0.5;q5_J_gr@s0.5,Batch_2,0.7673634,0.02274061,0.7673634,0.20989598
