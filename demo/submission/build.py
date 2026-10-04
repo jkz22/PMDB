@@ -24,6 +24,7 @@ TEMPLATES = HERE / "templates"
 FACTS_JSON = HERE / "facts.json"
 VIDEO = "demo/backup/pmdb-submission.mp4"
 HELDOUT_SITES = {"3e122cbj", "fn0mhxef", "xrv9xvzb"}
+EXPECTED_CALLS = {"3e122cbj": "Batch_1", "fn0mhxef": "Batch_3", "xrv9xvzb": "Batch_2"}
 RENDERED = [("submission.md", "docs/slides/submission.md"), ("qa.md", "docs/slides/qa.md"),
             ("run-of-show.md", "docs/slides/run-of-show.md"), ("pitch.html", "docs/slides/pitch.html")]
 README = "README.md"
@@ -148,6 +149,10 @@ def check_invariants(facts):
         raise StoryChange(f"STORY CHANGE: {facts['fem_missing']} FEM cases are missing, so '0 failures' is false")
     if set(sites) != HELDOUT_SITES:
         raise StoryChange(f"STORY CHANGE: the held-out sites are now {sorted(sites)}, not {sorted(HELDOUT_SITES)}")
+    for site, expected in EXPECTED_CALLS.items():
+        assigned = sites[site]["assigned"]
+        if assigned != expected:
+            raise StoryChange(f"STORY CHANGE: {site} is now {assigned}, but the card text explains {expected}")
     if sites["3e122cbj"]["confidence"] != 0:
         raise StoryChange("STORY CHANGE: 3e122cbj no longer has confidence 0 "
                           f"({sites['3e122cbj']['confidence']})")
