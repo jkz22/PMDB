@@ -100,8 +100,8 @@ The stop window is the range outside of which a swelling result is treated as a 
 - Stop window for the site swelling at full SOC: [0.03, 0.39]
 - Literature band (reported only): [0.09, 0.39]
 - Maximum sites with a failed solve: 3
-- Solver settings: `ds_max` = 0.05, `ds_min` = 0.0015625, `grow_if_its_le` = 5, `snes_rtol` = 1e-08, `snes_atol` = 1e-10, `snes_max_it` = 25, `quadrature_degree` = 2, `linesearch` = bt
-- Remediation applied: none applied
+- Solver settings: `ds_max` = 0.05, `ds_min` = 0.0001953125, `grow_if_its_le` = 5, `snes_rtol` = 1e-08, `snes_atol` = 1e-10, `snes_max_it` = 25, `quadrature_degree` = 2, `linesearch` = bt
+- Remediation applied: rung1: solver.ds_min 0.0015625 -> 0.0001953125 (stage3 failed_at_s bottom=0.0265625, top=0.0265625; old solver, predictor NaN); P30: pore compaction barrier psi_c = kappa/2 ln(J/Jc)^2 for J < Jc, Jc 0.3, kappa 500 MPa, pore cells only (rungs 1-3 reached s <= 0.075 only; pores crushed to J -> 0; P30 made it worse, finite path only); P31/D20: mechanics linear (small strain, log eigenstrain), no substepping
 <!-- /AUTO:gates -->
 
 ## 8. Runtime and cost
@@ -109,7 +109,11 @@ The stop window is the range outside of which a swelling result is treated as a 
 All finite-element code runs on Modal in a pinned container image. Production runs are detached and polled from the results volume; each case is retried once with a larger timeout and memory. Before every launch the remaining planned spend is re-projected against the hard cap; if it would exceed the cap the collector-at-top orientation is dropped first, then the resolution check.
 
 <!-- AUTO:cost -->
-_pending: generated after the full run_
+- Cost model: `cpu_rate` = 0.0472, `mem_rate` = 0.008, `overhead_s` = 120, `cap_usd` = 180.0, `exponent` = 1.5
+- Production settings: `cpu` = 4.0, `memory_mb` = 10240, `timeout_s` = 7200
+- Per-case wall time (s): median 140, max 191
+- Per-case cost (USD): median 0.02, max 0.02
+- Ledger total (USD): 2.61 of cap 180.0
 <!-- /AUTO:cost -->
 
 ## 9. Limitations

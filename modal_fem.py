@@ -93,12 +93,49 @@ def _worst(n_calls: int, cpu: float, memory_mb: int, timeout_s: int) -> float:
     return n_calls * (timeout_s + OVERHEAD_S) / 3600.0 * _rate(cpu, memory_mb)
 
 
-def budget_check(mode: str, tag: str, items: list, cpu: float, memory_mb: int, timeout_s: int) -> str:
-    """P22 rules (a) and (d). Returns "go" or "skip"; raises SystemExit(3) on a cap refusal.
+def _save_budget(budget: dict) -> None:
+    BUDGET_JSON.parent.mkdir(parents=True, exist_ok=True)
+    BUDGET_JSON.write_text(json.dumps(budget, indent=2))
 
-    Rules (b) and (c) (tags ``full`` / ``full_rerun``) belong to the production modes (Step 8).
-    """
+
+def _manifest_cases(orientation: str, sites: str = "") -> list[dict]:
+    """All 31 labelled + 3 held-out sites (cache manifests) x one orientation, optionally restricted."""
+    out = []
+    for man in (ROOT / "cache" / "half" / "manifest.csv", ROOT / "cache_heldout" / "half" / "manifest.csv"):
+        with open(man, newline="") as fh:
+            for r in csv.DictReader(fh):
+                out.append({"batch": r["batch"], "site": r["site"], "orientation": orientation,
+                            "n_cells": (int(r["height"]) // 2) * (int(r["width"]) // 2)})
+    if sites:
+        want = set(sites.split(","))
+        out = [c for c in out if f"{c['batch']}/{c['site']}" in want]
+    return out
+
+
+def _reference() -> tuple[float, float]:
+    """(c_ref, n_cells_ref): mean per-case cost and cells of finished full cases, else of the bench cpu-4 cases."""
+    for tags in (("full",), ("bench",)):
+        cs, ns = [], []
+        for tag in tags:
+            for rp in (FEM_DIR / "results" / tag).rglob("*.json"):
+                m = json.loads(rp.read_text())["meta"]
+                if not m.get("error") and "cost_usd" in m:
+                    cs.append(m["cost_usd"])
+                    ns.append(m["n_cells"])
+        if cs:
+            return sum(cs) / len(cs), sum(ns) / len(ns)
+    raise SystemExit("no reference case cost (run the benchmark first)")
+
+
+def _expected(cases: list[dict]) -> float:
+    c_ref, n_ref = _reference()
+    return sum(1.25 * c_ref * (c["n_cells"] / n_ref) ** 1.5 for c in cases)
+
+
+def budget_check(mode: str, tag: str, items: list, cpu: float, memory_mb: int, timeout_s: int) -> str:
+    """P22 rules (a)-(d). Returns "go" or "skip"; raises SystemExit(3) on a cap refusal."""
     budget = _load_budget()
+    budget.setdefault("launched", [])
     if mode in ("probe", "unit", "bench", "window"):
         if mode == "window" and tag.startswith("stage2") and budget["drop_stage2"]:
             print("stage2 dropped by budget")
@@ -108,7 +145,50 @@ def budget_check(mode: str, tag: str, items: list, cpu: float, memory_mb: int, t
             print(f"BUDGET REFUSAL: ledger + worst case + allowance = {total:.2f} > {CAP_USD}")
             raise SystemExit(3)
         return "go"
-    raise NotImplementedError(f"budget rule for mode {mode!r} is added with the production modes")
+    if mode != "full":
+        raise NotImplementedError(f"budget rule for mode {mode!r}")
+    orientation = items[0]["orientation"]
+    stage2_open = not budget["drop_stage2"] and not (FEM_DIR / "results" / "stage2_50").exists()
+
+    def remaining(this_chunk: bool) -> float:
+        r = 0.0
+        for o in ("bottom", "top"):
+            if o == "top" and budget["drop_top"]:
+                continue
+            if o in budget["launched"] and not (this_chunk and o == orientation):
+                continue
+            r += _expected(_manifest_cases(o))
+        if stage2_open and not budget["drop_stage2"]:
+            r += _worst(2, 4.0, 16384, 7200)
+        return r
+
+    if tag == "full_rerun":
+        total = ledger_total() + _expected(items) + remaining(False) + DEV_ALLOWANCE_USD
+        if total > CAP_USD:
+            print("reruns skipped by budget")
+            return "skip"
+        return "go"
+    if orientation == "top" and budget["drop_top"]:
+        print("top dropped by budget")
+        return "skip"
+    led = ledger_total()
+    if led + remaining(True) + DEV_ALLOWANCE_USD > CAP_USD:
+        budget["drop_top"] = True
+        budget["log"].append(f"{_utc()}: drop_top (ledger {led:.2f})")
+        if orientation == "top":
+            _save_budget(budget)
+            print("top dropped by budget")
+            return "skip"
+        if led + remaining(True) + DEV_ALLOWANCE_USD > CAP_USD:
+            budget["drop_stage2"] = True
+            budget["log"].append(f"{_utc()}: drop_stage2 (ledger {led:.2f})")
+            if led + remaining(True) + DEV_ALLOWANCE_USD > CAP_USD:
+                _save_budget(budget)
+                print("BUDGET REFUSAL: full chunk exceeds the cap even with top and stage2 dropped")
+                raise SystemExit(3)
+    budget["launched"].append(orientation)
+    _save_budget(budget)
+    return "go"
 
 
 def _utc() -> str:
@@ -501,6 +581,48 @@ def _mode_window(orientation: str, sites: str, crop_um: float, res_nm: float, ta
     return 1 if any(d["meta"].get("error") for d in _load_results(tag)) else 0
 
 
+def _mode_bench(cpu: float, memory: int, timeout: int) -> int:
+    site = "Batch_3/vc2whyaq"
+    b, s = site.split("/")
+    pair = [{"batch": b, "site": s, "orientation": o} for o in ("bottom", "top")]
+    one = [{"batch": b, "site": s, "orientation": "bottom"}]
+    total = ledger_total() + _worst(2, 4.0, memory, timeout) + _worst(1, 8.0, memory, timeout) + DEV_ALLOWANCE_USD
+    if total > CAP_USD:
+        print(f"BUDGET REFUSAL: {total:.2f} > {CAP_USD}")
+        return 3
+    h1 = run_cases.spawn(pair, "bench", 4.0, memory, timeout, 4)
+    h2 = run_cases.spawn(one, "bench_cpu8", 8.0, memory, timeout, 8)
+    h1.get()
+    h2.get()
+    gates = []
+    for tag in ("bench", "bench_cpu8"):
+        sync(tag)
+        g = summarize(tag)
+        if tag == "bench":
+            gates = g
+    print("SYNC DONE bench")
+    if any(not g["gate_ok"] for g in gates):
+        return 4
+    return 1 if any(d["meta"].get("error") for tg in ("bench", "bench_cpu8") for d in _load_results(tg)) else 0
+
+
+def _mode_full(orientation: str, sites: str, tag: str, cpu: float, memory: int, timeout: int,
+               solver_overrides: str) -> int:
+    if orientation not in ("bottom", "top"):
+        raise SystemExit("full mode needs --orientation bottom|top")
+    tag = tag or "full"
+    cases = _manifest_cases(orientation, sites)
+    if budget_check("full", tag, cases, cpu, memory, timeout) == "skip":
+        return 0
+    ov = json.loads(solver_overrides) if solver_overrides else None
+    run_cases.remote([{k: c[k] for k in ("batch", "site", "orientation")} for c in cases], tag, cpu, memory,
+                     timeout, int(cpu), 0.0, 0.0, ov)
+    sync(tag)
+    summarize(tag)
+    print(f"SYNC DONE {tag}")
+    return 0
+
+
 @app.local_entrypoint()
 def main(mode: str, k: str = "", orientation: str = "both", sites: str = "", crop_um: float = 0.0,
          res_nm: float = 0.0, tag: str = "", cpu: float = 4.0, memory: int = 16384, timeout: int = 7200,
@@ -511,6 +633,10 @@ def main(mode: str, k: str = "", orientation: str = "both", sites: str = "", cro
         code = _mode_unit(k)
     elif mode == "window":
         code = _mode_window(orientation, sites, crop_um, res_nm, tag, cpu, memory, timeout, solver_overrides)
+    elif mode == "bench":
+        code = _mode_bench(cpu, 16384, 21600)
+    elif mode == "full":
+        code = _mode_full(orientation, sites, tag, cpu, memory, timeout, solver_overrides)
     elif mode == "diag":
         runs = json.loads(solver_overrides)
         t0 = time.time()
