@@ -195,11 +195,11 @@
 <section class="slide">
   <div class="kicker">9 · 48 hours</div>
   <h1>How it was built.</h1>
-  <figure><video src="../../outputs/clips/repo_progress_cat.mp4" autoplay loop muted playsinline style="max-width:100%;max-height:70vh"></video></figure>
+  <figure><video src="../../outputs/clips/repo_progress_cat.mp4" loop muted playsinline style="max-width:100%;max-height:70vh"></video></figure>
   <div class="foot"><span>The repository over the hackathon &mdash; thank you!</span><span>github.com/jkz22/PMDB</span></div>
 </section>
 
-<div class="hud"><span id="counter">1 / 7</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
+<div class="hud"><span id="counter"></span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>
 
 <script>
   const slides = [...document.querySelectorAll(".slide")];
@@ -208,7 +208,11 @@
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach((s, k) => s.classList.toggle("active", k === i));
     document.getElementById("counter").textContent = `${i + 1} / ${slides.length}`;
+    slides.forEach((s, k) => s.querySelectorAll("video").forEach(v => {
+      if (k === i) { v.currentTime = 0; v.play().catch(() => {}); } else v.pause();
+    }));
   };
+  show(0);
   addEventListener("keydown", e => {
     if (["ArrowRight", "PageDown", " "].includes(e.key)) show(i + 1);
     if (["ArrowLeft", "PageUp"].includes(e.key)) show(i - 1);
