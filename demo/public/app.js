@@ -1,7 +1,7 @@
 import * as fp from '/lib/fingerprint.js';
 import * as cf from '/lib/confound.js';
 import { el, lineChart, stripPlot, histogram, scatter, BATCH_COLOR, BATCH_LABEL } from './charts.js';
-import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs, reopenSite } from './embed_logic.js';
+import { findCell, headerRow, clampTip, storyIsStale, evidenceIsStale, topPcs, reopenSite, confidence } from './embed_logic.js';
 
 const BATCHES = ['Batch_1', 'Batch_2', 'Batch_3'];
 const short = (b) => b.replace('Batch_', 'Batch ').replace('heldout', 'held-out');
@@ -525,7 +525,7 @@ R.embeddings = (root) => {
       h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),
         h('span', { class: 'call-batch', style: `color:${BATCH_COLOR[s.call]}` }, short(s.call)),
         h('span', { class: 'call-p' }, p.toFixed(2),
-          h('span', { class: `conf ${p >= 0.8 ? 'hi' : p >= 0.67 ? 'md' : 'lo'}` }, p >= 0.8 ? 'HIGH' : p >= 0.67 ? 'MEDIUM' : 'LOW'))),
+          h('span', { class: `conf ${confidence(p).cls}` }, confidence(p).label))),
       bars,
       h('div', {},
         h('a', { href: `/evidence/${s.site}.png`, target: '_blank', title: 'Open full size' },

@@ -157,22 +157,46 @@
   <figure><img src="../../outputs/fingerprint/figures/depth_profiles.png" alt="Si depth profiles per batch with held-out sites against batch medians"></figure>
 </section>
 
-<!-- 6 · THE ANSWER -->
+<!-- 6 · ROUND 1 -->
 <section class="slide">
-  <div class="kicker">6 · The answer</div>
-  <h1>That is enough to call the three held-out sites.</h1>
+  <div class="kicker">6 · Round 1</div>
+  <h1>Three held-out images, scored against the revealed truth.</h1>
   <div class="cards">
-    <div class="call"><div class="site">fn0mhxef</div><div class="batch">{{call_fn0mhxef_batch}}</div></div>
-    <div class="call"><div class="site">xrv9xvzb</div><div class="batch">{{call_xrv9xvzb_batch}}</div></div>
-    <div class="call"><div class="site">3e122cbj</div><div class="batch">{{call_3e122cbj_batch}}</div></div>
+    <div class="call"><div class="site">fn0mhxef</div><div class="batch">Batch 2</div><div class="why">true <b>Batch 1</b> &nbsp;&#10007;</div></div>
+    <div class="call"><div class="site">xrv9xvzb</div><div class="batch">Batch 3</div><div class="why">true <b>Batch 3</b> &nbsp;&#10003;</div></div>
+    <div class="call"><div class="site">3e122cbj</div><div class="batch">Batch 1</div><div class="why">true <b>Batch 2</b> &nbsp;&#10007;</div></div>
   </div>
+  <div class="foot"><span>The model&rsquo;s calls, each made with the image&rsquo;s entire parent electrode excluded from training. These labels were hard for everyone: no team scored 3/3, one scored 2/3.</span><span>outputs/probe_explain/site_explanations.csv</span></div>
+</section>
+
+<!-- 7 · ROUND 2 -->
+<section class="slide">
+  <div class="kicker">7 · Round 2</div>
+  <h1>Six new images.</h1>
+  <div class="cards">
+    <div class="call"><div class="site">0eryguqq</div><div class="batch">Batch 3</div></div>
+    <div class="call"><div class="site">fhwrjtet</div><div class="batch">Batch 3</div></div>
+    <div class="call"><div class="site">fspqbkxl</div><div class="batch">Batch 2</div></div>
+    <div class="call"><div class="site">y59rxmxl</div><div class="batch">Batch 1</div></div>
+    <div class="call"><div class="site">soo2ax3r</div><div class="batch">Batch 1</div></div>
+    <div class="call"><div class="site">4hq27w4c</div><div class="batch">Batch 2</div></div>
+  </div>
+  <div class="foot"><span>Linear probe on MicroNet patch embeddings &mdash; validated leave-one-<em>parent</em>-out, so no sibling-crop leakage: accuracy 0.71, permutation p = 0.005.</span><span>docs/final_predictions.md &middot; outputs/probe_explain/</span></div>
 </section>
 
 <section class="slide">
-  <div class="kicker">7 · The twist</div>
+  <div class="kicker">8 · The twist</div>
   <h1>The 34 &ldquo;sites&rdquo; are crops of 13 parent electrodes.</h1>
   <figure><img src="../../outputs/slides/parents_heldout.png" alt="Top three reconstructed parent images: each held-out site abuts at least one labelled crop, and one parent spans several batch labels"></figure>
-  <div class="foot"><span>We stitched the dataset back together: 17 seams, z &ge; 5.6, zero false positives across 2,108 wrong pairings. One parent spans several &ldquo;batches&rdquo;, and two of the three held-out sites abut crops whose organiser-released label (not our call above) is <em>different</em> (fn0mhxef has a single confirmed neighbour) &mdash; the label follows the crop, not the material.</span><span>full figure &amp; method: outputs/stitching/</span></div>
+  <div class="foot"><span>We stitched the dataset back together: 17 seams, z &ge; 5.6, zero false positives across 2,108 wrong pairings. One parent spans several &ldquo;batches&rdquo;, and two of the three round-1 images abut crops whose organiser-released label is <em>different</em> (fn0mhxef has a single confirmed neighbour) &mdash; the label follows the crop, not the material. This is why validation is leave-one-parent-out.</span><span>full figure &amp; method: outputs/stitching/</span></div>
+</section>
+
+<!-- 9 · OUTRO -->
+<section class="slide">
+  <div class="kicker">9 · 48 hours</div>
+  <h1>How it was built.</h1>
+  <figure><video src="../../outputs/clips/repo_progress_cat.mp4" autoplay loop muted playsinline style="max-width:100%;max-height:70vh"></video></figure>
+  <div class="foot"><span>The repository over the hackathon &mdash; thank you!</span><span>github.com/jkz22/PMDB</span></div>
 </section>
 
 <div class="hud"><span id="counter">1 / 7</span> · <kbd>→</kbd> next · <kbd>←</kbd> back</div>

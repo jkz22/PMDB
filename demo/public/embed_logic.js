@@ -42,3 +42,11 @@ export function topPcs(rows, sites, n) {
 export function reopenSite(openSite, view, displayedSites) {
   return openSite && view === 'embeddings' && displayedSites.includes(openSite) ? openSite : null;
 }
+
+// Confidence label from the value as DISPLAYED (2 dp), so the number and the label never disagree.
+export function confidence(p) {
+  const shown = Number(Number(p).toFixed(2));
+  if (shown >= 0.8) return { shown, cls: 'hi', label: 'HIGH' };
+  if (shown >= 0.67) return { shown, cls: 'md', label: 'MEDIUM' };
+  return { shown, cls: 'lo', label: 'LOW' };
+}
