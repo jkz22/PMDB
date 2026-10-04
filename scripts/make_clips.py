@@ -318,12 +318,12 @@ def fem_box(first: np.ndarray, last: np.ndarray) -> tuple[int, int, int, int]:
 def clip_fem() -> None:
     X = features()
     reps = representatives(X)
-    curves = pd.read_csv(ROOT / "outputs/fem/site_curves.csv", dtype={"site": str})
+    curves = pd.read_csv(ROOT / "outputs/fem/free_lateral/site_curves.csv", dtype={"site": str})
     curves = curves[(curves["orientation"] == "bottom") & (~curves["heldout"])]
     med = curves.groupby(["batch", "frame"])["swelling"].median().unstack(0)
     frames = {}
     for b in BATCHES:
-        gif = Image.open(ROOT / f"outputs/fem/gifs/{b}__{reps[b]}.gif")
+        gif = Image.open(ROOT / f"outputs/fem/free_lateral/gifs/{b}__{reps[b]}.gif")
         fr = []
         for i in range(gif.n_frames):
             gif.seek(i)
@@ -336,8 +336,8 @@ def clip_fem() -> None:
 
     fig = new_fig()
     fig.text(0.05, 0.915, "Charging: silicon swells ~3x in volume", fontsize=38, weight="bold")
-    fig.text(0.05, 0.865, "2D finite-element lithiation on the real segmented microstructure, one site per batch",
-             fontsize=19, color=DIM)
+    fig.text(0.05, 0.865, "2D finite-element lithiation on the real segmented microstructure, free lateral expansion, "
+             "one site per batch", fontsize=19, color=DIM)
     ims, txt = [], []
     for c, b in enumerate(BATCHES):
         ax = fig.add_axes([0.04 + c * 0.315, 0.36, 0.30, 0.44])
@@ -356,8 +356,9 @@ def clip_fem() -> None:
     socx = med.index.to_numpy() / (nf - 1) * 100
     lines = {b: P.plot([], [], color=COL[b], lw=4, label=f"{LABEL[b]} median")[0] for b in BATCHES}
     P.legend(loc="upper left", frameon=False, fontsize=14)
-    punch = fig.text(0.66, 0.15, "All batches swell ~13%.\nChemistry is the same -\nthe arrangement is not.",
-                     fontsize=24, weight="bold", alpha=0, va="center")
+    final_sw = med.iloc[-1].mean() * 100
+    punch = fig.text(0.66, 0.15, f"All batches swell ~{final_sw:.0f}%.\nChemistry is the same -\n"
+                     "the arrangement is not.", fontsize=24, weight="bold", alpha=0, va="center")
 
     def update(t):
         f = (nf - 1) * ramp(t, 0.6, 5.0)
