@@ -116,3 +116,5 @@ header.top nav button { white-space: nowrap; }
 .call.open .call-p, .call.open .call-batch { font-size: 30px; }
 .call.open p { font-size: 17px; }
 @media (prefers-reduced-motion: reduce) { .call { transition: none; } }
+.card-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(13,13,12,.45); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.card-overlay .call.open { width: min(1100px, 100%); max-height: 100%; overflow: auto; cursor: default; grid-column: auto; }
