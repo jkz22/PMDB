@@ -479,6 +479,8 @@ const SITE_STORY = {
   y59rxmxl: { call: 'Batch_1', text: 'Leans Batch 1: lower Si area fraction and fewer Si particles than a Batch 2 crop, with less Si–graphite contact.' },
   soo2ax3r: { call: 'Batch_1', text: 'Leans Batch 1: fewer but larger Si particles (lower density, higher Si area) than a Batch 2 crop, most visible deeper in the coating.' },
 };
+// Call each evidence PNG in /evidence was rendered for; a different loaded call means the map is stale.
+const EVIDENCE_CALL = { '0eryguqq': 'Batch_3', fhwrjtet: 'Batch_3', fspqbkxl: 'Batch_2', '4hq27w4c': 'Batch_2', y59rxmxl: 'Batch_1', soo2ax3r: 'Batch_1' };
 const KPI_NAME = { si_frac: 'Si area fraction', si_density_per_1000um2: 'Si particle density', si_mean_area_um2: 'Si particle size',
   si_graphite_contact_frac: 'Si–graphite contact', porosity: 'porosity', depth_frac: 'depth position' };
 function pcStory(label, r2, explained) {
@@ -505,16 +507,18 @@ R.embeddings = (root) => {
     const bars = h('div', { class: 'pbar' }, ...['Batch_1', 'Batch_2', 'Batch_3'].map((b) =>
       h('span', { style: `width:${(+s[`p_${b}`] * 100).toFixed(1)}%;background:${BATCH_COLOR[b]}`, title: `${short(b)} ${(+s[`p_${b}`]).toFixed(2)}` })));
     const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
-    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', title: 'Click to expand',
-      onclick: (e) => openCard(e.currentTarget),
-      onkeydown: (e) => { if (e.key === 'Enter') openCard(e.currentTarget); } },
+    return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', role: 'button', title: 'Click to expand',
+      onclick: (e) => { if (e.target.closest('a')) return; openCard(e.currentTarget); },
+      onkeydown: (e) => { if (e.target !== e.currentTarget) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(e.currentTarget); } } },
       h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),
         h('span', { class: 'call-batch', style: `color:${BATCH_COLOR[s.call]}` }, short(s.call)),
         h('span', { class: 'call-p' }, p.toFixed(2),
           h('span', { class: `conf ${p >= 0.8 ? 'hi' : p >= 0.67 ? 'md' : 'lo'}` }, p >= 0.8 ? 'HIGH' : p >= 0.67 ? 'MEDIUM' : 'LOW'))),
       bars,
       h('div', {},
-        h('img', { src: `/evidence/${s.site}.png`, alt: `Evidence map for ${s.site}`, class: 'evidence' })),
+        h('a', { href: `/evidence/${s.site}.png`, target: '_blank', title: 'Open full size' },
+          h('img', { src: `/evidence/${s.site}.png`, alt: `Evidence map for ${s.site}`, class: 'evidence' }))),
+      ...(evidenceIsStale(EVIDENCE_CALL, s.site, s.call) ? [h('p', { class: 'src' }, `Evidence map was rendered for the call ${EVIDENCE_CALL[s.site] ? short(EVIDENCE_CALL[s.site]) : 'unknown'}; the loaded call is ${short(s.call)}, so the map may not match.`)] : []),
       h('div', { class: 'src' }, 'red zones support the call · blue argue against · yellow = 3 strongest'),
       h('p', {}, SITE_STORY[s.site].text),
       ...(storyIsStale(SITE_STORY[s.site], s.call) ? [h('p', { class: 'src' }, `Explanation written when this site was called ${short(SITE_STORY[s.site].call)}; the loaded call is ${short(s.call)}, so the text may be out of date. Chips and bars are from the loaded data.`)] : []),
@@ -523,9 +527,7 @@ R.embeddings = (root) => {
       h('div', { class: 'src' }, `${Math.round(ex * 100)}% measured microstructure · ${Math.round((1 - ex) * 100)}% fine texture`));
   })));
   // 2. compact heatmap: top 12 dims + rest
-  const tot = {};
-  for (const r of C) tot[r.pc] = (tot[r.pc] || 0) + Math.abs(+r.contribution);
-  const top = Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, 12);
+  const top = topPcs(C, test.map((x) => x.site), 12);
   const cell = (s, parent, pc) => findCell(C, s, parent, pc);
   const max = Math.max(...C.filter((r) => top.includes(r.pc)).map((r) => Math.abs(+r.contribution)));
   const tip = h('div', { class: 'emb-tip', hidden: true });

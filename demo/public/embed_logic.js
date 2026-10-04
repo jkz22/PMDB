@@ -25,3 +25,15 @@ export function clampTip(x, y, w, h, vw, vh, gap = 14, pad = 8) {
 export function storyIsStale(story, call) {
   return !story || story.call !== call;
 }
+
+// An evidence PNG is only trusted when the loaded call equals the call it was rendered for.
+export function evidenceIsStale(evidenceCalls, site, call) {
+  return !evidenceCalls || evidenceCalls[site] !== call;
+}
+
+// Top-n PCs by summed |contribution| over the given (displayed) sites only.
+export function topPcs(rows, sites, n) {
+  const keep = new Set(sites), tot = {};
+  for (const r of rows) if (keep.has(r.site)) tot[r.pc] = (tot[r.pc] || 0) + Math.abs(+r.contribution);
+  return Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, n);
+}
