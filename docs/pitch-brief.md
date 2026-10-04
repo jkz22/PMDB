@@ -2,11 +2,13 @@
 
 Deck source for the 2026-10-04 pitch (decision D19, `.claude/plans/fem-swelling.md`). Every number below is copied from the file cited next to it. Paths are relative to the repository root. The "Numbers checklist" at the end lists each number once, for fact-checking.
 
+Revision 2 (2026-10-04): the story now follows the FEM diagnosis (`.claude/checkpoint/reports/fem-why.synthesiser.md`) and the pre-registered test D21 (`.claude/plans/fem-swelling.md`). Leo's spatial fingerprint model (`pmdb/fingerprint.py`, `docs/fingerprint.md`) is the classifier of record. Our two-stage random forest, whose rule had picked the KPI arm, is now a cross-check only.
+
 ## Headline
 
-1. We turned all 34 SEM sites into 68 2D lithiation simulations on Modal (0 failures, $2.608 total), and the median simulated electrode swelling, 0.127, sits inside the literature band [0.09, 0.39] (`docs/fem/results.md`).
-2. A two-stage random forest against the Batch_3 supplier baseline assigns the held-out sites: 3e122cbj to Batch_1 (0.855), fn0mhxef to Batch_3 (0.562), xrv9xvzb to Batch_3 (0.586), and the arms disagree on xrv9xvzb (`docs/classifier/results.md`).
-3. With 31 labelled sites, FEM features did not beat image KPIs end to end (balanced accuracy 0.370 vs 0.437), so the rule fixed in advance picked the KPI arm (`docs/classifier/results.md`).
+1. We simulated lithiation inside all 34 real SEM microstructures: 68 of 68 cases ran to full charge for $2.608, and the median simulated swelling, 0.127, sits inside the literature band [0.09, 0.39] (`docs/fem/results.md`).
+2. The simulation answered the question with a clear negative. Swelling is set by Si content (R² = 0.971 against Si area fraction), and Si content does not differ between batches (Kruskal-Wallis p = 0.377). The batches differ in how the Si is arranged, not in how much there is (`.claude/checkpoint/reports/fem-why.explorer-diag.md`).
+3. Leo's spatial fingerprint reads that arrangement: 21 of 31 sites correct in leave-one-out, permutation p = 0.0060. Under a rule written before the run, adding FEM features did not help (20/31 and 17/31), so the fingerprint makes the held-out calls: 3e122cbj Batch_1, fn0mhxef Batch_3, xrv9xvzb Batch_2 (`outputs/fem_fingerprint/main/verdict.md`).
 
 ---
 
@@ -17,202 +19,205 @@ Deck source for the 2026-10-04 pitch (decision D19, `.claude/plans/fem-swelling.
 - The electrode is a graphite anode with silicon as the secondary active material. The provider's only stated quality criterion: "silicon must not cluster and must not be localised" (`docs/kpis/README.md`).
 - Batch_3 is the baseline, "what's been 'promised' by the supplier". Batch_1 and Batch_2 arrived later. They are not better or worse, they show the variation a model must detect (`data_heldout/README.md`).
 - Deliverable for each held-back site: always a batch, a confidence, and how it differs from Batch_3. Abstaining is not allowed (`data_heldout/README.md`, `AGENTS.md`).
-- Why it matters (organiser): a model that can do this can flag an unknown batch N as in or out of distribution, which supports accept/reject decisions (`data_heldout/README.md`).
+- Data: 31 labelled sites (Batch_1 7, Batch_2 7, Batch_3 17; row counts of `outputs/fem/validation.csv`) and 3 unlabelled held-out sites, `3e122cbj`, `fn0mhxef`, `xrv9xvzb`, never trained on (`AGENTS.md`). Three aligned detectors per site (BSE, Inlens, ETD or SE), 50 nm/px in the half-resolution cache (`AGENTS.md`).
 
-**Figure:** none required. Optional: one raw BSE frame, e.g. frame 1 of `outputs/fem/figures/example_frames.png`.
+**Figure:** one raw BSE frame, e.g. frame 1 of `outputs/fem/figures/example_frames.png`.
 
-**Speaker note:** Silicon holds about 3400 mAh/g against about 340 mAh/g for graphite in the reference half cell (`docs/fem/literature-review.md`, C2), and it swells far more. The supplier promised Batch_3. Our job is to say whether a new sample matches that promise and, if not, how it differs.
-
----
-
-## Slide 2. The data: 31 labelled sites, 3 held out
-
-**Key message:** We have 31 labelled SEM cross-sections in three unequal batches and 3 unlabelled sites to classify.
-
-- Labelled sites: Batch_1 7, Batch_2 7, Batch_3 17 (row counts of `outputs/fem/validation.csv`; the 17 Batch_3 and 14 Batch_1/Batch_2 sites are also named in `docs/classifier/method.md`).
-- Held out: `3e122cbj`, `fn0mhxef`, `xrv9xvzb`, unlabelled, never trained on (`AGENTS.md`, `data_heldout/README.md`).
-- Three aligned detectors per site: BSE (composition), Inlens (topography), and ETD or SE. 27 sites use ETD, 4 use SE (`AGENTS.md`). All 3 held-out sites are BSE, Inlens, ETD (`data_heldout/README.md`).
-- Scale: 25 nm/px raw, 50 nm/px in the half-resolution cache we use (`AGENTS.md`). Known confound: an imaging offset on some Batch_3 sites (black level ≈ +19–23, gain ≈ 0.69× on 4 sites), so grey levels alone could leak the batch (`AGENTS.md`).
-
-**Figure:** `outputs/fem/figures/example_frames.png` (left column: BSE at SOC 0 for one site per batch).
-
-**Speaker note:** 31 sites is small. Every metric later carries a bootstrap interval, and the site, not the tile, is the unit of evidence. We kept the held-out sites out of every training fold.
+**Speaker note:** The supplier promised Batch_3. Our job is to say whether a new sample matches that promise and, if not, how it differs. One trap up front: some Batch_3 sites carry an imaging offset (black level ≈ +19–23, gain ≈ 0.69× on 4 sites, `AGENTS.md`), so grey levels alone could leak the batch. Every model in this deck works on segmented geometry, not on grey levels.
 
 ---
 
-## Slide 3. Approach: two feature paths, one classifier
+## Slide 2. The question: can a mechanics simulation of the real microstructure reveal batch differences?
 
-**Key message:** Segment each site once, then describe it two ways, as image KPIs and as a simulated charge, and classify against Batch_3 in two stages.
+**Key message:** Silicon swells far more than graphite, so whether a batch is acceptable could depend on how the surrounding microstructure absorbs that swelling. A KPI counts Si. A simulation asks whether its neighbourhood can absorb it.
 
-- Path A, image KPIs: segmentation, then 15 KPI features per tile (Si loading, particle size, clustering, Si-free pockets, Si-graphite contact) (`docs/classifier/method.md`, `docs/classifier/results.md`).
-- Path B, physics: segmentation, then a 2D finite-element lithiation from 0% to 100% SOC in 11 frames, then 16 FEM features per tile (`.claude/plans/fem-swelling.md` D3; `docs/classifier/method.md`).
-- Tiles: 6 tiles of 22 µm per site, full height, on the same grid for both paths (`docs/classifier/method.md`).
-- Classifier: random forest, fixed hyperparameters, never tuned. Stage 1: Batch_3 vs not. Stage 2: Batch_1 vs Batch_2. Site probability = mean of tile probabilities; confidence = product along the chosen branch (`docs/classifier/method.md`). Three arms: KPI (15 features), FEM (16), KPI+FEM (31) (`docs/classifier/results.md`).
+- Si: volume ratio J_Si = 3.240 at 100% SOC in our model (`docs/fem/method.md`, SOC table). Literature full-lithiation expansion: 263% (Qi), 277% (Obrovac), 280% (Beaulieu) (`docs/fem/literature-review.md`).
+- Graphite: c-axis (through-thickness) strain 0.094 at 100% SOC in our model (`docs/fem/method.md`, SOC table); literature end point about 10.3% at LiC6 (`docs/fem/literature-review.md`, C12).
+- In the image-based model of Shah et al. 2022, Si expansion is absorbed by "(i) reduction in porosity, (ii) compaction of CBD, and (iii) expansion into the separator" (`docs/fem/literature-review.md`, C17).
+- Hypothesis: batches with the same Si but a different neighbourhood (pores, binder, graphite contact) would swell and stress differently, and a classifier could read that.
 
-**Figure:** redraw the mermaid flowchart in `docs/classifier/method.md` section 2 (FEM side: `docs/fem/method.md` section 1).
+**Figure:** none, or a two-panel sketch: Si particle next to a pore vs Si particle boxed in by graphite.
 
-**Speaker note:** The two-stage design mirrors the question. First, is this the supplier baseline? Only if not, which of the later batches does it resemble? The explanation for each site comes from stage-1 importance times the site's z-score against Batch_3.
-
----
-
-## Slide 4. Physics in one slide: Si growth meets pore space
-
-**Key message:** Silicon roughly triples its volume on charge while graphite swells about 10% through the thickness, so the outcome depends on how much pore space sits next to the silicon.
-
-- Si: volume ratio J_Si = 3.240 at 100% SOC in our model (`docs/fem/method.md`, SOC table). Literature full-lithiation expansion: 263% (Qi), 277% (Obrovac), 280% (Beaulieu); we use β = 2.8 with utilisation u_max = 0.8, because full cells do not reach Li15Si4 (`docs/fem/literature-review.md`).
-- Graphite: c-axis (through-thickness) strain 0.094 at 100% SOC in our model (`docs/fem/method.md`, SOC table); literature end point about 10.3% at LiC6 (`docs/fem/literature-review.md`, C12). In-plane strain is about 1% (`docs/fem/literature-review.md`, C14).
-- Charge order (Yao 2019): over the first 25% of SOC, Si takes 96% of the charge; above that, Si 58% and graphite 42% (`docs/fem/literature-review.md`).
-- Why simulate: in the image-based model of Shah et al. 2022, Si expansion is absorbed by "(i) reduction in porosity, (ii) compaction of CBD, and (iii) expansion into the separator" (`docs/fem/literature-review.md`, C17). A KPI counts Si. A simulation asks whether its neighbourhood can absorb it.
-
-**Figure:** `outputs/fem/figures/swelling_vs_soc.png` (site swelling vs SOC, all 34 sites, with the stop window and literature band).
-
-**Speaker note:** All parameters come from a literature review with evidence grades, listed in `docs/fem/literature-review.md`. Where nothing was published, for example pore stiffness, we say so: it is a numerical choice.
+**Speaker note:** Silicon holds about 3400 mAh/g against about 340 mAh/g for graphite in the reference half cell (`docs/fem/literature-review.md`, C2). That capacity is why it is in the anode, and its swelling is why its placement matters. All parameters come from a literature review with evidence grades (`docs/fem/literature-review.md`).
 
 ---
 
-## Slide 5. Engineering: 68 simulations, $2.608
+## Slide 3. The simulation: 68 cases, 0 failures, $2.608
 
-**Key message:** The full simulation campaign ran on Modal CPUs for a few dollars, with every case converged.
+**Key message:** We turned every segmented SEM site into a 2D finite-element lithiation from 0 to 100% charge, and the whole campaign ran on Modal CPUs for a few dollars.
 
-- 34 sites × 2 collector orientations = 68 cases (`outputs/fem/run_log.json`, `cases`; `docs/fem/results.md`, Convergence). Two orientations because the foil side is not visible; features use their mean (`sym`) (`docs/fem/method.md` section 4).
-- Each case meshes one cell per pixel at 100 nm: 1011513 cells for Batch_1/4ih2ggld (`outputs/fem/run_log.json`). FEniCSx/dolfinx 0.10.0 in a pinned Docker image, 4 CPUs, 10240 MB (`outputs/fem/run_log.json`).
-- Wall time per case: median 140 s, max 191 s (bottom); median 130 s, max 175 s (top). 0 of 34 sites failed before 100% SOC in either orientation (`docs/fem/results.md`).
-- Cost: ledger total $2.608 of a $180 cap; production runs $1.31; per case median $0.019, max $0.023 (`docs/fem/results.md`). Checks: 49 unit tests passed; 100 vs 50 nm resolution check passed, max relative swelling difference 0.00643 (`docs/fem/results.md`).
+- Pipeline: image → segmentation → mesh at one cell per pixel at 100 nm → lithiation in 11 SOC frames → stress and strain fields → features (`docs/fem/method.md` section 1; `.claude/plans/fem-swelling.md` D3). 1011513 cells for Batch_1/4ih2ggld (`outputs/fem/run_log.json`).
+- 34 sites × 2 collector orientations = 68 cases (`outputs/fem/run_log.json`; `docs/fem/results.md`, Convergence). Two orientations because the foil side is not visible; features use their mean (`sym`) (`docs/fem/method.md` section 4).
+- 0 of 34 sites failed before 100% SOC in either orientation. Wall time per case: median 140 s (bottom), 130 s (top) (`docs/fem/results.md`).
+- Cost: ledger total $2.608 of a $180 cap; production runs $1.31 (`docs/fem/results.md`). Checks: 49 unit tests passed; 100 vs 50 nm resolution check, max relative swelling difference 0.00643 (`docs/fem/results.md`).
 
-**Figure:** GIF wall, one per batch, chosen as the site with the highest `swelling_sym` in its batch (`outputs/fem/validation.csv`):
+**Figure:** GIF wall, one per batch, the site with the highest `swelling_sym` in its batch (`outputs/fem/validation.csv`):
 - Batch_1: `outputs/fem/gifs/Batch_1__5n1q8atc.gif` (swelling_sym 0.183591)
 - Batch_2: `outputs/fem/gifs/Batch_2__b3esycq1.gif` (swelling_sym 0.137581)
 - Batch_3: `outputs/fem/gifs/Batch_3__x7u69zsw.gif` (swelling_sym 0.139353)
 - Held out: `outputs/fem/gifs/Batch_heldout__3e122cbj.gif` (swelling_sym 0.168261)
 
-**Speaker note:** Each GIF is 11 frames, 0 to 100% SOC: the BSE image warped by the computed displacement with von Mises stress on top. The colour scale is fixed across sites. The GIFs show the bottom orientation.
+**Speaker note:** Each GIF is 11 frames, 0 to 100% SOC: the BSE image warped by the computed displacement, with von Mises stress on top on a colour scale fixed across sites, bottom orientation. One honest model choice: the literature calls for finite-strain mechanics, but on real microstructures it failed at s of about 0.02 to 0.08, because Si crushes thin pores and the model has no contact. Production therefore uses linear small-strain elasticity with a logarithmic eigenstrain (`docs/fem/results.md`, Limitations; `.claude/plans/fem-swelling.md` D20).
 
 ---
 
-## Slide 6. The honest model story: finite strain did not converge
+## Slide 4. The simulation is physically plausible
 
-**Key message:** The literature calls for finite-strain mechanics, but on real microstructures it failed within the first few percent of charge, so production uses linear small-strain elasticity with a logarithmic eigenstrain (D20).
+**Key message:** Simulated electrode swelling at full charge falls inside the literature band at every site, at its low end, as expected for a 2D elastic model.
 
-- Finite-strain neo-Hookean failed at s of about 0.02 to 0.08 for every remediation rung. Si growth crushed thin pores to J of order 1e-3. A pore compaction barrier made it worse (failed at s = 0.023 and 0.016) (`docs/fem/results.md`, Limitations; `.claude/plans/fem-swelling.md` D20).
-- Contact mechanics, the proper fix, was out of hackathon scope (`.claude/plans/fem-swelling.md` D20). The finite-strain code stays in the repo as a tested reference, not used in production (`docs/fem/results.md`).
-- Cost of the switch: absolute stresses are not physical. Si von Mises saturates at about 20 to 26 GPa and `si_yield_frac` is 1.0 everywhere (`docs/fem/results.md`). Linear J can drop to or below 0 in pores ("over-closure"), caught by the pore-closure flag (`docs/fem/results.md`).
-- What survives: swelling, porosity change and geometry-driven features, which are less affected by the stress saturation (`docs/fem/results.md`).
-
-**Figure:** none, or the three-line remediation log from `docs/fem/results.md`, Flags.
-
-**Speaker note:** We tried the textbook model first and it broke on real images, for a physical reason: pores close and the model has no contact. We chose a model that runs on every site and treat its stresses as relative descriptors, not predictions.
-
----
-
-## Slide 7. Swelling validation against the literature
-
-**Key message:** Simulated electrode swelling at full charge sits inside the literature band for every site, at its low end, as expected for a 2D elastic model.
-
-- Median `swelling_sym` at s = 1 over 34 sites: 0.127. Stop window [0.03, 0.39], G4 pass. Literature band [0.09, 0.39], `lit_band_ok = True` (`docs/fem/results.md`). Sites outside the stop window: none (`docs/fem/results.md`).
+- Median `swelling_sym` at s = 1 over 34 sites: 0.127. Literature band [0.09, 0.39], `lit_band_ok = True`. Stop window [0.03, 0.39]; no site outside it (`docs/fem/results.md`).
 - Median by batch: Batch_1 0.132, Batch_2 0.125, Batch_3 0.125, Batch_heldout 0.127 (`docs/fem/results.md`).
 - Literature reference points: graphite-only 9% (Michael), 19% (Prado), 33% (Kirner); 15 wt% Si 22% at a 100 mV cut-off and 39% at 10 mV (`docs/fem/literature-review.md`, VT1).
-- Low end expected: no particle rearrangement, binder creep or SEI growth in the model (`docs/fem/method.md` section 9). Batch_1's two highest sites (0.183591, 0.179983) and held-out 3e122cbj (0.168261) stand out above the rest (`outputs/fem/validation.csv`).
+- Low end expected: no particle rearrangement, binder creep or SEI growth in the model (`docs/fem/method.md` section 9).
 
-**Figure:** `outputs/fem/figures/swelling_by_batch.png` (gold: literature band).
+**Figure:** `outputs/fem/figures/swelling_by_batch.png` (gold: literature band); optional `outputs/fem/figures/swelling_vs_soc.png`.
 
-**Speaker note:** This is a sanity check, not a calibration. Batch medians are close, so swelling alone does not separate batches. The outliers in Batch_1 and the held-out site are worth a look on the next slide pair.
+**Speaker note:** This is a sanity check, not a calibration. Look at the batch medians: 0.132, 0.125, 0.125. They are already close. The next slide explains why.
 
 ---
 
-## Slide 8. Ablation: did physics help the classifier?
+## Slide 5. The finding: batches differ in arrangement, not amount
 
-**Key message:** FEM features scored highest on the Batch_3-vs-rest stage but not end to end, Batch_1 vs Batch_2 was at or below chance for every arm, and the rule fixed before the FEM results picked the KPI arm.
+**Key message:** The simulated swelling is set by how much Si a site holds, and the batches hold the same amount of Si. So the swelling cannot separate them. What differs between batches is where the Si sits.
 
-| arm | level | n_sites | balanced_acc | 95% CI | brier |
+- Swelling tracks Si content. Site swelling at s = 1 regressed on Si area fraction (`K01_si_frac_adm`): R² = 0.971. Spearman rho with K01: 0.891 for swelling at full charge, 0.903 at half charge (`.claude/checkpoint/reports/fem-why.explorer-diag.md`).
+- Si content does not differ between batches: K01 Kruskal-Wallis p = 0.377. Swelling itself: p = 0.2166. What is left of swelling after Si content: p = 0.699 (`.claude/checkpoint/reports/fem-why.explorer-diag.md`).
+- The stress features carry no usable signal under linear mechanics: `si_yield_frac` = 1 on every labelled site, and site-level Si von Mises p95 runs from 23414.9 to 27445.9 MPa against a yield stress of 637.5 MPa (`.claude/checkpoint/reports/fem-why.explorer-diag.md`).
+- No single number separates the batches. 0 of 42 site-level image KPIs reach p < 0.05 in our scan (`.claude/checkpoint/reports/fem-why.explorer-diag.md`); Leo's scan finds none of 51, best p = 0.065 (`docs/fingerprint.md`). No bug: the integrity checks are clean and the repository metrics reproduce exactly (`.claude/checkpoint/reports/fem-why.synthesiser.md`, C10).
+
+**Figure:** `outputs/fem/figures/swelling_vs_si.png` — site swelling at s = 1 (sym) vs K01, coloured by batch, held-out sites as stars, linear fit on labelled sites (R² = 0.97). Generated by `scripts/plot_swelling_vs_si.py` from `outputs/fem/site_curves.csv` and `outputs/kpis/site_kpis.csv` (+ `outputs/heldout/kpis/site_kpis.csv`).
+
+**Speaker note:** This is a mechanistic negative result, and it rules out a hypothesis. In a linear model with swelling strain only in Si, the electrode swells roughly in proportion to its Si fraction (our reading of the R² of 0.971, not a separate measurement). Our first classifier, a two-stage random forest on tile features, showed the same thing from the other side: end-to-end balanced accuracy 0.437 for image KPIs, 0.370 for FEM, 0.350 for both (`docs/classifier/results.md`). Its pre-set rule picked the KPI arm, but every arm sat in the same noise band. That classifier is no longer our answer.
+
+---
+
+## Slide 6. Leo's spatial fingerprint reads the arrangement
+
+**Key message:** Our teammate Leo built a classifier on spatial curves instead of scalars. It separates the batches better than chance with a permutation test behind it, and it is our classifier of record.
+
+- Features, 16 per site: Si depth profile in five bands, normalised by the site mean so composition cancels, plus depth slope and mid-depth dip; pair-correlation level in four lag bins per axis; spread of Si-graphite contact (K15) across tiles (`docs/fingerprint.md`).
+- What it sees: Batch_3 uniform through the coating; Batch_2 top-heavy with a depleted mid-depth (consistent with Si migration during drying); Batch_1 bottom-heavy (consistent with sedimentation) and more variable site to site. Mid-depth band Kruskal-Wallis p ≈ 0.001 (`docs/fingerprint.md`).
+- Model: robust per-batch naive Bayes with no fitted weights, assignment by best likelihood score, plus class-conditional conformal p-values for credibility, confidence and an out-of-distribution flag (`docs/fingerprint.md`).
+- Validation, leave-one-site-out: accuracy 0.677 (21/31) against a 0.548 majority baseline; label-permutation p = 0.002 over 500 permutations, null mean 0.369 (`outputs/fingerprint/evaluation.json`, `docs/fingerprint.md`). Per-batch recall: Batch_1 5/7, Batch_2 3/7, Batch_3 13/17 (`docs/fingerprint.md`).
+
+**Figure:** `outputs/fingerprint/figures/depth_profiles.png` (per-batch Si depth profiles with the held-out sites against the batch medians).
+
+**Speaker note:** Credit where due: the fingerprint is Leo's work (`pmdb/fingerprint.py`). It answers the provider's own rule, "silicon must not cluster and must not be localised", directly, because it measures where Si sits. Two caveats from Leo's own docs: the feature families were chosen by exploring the labelled data, and with n = 31 the permutation test, not the 0.677, is the claim (`docs/fingerprint.md`).
+
+---
+
+## Slide 7. Does FEM add anything to the fingerprint? A pre-registered test
+
+**Key message:** We wrote the pass rule down before running anything. No FEM arm passed, so Leo's fingerprint alone (A0) stays the classifier of record.
+
+- Rule (D21, fixed before any run): an FEM arm adds value only if leave-one-out gets at least 23/31 correct and a permutation test (1000 permutations, any feature selection rerun inside every permutation) gives p ≤ 0.05 (`.claude/plans/fem-swelling.md` D21; `outputs/fem_fingerprint/main/verdict.md`).
+- Arms: A0 Leo's 16 features; A1 A0 plus 2 physics features (swelling left over after Si content, and Si stress spread); A2 A0 plus the top 2 of 160 raw FEM metrics, chosen inside each fold on training sites only (`.claude/plans/fem-swelling.md` D21).
+
+| arm | correct | accuracy | balanced acc | perm p | passes |
 |---|---|---|---|---|---|
-| KPI | stage1 | 31 | 0.548 | 0.418–0.702 | 0.233 |
-| FEM | stage1 | 31 | 0.626 | 0.468–0.791 | 0.248 |
-| KPI+FEM | stage1 | 31 | 0.561 | 0.407–0.717 | 0.240 |
-| KPI | stage2 | 14 | 0.357 | 0.125–0.625 | 0.277 |
-| FEM | stage2 | 14 | 0.357 | 0.125–0.637 | 0.341 |
-| KPI+FEM | stage2 | 14 | 0.286 | 0.056–0.525 | 0.322 |
-| KPI | end_to_end | 31 | 0.437 | 0.292–0.630 | 0.191 |
-| FEM | end_to_end | 31 | 0.370 | 0.250–0.513 | 0.208 |
-| KPI+FEM | end_to_end | 31 | 0.350 | 0.224–0.497 | 0.201 |
+| A0 (Leo) | 21/31 | 0.677 | 0.636 | 0.0060 | reference |
+| A1 (+2 physics) | 20/31 | 0.645 | 0.616 | 0.0060 | False |
+| A2 (+2 selected) | 17/31 | 0.548 | 0.557 | 0.0809 | False |
+| A1, edge5 | 21/31 | 0.677 | 0.636 | 0.0060 | False |
+| A2, edge5 | 18/31 | 0.581 | 0.521 | 0.0370 | False |
 
-Source: `docs/classifier/results.md` (full precision in `outputs/classifier/metrics.csv`).
+Sources: `outputs/fem_fingerprint/main/verdict.md`, `outputs/fem_fingerprint/main/metrics.csv`, `outputs/fem_fingerprint/edge5/verdict.md`, `outputs/fem_fingerprint/edge5/metrics.csv`.
 
-- Selection rule, fixed in advance: highest end-to-end balanced accuracy; arms within 0.05 are tied; ties go to the lowest Brier. Applied: KPI (`docs/classifier/results.md`).
-- Stage 2 (Batch_1 vs Batch_2) balanced accuracy is 0.286 to 0.357 across arms, below the 0.5 of a coin flip for two classes. End-to-end KPI confusion: 5 of 7 Batch_1 and 6 of 7 Batch_2 sites are called Batch_3; 15 of 17 Batch_3 sites are correct (`docs/classifier/results.md`).
-- CIs are wide: with 31 sites, differences below ~0.1 balanced accuracy are within the bootstrap CI (`docs/classifier/results.md`). The FEM stage-1 lead is inside that noise.
-- External reference (flat logistic, different task structure): 0.493, CI 0.316–0.691 (`outputs/pooling_checks/check3_results.md`, R1 multiclass).
+- edge5 is a sensitivity run, never eligible as the final arm: the same arms with features re-reduced after dropping a 5 µm band at the top and bottom image edges (`outputs/fem_fingerprint/edge5/verdict.md`; `.claude/plans/fem-swelling.md` D21).
+- A2 picked `q25_vm_binder@s0.5` in 31 of 31 folds (`outputs/fem_fingerprint/main/verdict.md`). The FEM signal that exists is not enough to move the fingerprint.
 
-**Figures:** `outputs/classifier/fig_confusion.png`, `outputs/classifier/fig_importance.png` (top stage-1 feature: `K15_si_graphite_contact_frac`, importance 0.117, `docs/classifier/results.md`).
+**Figure:** the table above. Optional: bar chart of correct/31 per arm with the 23/31 threshold line.
 
-**Speaker note:** We wrote the selection rule before we saw the FEM results and we kept it. Physics carried some signal on the baseline question. It did not carry it through to the three-way answer, and nothing we tried separates Batch_1 from Batch_2 on 14 sites.
+**Speaker note:** Adding physics made the fingerprint slightly worse or left it unchanged. With 31 sites, one site is noise, which is why the rule asked for two more correct sites and a permutation test. The held-out sites were scored only after the rule was applied (`.claude/plans/fem-swelling.md` D21).
 
 ---
 
-## Slide 9. Held-out predictions
+## Slide 8. Held-out calls, and how to read the two numbers
 
-**Key message:** One site is clearly not Batch_3, one looks like Batch_3, and one is a genuine disagreement between the image and physics views.
+**Key message:** Every held-out site gets a batch, a credibility and a confidence. One call is firm, one is weak, and one is a correctly reported toss-up.
 
-| site | KPI (final) | FEM | KPI+FEM |
-|---|---|---|---|
-| 3e122cbj | Batch_1 (0.85) | Batch_1 (0.82) | Batch_1 (0.84) |
-| fn0mhxef | Batch_3 (0.56) | Batch_3 (0.61) | Batch_3 (0.61) |
-| xrv9xvzb | Batch_3 (0.59) | Batch_2 (0.45) | Batch_2 (0.40) |
+| site | batch | credibility | confidence | p(B1) / p(B2) / p(B3) | out of distribution |
+|---|---|---|---|---|---|
+| 3e122cbj | Batch_1 | 0.875 | 0.0 | 0.875 / 0.875 / 1.0 | False |
+| fn0mhxef | Batch_3 | 0.444 | 0.125 | 0.125 / 0.875 / 0.444 | False |
+| xrv9xvzb | Batch_2 | 1.0 | 0.5 | 0.5 / 1.0 / 0.389 | False |
 
-Source: `docs/classifier/results.md`, "All arms". Final-arm confidences at three decimals: 0.855, 0.562, 0.586 (`docs/classifier/results.md`).
+Source: `outputs/fingerprint/heldout_predictions.csv`; identical in `outputs/fem_fingerprint/main/heldout_predictions.csv`.
 
-How each site differs from Batch_3 (final arm, `outputs/classifier/heldout_predictions.csv`):
+- **Credibility:** how typical the site is of the batch it was assigned to. 1.0 means it looks as ordinary for that batch as any labelled site of that batch (`docs/fingerprint.md`).
+- **Confidence:** 1 minus the highest p among the other batches. It is high only when every other batch is ruled out; 0 means another batch fits at least as well (`docs/fingerprint.md`).
+- The batch itself is chosen by the best likelihood score, not by the highest p. The p-values only say how typical a site is for each batch (`docs/fingerprint.md`).
+- No held-out site is flagged out of distribution (`outputs/fingerprint/heldout_predictions.csv`, `ood` column).
 
-- **3e122cbj → Batch_1, confidence 0.855.** 6/6 tiles vote not-Batch_3. Much more Si than the baseline: Si objects per 1000 µm² 116 vs Batch_3 27.7 ± 10.5 (z = +8.4); Si area fraction 0.139 vs 0.0623 ± 0.00955 (z = +8.0); less Si boundary touching graphite, 0.566 vs 0.738 ± 0.0294 (z = −5.9). It also has the highest simulated swelling of the held-out sites, 0.168261 (`outputs/fem/validation.csv`).
-- **fn0mhxef → Batch_3, confidence 0.562.** 1/6 tiles vote not-Batch_3. Its top deviations are small: nearest-neighbour index vs CSR 1.06 vs 0.976 ± 0.0582 (z = +1.4); Si ECD d90 3.22 vs 2.83 ± 0.403 µm (z = +1.0); normalised mean MST edge 2.28 vs 2.14 ± 0.141 (z = +1.0). Read: within the baseline's spread.
-- **xrv9xvzb → Batch_3, confidence 0.586 (disagreement case).** KPI arm: 1/6 tiles vote not-Batch_3. Slightly less Si (0.0518 vs 0.0623 ± 0.00955, z = −1.1), smaller large particles (ECD d90 2.47 vs 2.83 ± 0.403, z = −0.9), larger Si-free pockets (p95 distance 7.31 vs 5.61 ± 1.61 µm, z = +1.1). The FEM arm says not-Batch_3 on 6/6 tiles (P(Batch_3) 0.272361) and picks Batch_2 (`outputs/classifier/heldout_predictions.csv`). It has the lowest simulated swelling of all 34 sites, 0.117689 (`outputs/fem/validation.csv`).
+**Figure:** `outputs/fingerprint/figures/card_3e122cbj.png`, `card_fn0mhxef.png`, `card_xrv9xvzb.png`.
 
-**Figures:** `outputs/fem/gifs/Batch_heldout__3e122cbj.gif`; optional `outputs/fem/gifs/Batch_heldout__xrv9xvzb.gif` for the disagreement.
-
-**Speaker note:** We report the final arm's answer and show the others. For xrv9xvzb treat our call as low confidence: the image view says baseline, the physics view says not baseline. For 3e122cbj, a z of +8 means it is far from Batch_3. The classifier must still pick one of three batches, so a large z is our only warning that a site may come from somewhere new.
+**Speaker note:** The p-values move in coarse steps, 1/8 for a 7-site batch (`docs/fingerprint.md`), so read them as bins, not as precise probabilities. A confidence of 0 for 3e122cbj is the model saying "this one could be anyone", not a bug.
 
 ---
 
-## Slide 10. Limitations
+## Slide 9. How each held-out site differs from Batch_3
 
-**Key message:** The results are honest but thin: small data, a 2D linear model and an unseen-supplier blind spot.
+**Key message:** fn0mhxef matches the baseline's depth profile, xrv9xvzb has Batch_2's depleted mid-depth, and 3e122cbj matches the baseline's arrangement while holding far more Si.
 
-- 31 labelled sites: bootstrap CIs are about ±0.2 and tiles of one site are not independent evidence (`docs/classifier/method.md` section 7).
-- Calibration: 28 of 31 end-to-end confidences fall in [0.5, 0.7), with accuracy 0.607; none above 0.7 (`docs/classifier/results.md`, Calibration).
-- FEM: 2D plane strain, elastic only, no electrochemistry, pure Si (no SiOx run), no parameter robustness sweeps, unsourced pore stiffness (`docs/fem/method.md` section 9; D17). Stresses are relative only (D20). Every site has its first pore closure at s = 0.1, so that feature does not separate sites at site level (`outputs/fem/validation.csv`, `first_pore_closure_s`).
-- The classifier always assigns one of 3 batches; it has no "new supplier" output (`docs/classifier/method.md` section 7).
+- **xrv9xvzb → Batch_2 (credibility 1.0, confidence 0.5).** Mid-depth dip −0.723229, below every Batch_3 site (Batch_3 minimum −0.692301) and inside the Batch_2 range (−1.035662 to −0.400299) (`outputs/fingerprint/heldout_features.csv`, `outputs/fingerprint/features.csv`). Largest deviations from the Batch_3 centre: `gx_2.0_4.0` (dev 1.983792), `si_depth_rel_band3` (1.697059), `si_depth_mid_dip` (1.548426) (`outputs/fingerprint/heldout_explain.csv`). Read: less Si at mid-depth than the baseline, the Batch_2 pattern.
+- **fn0mhxef → Batch_3 (credibility 0.444, confidence 0.125).** Mid-depth band Si 1.187464 of the site mean (`outputs/fingerprint/heldout_features.csv`). Batch_3 spans 0.482759 to 1.394753; Batch_1 reaches at most 1.100702 and Batch_2 at most 0.705665 (`outputs/fingerprint/features.csv`). Batch_1 is effectively excluded (p = 0.125). It is not a clean baseline match: its largest deviations from the Batch_3 centre are `si_depth_rel_band3` (dev 2.122747) and `gx_0.5_2.0` (1.872639) (`outputs/fingerprint/heldout_explain.csv`), and Batch_2 stays typical overall (p = 0.875).
+- **3e122cbj → Batch_1 (credibility 0.875, confidence 0.0).** Its arrangement is typical of every batch: all 16 features lie within 1 scale unit of the Batch_3 centre, the largest being `gx_2.0_4.0` at 0.842804 (`outputs/fingerprint/heldout_explain.csv`), and p(B3) = 1.0. It wins Batch_1 on likelihood only (`docs/fingerprint.md`). Where it does differ from Batch_3 is amount, which the fingerprint cancels by design: Si area fraction 0.139 vs Batch_3 0.0623 ± 0.00955 (z = +8.0), Si objects per 1000 µm² 116 vs 27.7 ± 10.5 (z = +8.4) (`docs/classifier/results.md`). Among labelled sites, only Batch_1 reaches that loading: site K01 maximum Batch_1 0.164500, Batch_2 0.083739, Batch_3 0.089180 (`outputs/kpis/site_kpis.csv`). It also has the highest simulated swelling of the held-out sites, 0.168261 (`outputs/fem/validation.csv`), in line with its Si content.
+
+**Figure:** `outputs/fingerprint/figures/depth_profiles.png` with the three held-out curves highlighted; `outputs/fem/gifs/Batch_heldout__3e122cbj.gif`.
+
+**Speaker note:** xrv9xvzb has the elevated BSE black level (p1 = 6) seen otherwise only in Batch_3 acquisitions, yet its material fingerprint says Batch_2 (`docs/fingerprint.md`). Either it is a Batch_2 electrode imaged with Batch_3 settings, or the black level is not a batch marker. That is why no model here uses grey levels. For 3e122cbj, the Batch_1 call has two independent supports, likelihood and Si loading, but the conformal confidence is 0 and we report it as such.
+
+---
+
+## Slide 10. Cross-check: three models, one disagreement
+
+**Key message:** Our earlier random forest agrees with the fingerprint on 3e122cbj and fn0mhxef in every arm. On xrv9xvzb the arms that include FEM agree with the fingerprint, and the image-KPI arm does not.
+
+| site | fingerprint (record) | RF KPI | RF FEM | RF KPI+FEM |
+|---|---|---|---|---|
+| 3e122cbj | Batch_1 | Batch_1 (0.85) | Batch_1 (0.82) | Batch_1 (0.84) |
+| fn0mhxef | Batch_3 | Batch_3 (0.56) | Batch_3 (0.61) | Batch_3 (0.61) |
+| xrv9xvzb | Batch_2 | Batch_3 (0.59) | Batch_2 (0.45) | Batch_2 (0.40) |
+
+Sources: `outputs/fingerprint/heldout_predictions.csv`; `docs/classifier/results.md`, "All arms".
+
+- The RF numbers in brackets are products of stage probabilities, not conformal confidences, so the columns do not compare as numbers (`docs/classifier/method.md`; `docs/fingerprint.md`).
+- xrv9xvzb under the RF KPI arm: 1 of 6 tiles votes not-Batch_3, slightly less Si than Batch_3 (0.0518 vs 0.0623 ± 0.00955, z = −1.1) (`docs/classifier/results.md`). The RF FEM arm votes not-Batch_3 on 6 of 6 tiles (P(Batch_3) 0.272361) (`outputs/classifier/heldout_predictions.csv`).
+
+**Figure:** the table above.
+
+**Speaker note:** We weight Batch_2 for xrv9xvzb: the two views that see only geometry and mechanics agree, and the KPI arm's Batch_3 call was its least certain (`.claude/checkpoint/reports/fem-why.synthesiser.md`, Contradictions). The RF stays in the repo as a cross-check, not as the answer.
+
+---
+
+## Slide 11. Limitations
+
+**Key message:** The negative result is robust; the mechanics and the sample size are where the method is thin.
+
+- Linear mechanics (D20): absolute stresses are not physical, Si von Mises saturates and `si_yield_frac` is 1.0 everywhere (`docs/fem/results.md`). 2D plane strain, elastic only, no electrochemistry, pure Si (no SiOx run), unsourced pore stiffness (`docs/fem/method.md` section 9).
+- Interior windows: the images are 40.3–57.9 µm high and show neither the foil nor a free surface (median pore fraction 0.016 at the top edge, 0.045 at the bottom, 0.041 in the middle) (`.claude/checkpoint/reports/fem-why.explorer-edges.md`). Our boundary conditions are right in direction (in-plane constrained, thickness free) but place a roller "foil" on one edge and a free surface on the other (`.claude/checkpoint/reports/fem-why.synthesiser.md`, C14).
+- Edge test: dropping 5 µm at the top and bottom edges leaves swelling nearly unchanged (Spearman 0.894 against the original, mean 0.1311 → 0.1297) but changes surface roughness (Spearman 0.639, mean 0.01088 → 0.00675), so roughness was mostly an edge artefact (`outputs/fem/edge5/site_curves.csv`; `.claude/reports/fem-edge5.implementer.md`). The D21 verdict did not change (Slide 7).
+- n = 31 (7/7/17): coarse conformal steps, wide uncertainty on the 0.677, and fingerprint feature families chosen by exploring the same labelled data (`docs/fingerprint.md`). The fingerprint cancels composition, so it would not flag a shipment with normal arrangement but unusual Si loading; 3e122cbj is that case (Slide 9).
 
 **Figure:** none.
 
-**Speaker note:** We would rather show the wide intervals than hide them. The method is built so that more sites drop straight in.
+**Speaker note:** We would rather show these than hide them. None of them rescues the swelling hypothesis: better boundary conditions would not change the fact that swelling follows Si content (`.claude/checkpoint/reports/fem-why.synthesiser.md`).
 
 ---
 
-## Slide 11. Next steps
+## Slide 12. Next steps and close
 
-**Key message:** The pipeline is in place; the gains now come from better physics and more data.
+**Key message:** The pipeline from SEM image to simulated charge to a batch call with a reason runs on every site for a few dollars; better physics and more sites are the next gains.
 
-- 3D microstructures, for example SliceGAN-style reconstruction from the 2D sections, to remove the plane-strain assumption (proposed; not yet in the repo docs).
+- Periodic boundary conditions in x (and a window condition in z), so interior images are treated as interior; needs a solver change and a re-run of all 68 cases (`.claude/checkpoint/reports/fem-why.synthesiser.md`, C14).
 - Finite strain with pore contact, the missing piece that blocked the finite-strain run (`.claude/plans/fem-swelling.md` D20).
-- More labelled sites, so stage 2 (Batch_1 vs Batch_2) has a chance and CIs narrow (`docs/classifier/method.md` section 7).
-- Calibrated confidences and an explicit out-of-distribution score built on the z-scores against Batch_3 (organiser goal in `data_heldout/README.md`).
+- 3D microstructures, for example reconstructed from the 2D sections, to remove the plane-strain assumption (proposed; not in the repo docs).
+- Pair the fingerprint with a composition check, so a Si-rich shipment like 3e122cbj is flagged even when its arrangement is typical (proposed, from Slide 9).
+- Close: 34 sites simulated, 68 cases, 0 failures; the edge re-reduction added $0.377 (`docs/fem/results.md`; `.claude/reports/fem-edge5.implementer.md`). Held-out: 3e122cbj Batch_1, fn0mhxef Batch_3, xrv9xvzb Batch_2 (`outputs/fingerprint/heldout_predictions.csv`).
 
-**Figure:** none.
+**Figure:** `outputs/fem/gifs/Batch_heldout__xrv9xvzb.gif` looping, or `scripts/demo_reject.py` (a shipment drifting from Batch_3 is first re-assigned, then rejected as out of distribution, `docs/fingerprint.md`).
 
-**Speaker note:** The SiOx variant and the robustness sweeps were planned and cut for time (D17). They are cheap to add back: the whole production campaign cost $1.31 (`docs/fem/results.md`).
-
----
-
-## Slide 12. Close
-
-**Key message:** From SEM images to a simulated charge to a batch call with a reason, for every site, reproducibly, for under $3 of compute.
-
-- 34 sites simulated, 68 cases, 0 failures, $2.608 total (`docs/fem/results.md`).
-- 3 held-out calls with confidence and a Batch_3 comparison: Batch_1 (0.855), Batch_3 (0.562), Batch_3 (0.586) (`docs/classifier/results.md`).
-- Every number in the docs is script-generated; two classifier runs are byte-identical (`.claude/plans/fem-swelling.md` D19; `docs/classifier/method.md` section 6).
-
-**Figure:** `outputs/fem/gifs/Batch_heldout__3e122cbj.gif` looping.
-
-**Speaker note:** Close on the held-out GIF. Thank the organisers. Invite questions on xrv9xvzb.
+**Speaker note:** The question was whether mechanics of the real microstructure reveals batch differences. The answer is that it reveals why they do not show up in bulk swelling: the amount of Si is the same, the arrangement is not. Thank Leo for the fingerprint and the organisers for the data. Invite questions on xrv9xvzb.
 
 ---
 
@@ -222,59 +227,62 @@ How each site differs from Batch_3 (final arm, `outputs/classifier/heldout_predi
 |---|---|---|
 | Labelled sites per batch | Batch_1 7, Batch_2 7, Batch_3 17 | `outputs/fem/validation.csv` (row counts) |
 | Held-out sites | 3 | `AGENTS.md`, `data_heldout/README.md` |
-| Sites with ETD / SE third detector | 27 / 4 | `AGENTS.md` |
-| Pixel size raw / half cache | 25 nm/px / 50.0 nm/px | `AGENTS.md` |
+| Pixel size, half cache | 50.0 nm/px | `AGENTS.md` |
 | Batch_3 imaging offset sites | 4 sites, black level ≈ +19–23, gain ≈ 0.69× | `AGENTS.md` |
-| SOC frames | 11 (0% to 100%) | `.claude/plans/fem-swelling.md` D3 |
-| Tiles per site, width | 6, 22 µm | `docs/classifier/method.md` |
-| Feature counts KPI / FEM / KPI+FEM | 15 / 16 / 31 | `docs/classifier/results.md` |
 | Si volume ratio at 100% SOC (model) | J_Si 3.240 | `docs/fem/method.md` (SOC table) |
-| Si eigenstretch β, utilisation u_max | 2.8, 0.8 | `docs/fem/method.md` (Parameters) |
 | Literature Si expansion | 263% (Qi), 277% (Obrovac), 280% (Beaulieu) | `docs/fem/literature-review.md` |
 | Graphite c-axis strain at 100% SOC (model) | 0.094 | `docs/fem/method.md` (SOC table) |
 | Graphite c-axis strain at LiC6 (literature) | about 10.3% | `docs/fem/literature-review.md` (C12) |
-| Graphite in-plane strain | about 1% | `docs/fem/literature-review.md` (C14) |
-| Si / graphite capacity (half cell, 0.01 V) | about 3400 / about 340 mAh/g | `docs/fem/literature-review.md` (C2) |
-| Si/graphite charge split | 96% Si below s = 0.25; 58% / 42% above | `docs/fem/literature-review.md` |
-| Simulation cases | 68 (34 bottom + 34 top) | `outputs/fem/run_log.json`, `docs/fem/results.md` |
+| Si / graphite capacity (half cell) | about 3400 / about 340 mAh/g | `docs/fem/literature-review.md` (C2) |
+| SOC frames | 11 (0% to 100%) | `.claude/plans/fem-swelling.md` D3 |
 | Cells, Batch_1/4ih2ggld bottom | 1011513 | `outputs/fem/run_log.json` |
-| dolfinx version | 0.10.0 | `outputs/fem/run_log.json` |
-| CPUs / memory per case | 4.0 / 10240 MB | `outputs/fem/run_log.json` |
-| Wall time per case (bottom) | median 140 s, max 191 s | `docs/fem/results.md` |
-| Wall time per case (top) | median 130 s, max 175 s | `docs/fem/results.md` |
+| Simulation cases | 68 (34 bottom + 34 top) | `outputs/fem/run_log.json`, `docs/fem/results.md` |
 | Failed sites | 0 in either orientation | `docs/fem/results.md` |
-| Modal ledger total | $2.608 of $180 cap (2.6081 in run log) | `docs/fem/results.md`, `outputs/fem/run_log.json` |
+| Wall time per case, median | 140 s bottom, 130 s top | `docs/fem/results.md` |
+| Modal ledger total (production campaign) | $2.608 of $180 cap (2.6081 in run log) | `docs/fem/results.md`, `outputs/fem/run_log.json` |
 | Production (full) mode cost | $1.31 (1.3122 in run log) | `docs/fem/results.md`, `outputs/fem/run_log.json` |
-| Per-case cost | median $0.019, max $0.023 | `docs/fem/results.md` |
-| Unit tests (G1) | 49 passed | `docs/fem/results.md` |
+| edge5 re-reduction cost | $0.377 (ledger 2.608 → 2.985) | `.claude/reports/fem-edge5.implementer.md` |
+| Unit tests | 49 passed | `docs/fem/results.md` |
 | Resolution check, swelling max rel. difference | 0.00643 | `docs/fem/results.md` |
 | Finite-strain failure range | s of about 0.02 to 0.08 | `docs/fem/results.md`, D20 |
-| Compaction-barrier failures | s = 0.023 and 0.016 | `docs/fem/results.md` |
-| Si von Mises under linear model | about 20 to 26 GPa (saturated) | `docs/fem/results.md` |
-| si_yield_frac | 1.0 everywhere | `docs/fem/results.md` |
+| GIF sites swelling_sym | 5n1q8atc 0.183591; b3esycq1 0.137581; x7u69zsw 0.139353; 3e122cbj 0.168261 | `outputs/fem/validation.csv` |
 | Median swelling_sym, 34 sites | 0.127 | `docs/fem/results.md` |
 | Stop window / literature band | [0.03, 0.39] / [0.09, 0.39] | `docs/fem/results.md` |
 | Median swelling by batch | B1 0.132, B2 0.125, B3 0.125, held-out 0.127 | `docs/fem/results.md` |
 | Literature electrode swelling | 9%, 19%, 33% (graphite); 22% at 100 mV, 39% at 10 mV (15 wt% Si) | `docs/fem/literature-review.md` (VT1) |
-| swelling_sym, GIF sites | 5n1q8atc 0.183591; b3esycq1 0.137581; x7u69zsw 0.139353; 3e122cbj 0.168261 | `outputs/fem/validation.csv` |
-| swelling_sym, 4ih2ggld | 0.179983 | `outputs/fem/validation.csv` |
-| swelling_sym, xrv9xvzb (lowest of 34) | 0.117689 | `outputs/fem/validation.csv` |
-| first_pore_closure_s | 0.1 at all 34 sites | `outputs/fem/validation.csv` |
-| Stage-1 balanced acc KPI / FEM / KPI+FEM | 0.548 / 0.626 / 0.561 | `docs/classifier/results.md` |
-| Stage-1 CI KPI / FEM / KPI+FEM | 0.418–0.702 / 0.468–0.791 / 0.407–0.717 | `docs/classifier/results.md` |
-| Stage-2 balanced acc KPI / FEM / KPI+FEM | 0.357 / 0.357 / 0.286 | `docs/classifier/results.md` |
-| End-to-end balanced acc KPI / FEM / KPI+FEM | 0.437 / 0.370 / 0.350 | `docs/classifier/results.md` |
-| End-to-end CI KPI / FEM / KPI+FEM | 0.292–0.630 / 0.250–0.513 / 0.224–0.497 | `docs/classifier/results.md` |
-| End-to-end Brier KPI / FEM / KPI+FEM | 0.191 / 0.208 / 0.201 | `docs/classifier/results.md` |
-| Arm tie margin | 0.05 | `docs/classifier/results.md` |
-| Noise level stated | differences below ~0.1 balanced accuracy | `docs/classifier/results.md` |
-| KPI confusion, correct per batch | B1 2/7, B2 1/7, B3 15/17 | `docs/classifier/results.md` |
-| Calibration, end-to-end [0.5, 0.7) bin | n 28, accuracy 0.607 | `docs/classifier/results.md` |
-| Top stage-1 feature | K15_si_graphite_contact_frac, 0.117 | `docs/classifier/results.md` |
-| Check-3 R1 multiclass balanced acc | 0.493 (0.316–0.691) | `outputs/pooling_checks/check3_results.md` |
-| Held-out final confidence | 3e122cbj 0.855, fn0mhxef 0.562, xrv9xvzb 0.586 | `docs/classifier/results.md` |
-| Held-out all-arm confidences | see Slide 9 table | `docs/classifier/results.md` |
-| xrv9xvzb FEM-arm P(Batch_3), tiles not-B3 | 0.272361, 6/6 | `outputs/classifier/heldout_predictions.csv` |
-| Held-out z-scores and site values | as quoted on Slide 9 | `outputs/classifier/heldout_predictions.csv` |
-| Bootstrap CI width | about ±0.2 | `docs/classifier/method.md` |
-| Chance level, two-class balanced accuracy | 0.5 | definitional, not from a file |
+| Swelling (s = 1) on K01, R² | 0.971 | `.claude/checkpoint/reports/fem-why.explorer-diag.md` |
+| Spearman rho with K01 | swell_100 0.891, swell_50 0.903 | `.claude/checkpoint/reports/fem-why.explorer-diag.md` |
+| KW p: K01 / swelling / swelling residual | 0.377 / 0.2166 / 0.699 | `.claude/checkpoint/reports/fem-why.explorer-diag.md` |
+| Si von Mises p95 range (site, s = 1) vs yield | 23414.9–27445.9 MPa vs 637.5 MPa | `.claude/checkpoint/reports/fem-why.explorer-diag.md` |
+| si_yield_frac | 1.0 everywhere | `docs/fem/results.md`; `.claude/checkpoint/reports/fem-why.explorer-diag.md` |
+| Scalar KPIs at p < 0.05 (ours) | 0 of 42 | `.claude/checkpoint/reports/fem-why.explorer-diag.md` |
+| Scalar KPIs separating batches (Leo) | none of 51, best p = 0.065 | `docs/fingerprint.md` |
+| RF end-to-end balanced acc KPI / FEM / KPI+FEM | 0.437 / 0.370 / 0.350 | `docs/classifier/results.md` |
+| Fingerprint feature count | 16 | `docs/fingerprint.md`, `outputs/fingerprint/evaluation.json` |
+| Mid-depth band KW p | ≈ 0.001 | `docs/fingerprint.md` |
+| Fingerprint LOO accuracy / majority baseline | 0.677 (21/31) / 0.548 | `outputs/fingerprint/evaluation.json` (0.6774193548387096 / 0.5483870967741935) |
+| Fingerprint permutation p, null mean | 0.002 (500 perms), 0.369 | `outputs/fingerprint/evaluation.json` (0.001996007984031936, 0.3688387096774193) |
+| Fingerprint recall | B1 5/7, B2 3/7, B3 13/17 | `docs/fingerprint.md`, `outputs/fingerprint/evaluation.json` |
+| Conformal step, 7-site batch | 1/8 | `docs/fingerprint.md` |
+| D21 rule | ≥ 23/31 and perm p ≤ 0.05, 1000 perms | `.claude/plans/fem-swelling.md` D21 |
+| D21 main: correct / acc / bacc / perm p | A0 21/31, 0.677, 0.636, 0.0060; A1 20/31, 0.645, 0.616, 0.0060; A2 17/31, 0.548, 0.557, 0.0809 | `outputs/fem_fingerprint/main/verdict.md`, `metrics.csv` |
+| D21 edge5: correct / acc / bacc / perm p | A1 21/31, 0.677, 0.636, 0.0060; A2 18/31, 0.581, 0.521, 0.0370 | `outputs/fem_fingerprint/edge5/verdict.md`, `metrics.csv` |
+| A2 raw FEM pool, top selection count | 160 metrics; q25_vm_binder@s0.5 in 31/31 folds | `.claude/plans/fem-swelling.md` D21; `outputs/fem_fingerprint/main/verdict.md` |
+| Held-out credibility / confidence | 3e122cbj 0.875 / 0.0; fn0mhxef 0.4444444444444444 / 0.125; xrv9xvzb 1.0 / 0.5 | `outputs/fingerprint/heldout_predictions.csv` |
+| Held-out p(B1) / p(B2) / p(B3) | 3e122cbj 0.875 / 0.875 / 1.0; fn0mhxef 0.125 / 0.875 / 0.4444444444444444; xrv9xvzb 0.5 / 1.0 / 0.3888888888888889 | `outputs/fingerprint/heldout_predictions.csv` |
+| xrv9xvzb mid-depth dip | −0.723229 | `outputs/fingerprint/heldout_features.csv` |
+| Batch_3 min / Batch_2 range, mid-depth dip | −0.692301 / −1.035662 to −0.400299 | `outputs/fingerprint/features.csv` (min/max over batch rows) |
+| fn0mhxef mid-depth band | 1.187464 | `outputs/fingerprint/heldout_features.csv` (`si_depth_rel_band2`) |
+| Mid-depth band range B3; max B1, B2 | 0.482759–1.394753; 1.100702, 0.705665 | `outputs/fingerprint/features.csv` (min/max over batch rows) |
+| Held-out deviations from Batch_3 centre (dev) | xrv9xvzb 1.983792, 1.697059, 1.548426; fn0mhxef 2.122747, 1.872639; 3e122cbj max 0.842804 | `outputs/fingerprint/heldout_explain.csv` (`dev_Batch_3`) |
+| 3e122cbj KPI z-scores vs Batch_3 | K01 0.139 vs 0.0623 ± 0.00955 (z +8.0); K02 116 vs 27.7 ± 10.5 (z +8.4) | `docs/classifier/results.md` |
+| Site K01 maximum per batch | B1 0.164500, B2 0.083739, B3 0.089180 | `outputs/kpis/site_kpis.csv` (max over batch rows) |
+| xrv9xvzb BSE black level | p1 = 6 | `docs/fingerprint.md` |
+| RF held-out calls, all arms | see Slide 10 table | `docs/classifier/results.md` |
+| xrv9xvzb RF KPI arm | 1/6 tiles not-B3; K01 0.0518 vs 0.0623 ± 0.00955, z −1.1 | `docs/classifier/results.md` |
+| xrv9xvzb RF FEM arm P(Batch_3), tiles not-B3 | 0.272361, 6/6 | `outputs/classifier/heldout_predictions.csv` |
+| Image heights | 40.3–57.9 µm | `.claude/checkpoint/reports/fem-why.explorer-edges.md` |
+| Edge pore fraction medians top / bottom / middle | 0.016 / 0.045 / 0.041 | `.claude/checkpoint/reports/fem-why.explorer-edges.md` |
+| edge5 vs original, Spearman (sym, s = 1) | swelling 0.894, surface_rough 0.639 | `outputs/fem/edge5/site_curves.csv` vs `outputs/fem/site_curves.csv`; `.claude/reports/fem-edge5.implementer.md` |
+| edge5 vs original, means (sym, s = 1) | swelling 0.1311 → 0.1297; surface_rough 0.01088 → 0.00675 | `.claude/reports/fem-edge5.implementer.md` |
+| edge band width | 5 µm top and bottom | `.claude/plans/fem-swelling.md` D21 |
