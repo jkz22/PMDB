@@ -332,7 +332,7 @@ def _fig_crops(sites: list[tuple[str, str]], loader, out: Path) -> pd.DataFrame:
             rows.append(row)
     table = pd.DataFrame(rows)
     # poorly imaged fields, same rule on every detector: > CROP_GALLERY_STATS_FRAC of the interior excluded from
-    # statistics (clipping included), or any KPI-invalid interior pixel (bad band / charging), or a crack flag
+    # statistics (clipping included), or > 0.1 % KPI-invalid interior pixels (bad band / charging), or a crack flag
     bad = table[(table.frac_invalid_stats_inner > CROP_GALLERY_STATS_FRAC) | (table.frac_invalid_kpi_inner > 0.001)
                 | (table.frac_crack > 0)]
     keys = sorted({(r.batch, r.site) for r in bad.itertuples()})
@@ -561,7 +561,7 @@ def _write_report(out: Path, summary: pd.DataFrame, site_df: pd.DataFrame, held:
           "* `texture_shortcut_*`: the same leave-one-out classifier on the four texture statistics only (is the site still identifiable from blur/noise?); `all_shortcut_batch_acc` uses grey + texture.", ""]
     L += ["## What is cut out ('crops')", "",
           "No field contains a Cu collector or the coating free surface (`collector_found`/`free_surface_found` are False on all 34 sites), so",
-          "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, any interior pixel is KPI-invalid (bad band / charging), or a crack is flagged, and why", ""]
+          "nothing is cropped for those reasons; `crops_gallery.png` shows the fields where, on any detector, more than 5 % of the interior is excluded from statistics, more than 0.1 % of the interior is KPI-invalid (bad band / charging), or a crack is flagged, and why", ""]
     worst = crops.sort_values("frac_invalid_stats_inner", ascending=False).head(12)
     L.append("| batch | site | detector | interior excluded | border |")
     L.append("|---|---|---|---|---|")
