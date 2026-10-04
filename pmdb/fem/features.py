@@ -63,13 +63,13 @@ def region_metrics(r: SimResult, frame: int, cols: slice, orientation: str, p: d
     orientations (uz is positive toward row 0), and surface_rough is the uz std over the upper crop row / cropped
     height. With the default 0.0 the free-surface definitions below are used unchanged.
     """
-    if not bool(r.converged[frame]):
-        return _nan_metrics()
     H, W = r.labels.shape
     h = r.px_um
     zc = _z_rows(H, h, z_edge_um)
     if H - 2 * zc < 2:
         raise ValueError(f"z_edge_um={z_edge_um} removes {2 * zc} of {H} image rows; no interior region left")
+    if not bool(r.converged[frame]):
+        return _nan_metrics()
     rows = slice(zc, H - zc)
     H_um = (H - 2 * zc) * h
     lab = r.labels[rows, cols]

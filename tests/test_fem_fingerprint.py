@@ -74,3 +74,13 @@ def test_availability_screen_uses_training_rows_only():
     tr3["cand"][0, 0] = np.nan  # NaN at a training site drops that column in-fold
     _, _, n3, _ = ffe.fold_matrices("A2", tr3, te, codes[1:])
     assert "a" not in n3
+
+
+def test_test_site_nan_never_reaches_prediction_matrix():
+    cand, codes = _toy()
+    tr = {"cand": cand[1:].copy(), "cand_names": list("abcd"), "leo": np.zeros((23, 1))}
+    for j in range(cand.shape[1]):
+        te = {"cand": cand[:1].copy(), "leo": np.zeros((1, 1))}
+        te["cand"][0, j] = np.nan
+        _, xte, names, _ = ffe.fold_matrices("A2", tr, te, codes[1:])
+        assert np.isfinite(xte).all() and "abcd"[j] not in names
