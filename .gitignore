@@ -19,3 +19,7 @@ outputs/clean*/qc_report.html
 # spine features are rebuilt by scripts/run_swelling_spine.py extract
 outputs/spine/features_*.npy
 outputs/spine/extract.log
+||||||| e8b1fad
+
+# imported harmonisation pipelines: half-res arrays are rebuilt with scripts/build_harmonise_ext.py (~6 min)
+cache*/harmonised_ext/*/half/*.npz

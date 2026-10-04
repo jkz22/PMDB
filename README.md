@@ -57,6 +57,12 @@ from pmdb.io import load_clean
 from pmdb import clean
 z, mask = load_clean("Batch_3", "71vgq3fw", "BSE", kind="harm", resolution="half")  # kind: "norm" | "harm"
 valid = clean.valid_for_kpis(mask)  # never compute statistics/KPIs on masked pixels
+
+# 6. Imported, literature-standard pipelines (third route, see docs/harmonisation_ext.md): "nyul" = N4ITK bias-field
+#    + Nyul-Udupa histogram standardisation, "basic" = BaSiC flat-/dark-field + per-image baseline.
+#    Arrays are rebuilt locally (gitignored): python scripts/build_harmonise_ext.py   (~6 min, after build_clean.py)
+from pmdb.harmonise_ext import load_ext
+img, mask3 = load_ext("Batch_3", "71vgq3fw", method="nyul")  # img (H, W, 3) uint8 [BSE, Inlens, SE_type], mask3 (H, W, 3) uint16
 ```
 
 ## Key Files & Outputs
