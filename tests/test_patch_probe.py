@@ -44,3 +44,17 @@ def test_fit_predict_probe_separable():
     tr = {s: v for s, v in X.items() if s != "Batch_2_0"}
     p = pp.fit_predict_probe(tr, sb, X["Batch_2_0"])
     assert p.shape == (3,) and abs(p.sum() - 1) < 1e-9 and pp.BATCHES[int(p.argmax())] == "Batch_2"
+
+
+def test_site_weights_equal_batch_totals():
+    train = ["a1", "a2", "b1", "c1", "c2", "c3"]
+    n = [10, 500, 77, 5, 5000, 40]
+    sb = {"a1": "A", "a2": "A", "b1": "B", "c1": "C", "c2": "C", "c3": "C"}
+    w = pp._site_weights(train, n, sb)
+    assert len(w) == sum(n)
+    ends = np.cumsum([0] + n)
+    site_tot = {s: w[ends[i]:ends[i + 1]].sum() for i, s in enumerate(train)}
+    batch_tot = {b: sum(t for s, t in site_tot.items() if sb[s] == b) for b in "ABC"}
+    assert np.allclose(list(batch_tot.values()), batch_tot["A"])
+    assert np.isclose(site_tot["a1"], site_tot["a2"])
+    assert np.isclose(site_tot["c1"], site_tot["c3"])

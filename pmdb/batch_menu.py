@@ -307,11 +307,10 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
         p_ens, p_ensc = plo.ensemble(p_patch, pf), plo.ensemble(p_patch, pfc)
         fp_ood = bool(fph["fp_ood"].iloc[0])
         opt = selection["option"]
-        if opt != "probe+ensemble":
+        if opt != "probe":
             call, corr, _ = OPTION_COLS[opt]
-        if opt == "probe+ensemble":
-            assert p_probe is not None, "probe+ensemble needs p_probe"
-            prob = (p_ens + np.asarray(p_probe[h])) / 2
+        if opt == "probe":
+            prob = np.asarray(p_probe[h])
             k = int(np.argmax(prob))
             high = float(prob.max()) >= 0.5
         elif opt == "fingerprint":
@@ -339,9 +338,9 @@ def predict_test(D, patch_site, site_labels, groups, X, Xc, y, singleton, menu_d
         rows.append({
             "site": site, "assigned": BATCHES[k], "confidence": "high" if high else "low", "option": opt,
             **{f"p_{b}": float(prob[j]) for j, b in enumerate(BATCHES)},
-            **({f"p_probe_{b}": float(p_probe[h][j]) for j, b in enumerate(BATCHES)}
-               | {f"p_comb_{b}": float(prob[j]) for j, b in enumerate(BATCHES)}
-               | {"probe_call": BATCHES[int(np.argmax(p_probe[h]))]} if p_probe is not None else {}),
+            **{f"reg_{m}_{b}": float(v[j]) for m, v in (("fingerprint", pf), ("patch_knn", p_patch),
+                                                        ("probe", np.asarray(p_probe[h])))
+               for j, b in enumerate(BATCHES)},
             "patch_call": BATCHES[pc], "fingerprint_call": BATCHES[fc], "fingerprint_centred_call": BATCHES[fcc],
             "n_evidence_for_call": int(n_for),
             "parent_id": test_parent_ids[h] if test_parent_ids is not None else "",

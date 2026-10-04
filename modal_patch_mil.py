@@ -272,7 +272,7 @@ def evaluate_menu(tag: str, dist_name: str, labels: list[dict], parents: list[di
         selection = bm.select_option(summary)
     test_pred = []
     p_probe = None
-    if test_sites and selection["option"] == "probe+ensemble":
+    if test_sites and True:
         from pmdb import patch_probe as pp
         feats = {k[1]: _load_emb(tag, k[0], k[1])[0] for k in keys}
         sb = {k[1]: l for k, l in zip(keys, lab["label"])}
@@ -354,7 +354,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
         raise SystemExit(f"unknown mode {mode!r}; use embed | distances | eval | lopo | heldout | all | menu | test | probe")
     root = Path(__file__).resolve().parent
     if mode == "probe":
-        _probe(root)
+        _probe(root, n_perm)
         return
     if mode in ("menu", "test"):
         _menu_or_test(mode, root)
@@ -429,7 +429,7 @@ def main(mode: str = "all", smoke: bool = False, n_perm: int = 1000):
             print(f"  {r['site']} -> {r['assigned']} ({r['confidence_flag']})")
 
 
-def _probe(root: Path) -> None:
+def _probe(root: Path, n_perm: int = 200) -> None:
     import pandas as pd
 
     from pmdb.batch_menu import labelled_sites
@@ -439,7 +439,7 @@ def _probe(root: Path) -> None:
     lab = labelled_sites()
     menu = pd.read_csv(root / "outputs" / "menu" / "menu_predictions.csv", dtype={"site": str})
     res = probe_lopo.remote("full", lab.to_dict("records"), parent_groups().to_dict("records"),
-                            menu.to_dict("records"))
+                            menu.to_dict("records"), n_perm)
     out = root / "outputs" / "patch_probe"
     ev = {k: res[k] for k in ("metrics", "heldout", "permutation", "elapsed_s")}
     _atomic_write(out / "evaluation.json", json.dumps(ev, indent=2).encode())
@@ -488,9 +488,6 @@ def _menu_or_test(mode: str, root: Path) -> None:
     if not sel_path.exists():
         raise SystemExit("outputs/menu/selection.json missing: run --mode menu first")
     selection = json.loads(sel_path.read_text())
-    sel2 = root / "outputs" / "menu" / "selection_v2.json"
-    if sel2.exists():
-        selection = json.loads(sel2.read_text())
     ft = root / "outputs" / "test" / "features.csv"
     if not ft.exists():
         raise SystemExit("outputs/test/features.csv missing: run `modal run modal_test_prep.py::main` first")
@@ -507,6 +504,14 @@ def _menu_or_test(mode: str, root: Path) -> None:
     preds["explanation"] = [e.replace(f" (see outputs/patch_mil/figures/heldout_{s}.png)", "") + (" " + sig if sig else "")
                             for s, e in zip(preds["site"], preds["explanation"])]
     out = root / "outputs" / "test"
+    reg = []
+    for r in preds.to_dict("records"):  # one row per site x registered runnable model (no ensembling)
+        for m in ("fingerprint", "patch_knn", "probe"):
+            p = [r[f"reg_{m}_{b}"] for b in ("Batch_1", "Batch_2", "Batch_3")]
+            reg.append({"site": r["site"], "model": m, "call": f"Batch_{1 + p.index(max(p))}",
+                        **{f"p_Batch_{i + 1}": v for i, v in enumerate(p)}, "flag": "high" if max(p) >= 0.5 else "low"})
+    _atomic_write(out / "registry_predictions.csv", pd.DataFrame(reg).to_csv(index=False).encode())
+    preds = preds[[c for c in preds.columns if not c.startswith("reg_")]]
     _atomic_write(out / "menu_evaluation.json",
                   json.dumps({"summary": res["summary"], "selection": selection}, indent=2).encode())
     _atomic_write(out / "final_predictions.csv", preds.to_csv(index=False).encode())

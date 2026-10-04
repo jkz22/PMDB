@@ -1,6 +1,6 @@
-# D21 verdict (tag `main`)
+# D21 verdict (tag `free_lateral`)
 
-
+**Sensitivity run (A3, tag `free_lateral`, table `outputs/fem/free_lateral/site_curves.csv`): never the final arm.**
 
 Rule: FEM arm adds value iff LOO correct >= 23/31 and permutation p <= 0.05 (1000 perms, seed 0, in-fold selection rerun).
 
@@ -10,7 +10,7 @@ Rule: FEM arm adds value iff LOO correct >= 23/31 and permutation p <= 0.05 (100
 | A1 | 24/31 | 0.774 | 0.695 | 0.0010 | 0.374 | True |
 | A2 | 21/31 | 0.677 | 0.664 | 0.0050 | 0.382 | False |
 
-**Verdict: classifier of record = A1**
+**Verdict: classifier of record = A0** (no FEM arm passed the rule)
 
 A2 selected features (count over 31 folds):
 
@@ -27,10 +27,7 @@ Held-out predictions:
 
 ```
         batch     site arm assigned  credibility  confidence   ood
-Batch_heldout 3e122cbj  A0  Batch_1     0.875000    0.000000 False
-Batch_heldout fn0mhxef  A0  Batch_3     0.444444    0.125000 False
-Batch_heldout xrv9xvzb  A0  Batch_2     1.000000    0.500000 False
-Batch_heldout 3e122cbj  A1  Batch_1     1.000000    0.000000 False
-Batch_heldout fn0mhxef  A1  Batch_3     0.500000    0.125000 False
-Batch_heldout xrv9xvzb  A1  Batch_2     1.000000    0.611111 False
+Batch_heldout 3e122cbj  A0  Batch_1     0.875000       0.000 False
+Batch_heldout fn0mhxef  A0  Batch_3     0.444444       0.125 False
+Batch_heldout xrv9xvzb  A0  Batch_2     1.000000       0.500 False
 ```
