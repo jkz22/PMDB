@@ -482,6 +482,14 @@ function pcStory(label, r2, explained) {
   return `Patches high on this dimension show ${parts.join(' and ')} (KPIs explain ${Math.round(r2 * 100)}% of it).`;
 }
 
+function openCard(card) {
+  document.querySelector('.card-overlay')?.remove();
+  const big = card.cloneNode(true); big.classList.add('open'); big.removeAttribute('title');
+  const ov = h('div', { class: 'card-overlay', onclick: (e) => { if (e.target === ov) ov.remove(); } }, big);
+  document.body.append(ov); big.focus();
+}
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelector('.card-overlay')?.remove(); });
+
 R.embeddings = (root) => {
   const P = M.D.probeTest || [], C = M.D.probeContrib || [];
   const test = P.filter((r) => SITE_STORY[r.site]).sort((a, b) => +b[`p_${b.call}`] - +a[`p_${a.call}`]);
@@ -493,8 +501,8 @@ R.embeddings = (root) => {
       h('span', { style: `width:${(+s[`p_${b}`] * 100).toFixed(1)}%;background:${BATCH_COLOR[b]}`, title: `${short(b)} ${(+s[`p_${b}`]).toFixed(2)}` })));
     const nets = Object.keys(KPI_NAME).map((k) => [k, +s[`net_${k}`]]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 3);
     return h('div', { class: 'card call', style: `border-top:4px solid ${BATCH_COLOR[s.call]}`, tabindex: '0', title: 'Click to expand',
-      onclick: (e) => { if (e.target.closest('a')) return; e.currentTarget.classList.toggle('open'); },
-      onkeydown: (e) => { if (e.key === 'Enter') e.currentTarget.classList.toggle('open'); } },
+      onclick: (e) => openCard(e.currentTarget),
+      onkeydown: (e) => { if (e.key === 'Enter') openCard(e.currentTarget); } },
       h('div', { class: 'call-head' }, h('b', { class: 'mono' }, s.site),
         h('span', { class: 'call-batch', style: `color:${BATCH_COLOR[s.call]}` }, short(s.call)),
         h('span', { class: 'call-p' }, p.toFixed(2))),
