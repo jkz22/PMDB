@@ -108,3 +108,37 @@ defensible held-out statement for this site: "Batch 1-like by composition and sw
 arrangement indistinguishable from Batch 3".
 
 > Caveat (`docs/reliability.md` §3): the functional family's AUC 0.71 rests mainly on the constrained share, whose batch difference does not reproduce under an independently written segmenter. Read the family result as segmentation-dependent.
+
+## 5. Noise-aware "why is this field off?" table (`scripts/run_deviation_table.py`)
+
+The organisers ask, per held-out field, *how it differs from Batch 3*. `outputs/acceptance/deviation_{long,z,flags}.csv`,
+`deviation_why.md` and `figures/deviation_heatmap.png` answer that for all 34 fields and every v1 site KPI
+(+ the two headline swelling columns): robust z vs Batch 3 (leave-one-out for Batch 3 fields) **and** the
+deviation in units of the field's own sampling SD (SD of a 16-tile site mean, `outputs/reliability/icc.csv`).
+A column is `off` only if |z| > 2 *and* the deviation exceeds 2 sampling SDs; `within_sampling_noise` if the
+z is large but the field size cannot resolve it; `off_noise_unknown` where no tile-level noise estimate exists
+(K05 z-scores, K06, K10–K13 — whole-field descriptors).
+
+| | n `off` columns, median (max) |
+|---|---|
+| Batch 3 fields, leave-one-out | 1 (3) |
+| Batch 1 fields | 1 (10) — the two high-Si fields 9–10, the other five 0–2 |
+| Batch 2 fields | 1 (2) |
+| held-out 3e122cbj / fn0mhxef / xrv9xvzb | 8 / 0 / 0 |
+
+Reading:
+
+- **Apart from the two high-Si Batch 1 fields, a Batch 1 or Batch 2 field deviates from the Batch 3 baseline
+  on as many KPIs as a Batch 3 field does from the rest of Batch 3** (median 1 column, usually a size or
+  density column at |z| 2–3). At KPI level there is no per-field "how it differs" for most off-baseline
+  fields — which is the same statement as the AUC ≈ 0.5 of §4, made per field. Explanations for these fields
+  have to come from the arrangement features (fingerprint) or from the classifier's attributions, and should
+  be presented as such rather than as a KPI deviation.
+- 3e122cbj is off on 8 columns (K01 +10, K02 +9, K03 max, K09, K15 −5; i.e. Si-rich, dense, closer-packed,
+  less graphite contact) — the composition story of §2.5 in `docs/functional.md`, now with the noise floor.
+  fn0mhxef and xrv9xvzb are inside Batch 3 on every resolvable column.
+- Of the ten |z| > 2 readings on K07 (Clark–Evans), seven are within sampling noise — the ICC caution in
+  `docs/reliability.md` applied: K07 should not appear in any "why" explanation.
+- K08 (pair-correlation peak) and K14 p50 have MAD = 0 within Batch 3 (mostly zero / identical values) so no
+  z is defined; they carry no per-field information at this field size.
+
