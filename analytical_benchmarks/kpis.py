@@ -80,7 +80,8 @@ def particles(lab, um):
 
 
 def run(row):
-    s = load_site(row["batch"], row["site"], resolution="half", normalise="none")
+    s = load_site(row["batch"], row["site"], resolution="half", normalise="none",
+                  data_root=row.get("data_root"), cache_root=row.get("cache_root"))
     um = s.nm_per_px / 1000
     lab, info = segment(s.image[..., 0])
     hp, grad = inlens_maps(s.image[..., 1])
@@ -92,7 +93,7 @@ def run(row):
             out[f"{k}" if a == "mean" else f"{k}__{a}"] = v
     kp, arrs = particles(lab, um); out.update(kp)
     out["inlens_edge_binder"] = float(grad[lab == 1].mean())
-    np.savez_compressed(f"tiles/{row['batch']}__{row['site']}.npz", X=X, Y=Y, lab=lab[::2, ::2], **arrs)
+    np.savez_compressed(f"{row.get('tiles_dir', 'tiles')}/{row['batch']}__{row['site']}.npz", X=X, Y=Y, lab=lab[::2, ::2], **arrs)
     print(row["batch"], row["site"], "done", flush=True)
     return out
 

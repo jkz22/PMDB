@@ -10,6 +10,8 @@ Run everything (about 2 min for 31 sites on 8 cores):
 
 To test a new (surprise) batch, copy it to `data/Batch_N/` and run the same command. Nothing is retrained. `scripts/build_cache.py` adds the new sites to `cache/half/`, and the new batch is compared with all other sites.
 
+Unlabelled held-back sites (`data_heldout/` on `main`): see [`heldout_results.md`](heldout_results.md). They get the same KPIs, a leave-one-site-out-validated batch assignment, and a separate imaging-fingerprint check.
+
 ## Pipeline
 
 | step | file | what it does |
