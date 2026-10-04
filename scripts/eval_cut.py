@@ -41,7 +41,7 @@ E = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(E)
 
 STRONG = ("71vgq3fw", "kbdh4tri", "tuy3zymq", "x7u69zsw")
-REFS = (("Batch_1", "4ih2ggld"), ("Batch_2", "vc2whyaq"), ("Batch_3", "i9jiqjwl"))
+REF_SITES = ("4ih2ggld", "i9jiqjwl", "vc2whyaq")   # clean sites of Batch 1 / 2 / 3 (domain B: identity check)
 HELDOUT = ("3e122cbj", "fn0mhxef", "xrv9xvzb")
 
 
@@ -64,15 +64,29 @@ def all_sites() -> list[tuple[str, str]]:
 def prepare_inputs(out: Path) -> None:
     arrs = {}
     for b, s in all_sites():
-        if s in STRONG or (b, s) in REFS or s in HELDOUT:
+        if s in STRONG or s in REF_SITES or s in HELDOUT:
             arrs[s], _ = hybrid_bse(b, s)
     np.savez_compressed(out, **arrs)
     print("wrote", out, sorted(arrs))
 
 
-def _phases(bse: np.ndarray, valid: np.ndarray):
-    masks = segment_bse(E._fill_invalid(bse, valid), E.NM)
-    return masks.pore, masks.si
+def phases_fixed(bse: np.ndarray, valid: np.ndarray, t_pore: float, t_si: float) -> tuple[np.ndarray, np.ndarray]:
+    """`segment_bse` with its two grey thresholds fixed (same smoothing, closing, hole filling, small-object and
+    artefact rules), so that input and translated output are labelled by one and the same rule; with the input's
+    own thresholds this reproduces `segment_bse(input)` exactly, hence an identity translation scores zero change."""
+    from skimage.morphology import binary_closing, binary_opening, disk, remove_small_objects
+
+    p = V0_PARAMS
+    px = lambda um2: int(np.ceil(um2 / (E.NM / 1000.0) ** 2))  # noqa: E731
+    g = ndimage.gaussian_filter(np.asarray(E._fill_invalid(bse, valid), dtype=np.float64), sigma=p["gauss_sigma_px"])
+    dark = g < t_pore
+    si = (g > t_si) & ~dark
+    si = binary_closing(si, disk(p["si_closing_radius_px"]))
+    si = ndimage.binary_fill_holes(si)
+    si = remove_small_objects(si, min_size=px(p["si_min_area_um2"]))
+    pore_all = dark & ~si
+    artefact = remove_small_objects(pore_all, min_size=px(p["artefact_min_area_um2"]))
+    return pore_all & ~artefact, si
 
 
 def _objects(mask: np.ndarray, valid: np.ndarray) -> int:
@@ -85,13 +99,9 @@ def site_row(batch: str, site: str, cut: np.ndarray) -> dict:
         raise ValueError(f"{site}: translated {cut.shape} vs input {inp.shape}")
     valid = C.valid_for_stats(msk)
     v0 = C.valid_for_kpis(msk)
-    pore_i, si_i = _phases(inp, valid)
-    # fixed thresholds from the input: apply the same grey thresholds to the output
-    g_in = ndimage.gaussian_filter(E._fill_invalid(inp, valid), V0_PARAMS["gauss_sigma_px"])
-    g_out = ndimage.gaussian_filter(E._fill_invalid(cut, valid), V0_PARAMS["gauss_sigma_px"])
-    t_pore = float(g_in[pore_i & v0].max()) if (pore_i & v0).any() else 0.0
-    t_si = float(g_in[si_i & v0].min()) if (si_i & v0).any() else 255.0
-    pore_o, si_o = g_out <= t_pore, g_out >= t_si
+    prm = segment_bse(E._fill_invalid(inp, valid), E.NM).params  # thresholds from the input only
+    pore_i, si_i = phases_fixed(inp, valid, prm["T_pore"], prm["T_si"])
+    pore_o, si_o = phases_fixed(cut, valid, prm["T_pore"], prm["T_si"])
     lab_i = pore_i.astype(np.int8) + 2 * si_i
     lab_o = pore_o.astype(np.int8) + 2 * si_o
     row = {
