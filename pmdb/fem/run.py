@@ -9,7 +9,7 @@ from typing import Literal
 
 import numpy as np
 
-from pmdb.fem.config import load_params, params_hash
+from pmdb.fem.config import case_params_hash, load_params
 from pmdb.fem.features import run_curves
 from pmdb.fem.geometry import central_cols, coarsen_image, coarsen_labels, labels_from_masks
 from pmdb.fem.gif import render_site_gif
@@ -79,5 +79,5 @@ def run_case(batch: str, site: str, orientation: Literal["bottom", "top"], *,
             "first_pore_closure_s": fpc, "n_substeps": len(r.substeps),
             "newton_its_total": int(sum(x["its"] for x in r.substeps)), "substeps": r.substeps,
             "wall_s": float(r.wall_s), "peak_rss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0,
-            "versions": _versions(), "params": p, "params_hash": params_hash(p), "gif_error": gif_error}
+            "versions": _versions(), "params": p, "params_hash": case_params_hash(p, lateral), "gif_error": gif_error}
     return {"meta": meta, "site_rows": site_rows, "tile_rows": tile_rows, "gif": gif}

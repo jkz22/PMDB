@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from pmdb.fem.config import load_params, params_hash
+from pmdb.fem.config import case_params_hash, load_params, params_hash
 from pmdb.fem.geometry import central_cols, coarsen_image, coarsen_labels
 from pmdb.fem.materials import (
     ARTEFACT, BINDER, GRAPHITE, PORE, SI, graphite_strains, lithiation_state,
@@ -27,6 +27,12 @@ def test_config_hash():
     h = params_hash(load_params())
     assert len(h) == 12 and int(h, 16) >= 0
     assert h == params_hash(load_params())
+
+
+def test_hash_includes_lateral_bc():
+    p = load_params()
+    assert case_params_hash(p, "both") == params_hash(p)  # default runs keep their committed hash
+    assert case_params_hash(p, "left") != case_params_hash(p, "both")
 
 
 # ------------------------------------------------------------- materials

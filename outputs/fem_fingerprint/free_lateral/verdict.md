@@ -1,6 +1,6 @@
 # D21 verdict (tag `free_lateral`)
 
-**Sensitivity run (A3, tag `free_lateral`, table `outputs/fem/free_lateral/site_curves.csv`): never the final arm.**
+**Sensitivity run (A3, tag `free_lateral`, table `outputs/fem/free_lateral/site_curves.csv`): its own verdict is not promoted to the classifier of record (the table below still shows whether each arm passes the rule). A1 passes the rule here and is the arm promoted in `outputs/fem_fingerprint/main/verdict.md` (same table); the A0 line below is only the mechanical sensitivity-run default. Under leave-one-parent-out A1 is 21/34 (`outputs/fem_fingerprint/lopo/metrics.json`).**
 
 Rule: FEM arm adds value iff LOO correct >= 23/31 and permutation p <= 0.05 (1000 perms, seed 0, in-fold selection rerun).
 
@@ -10,7 +10,7 @@ Rule: FEM arm adds value iff LOO correct >= 23/31 and permutation p <= 0.05 (100
 | A1 | 24/31 | 0.774 | 0.695 | 0.0010 | 0.374 | True |
 | A2 | 21/31 | 0.677 | 0.664 | 0.0050 | 0.382 | False |
 
-**Verdict: classifier of record = A0** (no FEM arm passed the rule)
+**Verdict (sensitivity-run default, not a rule outcome): A0.** A1 passes the rule (see table); promotion is decided in `outputs/fem_fingerprint/main/verdict.md`.
 
 A2 selected features (count over 31 folds):
 
