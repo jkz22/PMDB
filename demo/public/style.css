@@ -122,3 +122,4 @@ header.top nav button { white-space: nowrap; }
 @media (max-width: 900px) { .emb-stories { grid-template-columns: 1fr; } }
 .conf { font: 650 11px system-ui, sans-serif; letter-spacing: .08em; margin-left: 8px; padding: 2px 7px; border-radius: 8px; vertical-align: middle; }
 .conf.hi { background: var(--good); color: #fff; } .conf.lo { background: var(--hair); color: var(--ink2); }
+.conf.md { background: var(--warn); color: #fff; }
