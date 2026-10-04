@@ -14,3 +14,19 @@ K09_mst_sigma_norm,KPI,outputs/classifier/kpi_tiles6.csv,normalised SD of minimu
 K14_empty_p50_um,KPI,outputs/classifier/kpi_tiles6.csv,median distance to the nearest Si (Si-free pockets)
 K14_empty_p95_um,KPI,outputs/classifier/kpi_tiles6.csv,95th percentile distance to the nearest Si (Si-free pockets)
 K15_si_graphite_contact_frac,KPI,outputs/classifier/kpi_tiles6.csv,share of Si boundary touching graphite
+fem_swell_50,FEM,swelling @ frame 5,electrode thickness strain at 50% SOC
+fem_swell_100,FEM,swelling @ frame 10,electrode thickness strain at full charge
+fem_swell_slope_early,FEM,"OLS slope of swelling vs s, frames 0-2",swelling rate in the Si-dominated stage (s < 0.25)
+fem_swell_slope_late,FEM,"OLS slope of swelling vs s, frames 3-10",swelling rate once graphite lithiation dominates (s > 0.25)
+fem_surface_rough_100,FEM,surface_rough @ frame 10,non-uniformity of the free-surface rise across the tile
+fem_pore_left_100,FEM,1 + porosity_rel_change @ frame 10,fraction of the initial pore area still open at full charge
+fem_pore_closed_frac_100,FEM,pore_closed_frac @ frame 10,fraction of pore cells collapsed (J < 0.1) at full charge
+fem_first_closure_s,FEM,first s with tile pore_closed_frac > 0 (1.1 if never),SOC at which the first pore is crushed
+fem_vm_si_p95_100,FEM,vm_si_p95_MPa @ frame 10,peak Si von Mises stress (particle fracture driver)
+fem_si_yield_frac_100,FEM,si_yield_frac @ frame 10,fraction of Si above its yield stress
+fem_p_si_mean_100,FEM,p_si_mean_MPa @ frame 10,mean hydrostatic compression of Si
+fem_vm_binder_p95_100,FEM,vm_binder_p95_MPa @ frame 10,"peak binder stress, proxy for Si/matrix interface load transfer"
+fem_vm_gr_p95_100,FEM,vm_gr_p95_MPa @ frame 10,peak graphite stress imposed by swelling Si neighbours
+fem_sxx_mean_100,FEM,sxx_mean_MPa @ frame 10,mean in-plane stress (lateral constraint)
+fem_J_si_mean_100,FEM,J_si_mean @ frame 10,realised Si volume expansion
+fem_band_vm_maxdev_100,FEM,band_vm_maxdev @ frame 10,through-thickness heterogeneity of stress

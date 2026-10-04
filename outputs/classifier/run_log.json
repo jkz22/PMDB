@@ -1,12 +1,16 @@
 {
   "argv": [
-    "run"
+    "run",
+    "--require-fem"
   ],
   "arms_run": [
+    "KPI+FEM",
+    "FEM",
     "KPI"
   ],
-  "git_commit": "627784ecf02a749575ff675a4bf9d6879ae39bf0",
+  "git_commit": "dca23f3e5ab7ca55272f6729f04e1b3ada232eb2",
   "inputs_md5": {
+    "fem_tiles": "95edc69ba0a96e80a39409a23a3d6f14",
     "kpi_tiles6.csv": "962bb793d82a7ca22a455722674a5d4b"
   },
   "n_boot": 1000,

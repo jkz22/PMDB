@@ -1,13 +1,13 @@
 # Batch classifier: two-stage random forest vs Batch_3 (D18)
 
-Status: provisional (FEM arms not run): KPI
+Status: final arm: KPI
 
 ## Inputs
 
 - KPI tiles: `outputs/classifier/kpi_tiles6.csv` (md5 `962bb793d82a7ca22a455722674a5d4b`)
-- FEM tiles: not available
-- Arms run: KPI
-- Feature counts: KPI 15
+- FEM tiles: `outputs/fem/tile_curves.csv` (md5 `95edc69ba0a96e80a39409a23a3d6f14`)
+- Arms run: KPI+FEM, FEM, KPI
+- Feature counts: KPI+FEM 31; FEM 16; KPI 15
 - KPI zero-variance columns dropped: K16_si_graphite_dist_median_um
 
 ## Held-out predictions (arm: KPI)
@@ -24,16 +24,22 @@ Status: provisional (FEM arms not run): KPI
 
 All arms, predicted (confidence):
 
-| site | KPI |
-|---|---|
-| 3e122cbj | Batch_1 (0.85) |
-| fn0mhxef | Batch_3 (0.56) |
-| xrv9xvzb | Batch_3 (0.59) |
+| site | KPI+FEM | FEM | KPI |
+|---|---|---|---|
+| 3e122cbj | Batch_1 (0.84) | Batch_1 (0.82) | Batch_1 (0.85) |
+| fn0mhxef | Batch_3 (0.61) | Batch_3 (0.61) | Batch_3 (0.56) |
+| xrv9xvzb | Batch_2 (0.40) | Batch_2 (0.45) | Batch_3 (0.59) |
 
 ## LOSO ablation (31 labelled sites)
 
 | arm | level | n_sites | site_acc | balanced_acc | bacc_ci_lo | bacc_ci_hi | macro_f1 | brier |
 |---|---|---|---|---|---|---|---|---|
+| KPI+FEM | stage1 | 31 | 0.581 | 0.561 | 0.407 | 0.717 | 0.551 | 0.240 |
+| KPI+FEM | stage2 | 14 | 0.286 | 0.286 | 0.056 | 0.525 | 0.286 | 0.322 |
+| KPI+FEM | end_to_end | 31 | 0.484 | 0.350 | 0.224 | 0.497 | 0.325 | 0.201 |
+| FEM | stage1 | 31 | 0.645 | 0.626 | 0.468 | 0.791 | 0.620 | 0.248 |
+| FEM | stage2 | 14 | 0.357 | 0.357 | 0.125 | 0.637 | 0.354 | 0.341 |
+| FEM | end_to_end | 31 | 0.516 | 0.370 | 0.250 | 0.513 | 0.350 | 0.208 |
 | KPI | stage1 | 31 | 0.581 | 0.548 | 0.418 | 0.702 | 0.507 | 0.233 |
 | KPI | stage2 | 14 | 0.357 | 0.357 | 0.125 | 0.625 | 0.354 | 0.277 |
 | KPI | end_to_end | 31 | 0.581 | 0.437 | 0.292 | 0.630 | 0.447 | 0.191 |
