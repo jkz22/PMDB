@@ -76,6 +76,21 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 - D17 (user, 2026-10-03: "this is a hackathon, not a scientific paper") SCOPE CUT: D13 SiOx full run and D14 robustness
   sweeps are REMOVED. Only the default pure-Si configuration runs (34 sites × 2 foil orientations). D13/D14 above are
   superseded; no SiOx gate (G4x), no sweep config/mode, no Spearman robustness filter. Prefer pragmatic scope.
+- D21 (user chose "Steps 0-3", 2026-10-04; PRE-REGISTERED before any run) FEM-ON-FINGERPRINT TEST. Diagnosis:
+  .claude/checkpoint/reports/fem-why.synthesiser.md. Base model = Leo's fingerprint (pmdb/fingerprint.py, 16 site
+  features, robust naive Bayes, argmin score, LOO 21/31 = 0.677). Arms (all LOO over 31 labelled sites, refit per fold):
+    A0 Leo 16 (reproduce 21/31 exactly first);
+    A1 Leo 16 + 2 physics features from outputs/fem/site_curves.csv (sym, s = 1): swell_resid = swelling minus its
+       in-fold OLS fit on K01_si_frac_adm; si_stress_spread = (q75_vm_si - q25_vm_si) / q50_vm_si;
+    A2 Leo 16 + top-2 raw FEM metrics selected INSIDE each fold on training sites only (Kruskal-Wallis on the 160
+       site-level raw metrics at s = 0.5 and 1.0; drop near-duplicates |Spearman| > 0.9 within the training fold);
+    A3 (Step 3 sensitivity only, never selected as final) A1 and A2 recomputed from features that exclude a 5 µm band
+       at the top and bottom image edges (fields re-reduced on Modal).
+  DECISION RULE: an FEM arm "adds value" iff LOO correct >= 23/31 AND a permutation test (>= 1000 label permutations,
+  rerunning any in-fold selection inside every permutation) gives p <= 0.05. If both A1 and A2 pass, choose the higher
+  LOO accuracy, tie -> A1 (fewer, physics-motivated). Otherwise Leo's A0 remains the classifier of record. Report
+  accuracy AND balanced accuracy for every arm. Held-out sites scored only after the rule is applied. Excluded by rule
+  from any FEM feature set: si_yield_frac, Si stress/pressure/J magnitudes, sxx_mean, surface_rough.
 - D20 (Claude under delegated physics judgment + full autonomy, 2026-10-04 ~01:00) MECHANICS MODEL SWITCH: production
   uses SMALL-STRAIN LINEAR ELASTICITY with LOGARITHMIC eigenstrain (ε* = ln λ per axis, out-of-plane ε*_yy -> σ_yy,
   plane strain), one linear MUMPS solve per SOC frame, phase properties evaluated at each frame's s. Supersedes the
