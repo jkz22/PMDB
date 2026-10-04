@@ -110,3 +110,9 @@ header.top nav button { white-space: nowrap; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--hair); }
 .evidence { width: 100%; border-radius: 6px; border: 1px solid var(--hair); display: block; }
+.call { cursor: zoom-in; transition: box-shadow .15s; }
+.call:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+.call.open { grid-column: 1 / -1; cursor: zoom-out; }
+.call.open .call-p, .call.open .call-batch { font-size: 30px; }
+.call.open p { font-size: 17px; }
+@media (prefers-reduced-motion: reduce) { .call { transition: none; } }
