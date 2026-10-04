@@ -171,7 +171,9 @@ def fold_matrices(arm: str, tr: dict, te: dict, codes_tr: np.ndarray):
                 np.column_stack([te["leo"], r_te, te["spread"]]),
                 ["swell_resid", "si_stress_spread"], None)
     if arm == "A2":
-        ok = np.flatnonzero(np.isfinite(tr["cand"]).all(axis=0))  # training-rows-only availability screen
+        # availability screen: finite on every training row (no label information) and on the scored rows,
+        # since the predictor rejects non-finite selected features; a metric's presence carries no label
+        ok = np.flatnonzero(np.isfinite(tr["cand"]).all(axis=0) & np.isfinite(te["cand"]).all(axis=0))
         sel, p, skipped = select_features(tr["cand"][:, ok], codes_tr)
         chosen = [int(ok[j]) for j in sel]
         names = [tr["cand_names"][j] for j in chosen]

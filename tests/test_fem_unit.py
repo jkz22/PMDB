@@ -284,3 +284,11 @@ def test_features_oversized_z_edge_raises():
     lab = np.zeros((20, 20), dtype=np.uint8)
     with pytest.raises(ValueError, match="no interior"):
         region_metrics(_synthetic(lab, px=0.1), 2, slice(0, 10), "bottom", load_params(), z_edge_um=1.0)
+
+
+def test_features_oversized_z_edge_raises_even_if_unconverged():
+    lab = np.zeros((20, 20), dtype=np.uint8)
+    r = _synthetic(lab, px=0.1)
+    r.converged[:] = False
+    with pytest.raises(ValueError, match="no interior"):
+        region_metrics(r, 2, slice(0, 10), "bottom", load_params(), z_edge_um=1.0)
