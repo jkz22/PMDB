@@ -100,6 +100,23 @@ def check_null_matches_table(raw: dict, fem: Path, default_rel: str, accept_lega
                          "p-values would be invalid: rerun modal_eval.py for this table")
 
 
+def check_null_matches_inputs(raw: dict, tr: dict, y, accept_legacy: bool = False) -> None:
+    """Refuse nulls built from different training inputs (screened KPIs, FEM features or labels)."""
+    from pmdb.xgb_kpi import training_fingerprint
+
+    want = raw.get("inputs_sha256")
+    if want is None:
+        if not accept_legacy:
+            raise SystemExit("permutation null has no training-inputs hash, so changes to the screened KPI table "
+                             "cannot be detected; rerun modal_eval.py, or pass --accept-legacy-null if you know "
+                             "the KPI and FEM inputs are unchanged since the null was built")
+        print("WARNING: permutation null has no training-inputs hash; p-values assume the screened KPIs are unchanged")
+        return
+    if training_fingerprint(tr, y) != want:
+        raise SystemExit("permutation null was built from different training inputs (screened KPIs, FEM features "
+                         "or labels changed); p-values would be invalid: rerun modal_eval.py")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--tag", default="main", choices=sorted(TAG_ARMS))
@@ -124,6 +141,7 @@ def main() -> int:
         raise SystemExit(f"{null_file} missing: run `modal run modal_eval.py --tag {args.tag}` first")
     raw = json.loads(null_file.read_text())
     check_null_matches_table(raw, fem, DEFAULT_FEM[args.tag], accept_legacy=args.accept_legacy_null)
+    check_null_matches_inputs(raw, tr, y, accept_legacy=args.accept_legacy_null)
     seed = raw["seed"]
     if raw["n_perm"] < 1000:
         raise SystemExit("D22 requires >= 1000 permutations")
