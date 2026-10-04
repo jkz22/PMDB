@@ -1,0 +1,74 @@
+[
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean_norm",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean_harm",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "train_set": "all_fields",
+  "harmonise": "clean_norm",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "mae_adapted",
+  "steps": 6000,
+  "train_set": "all_fields",
+  "harmonise": "clean_harm",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean_norm",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "dino_ft",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean_harm",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "none",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "hybrid",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean_harm",
+  "aug": "aug2",
+  "stage": "CLEAN"
+ },
+ {
+  "family": "vae_c",
+  "steps": 4000,
+  "train_set": "all_fields",
+  "harmonise": "clean_harm",
+  "view": "BSE",
+  "stage": "CLEAN"
+ }
+]

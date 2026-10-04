@@ -32,6 +32,7 @@ def manifest() -> pd.DataFrame:
 
 
 HARM_METHODS = ("hybrid", "affine2", "histmatch", "offset", "affine3")  # PR #16 per-site LUTs, materialised uint8
+CLEAN_METHODS = ("clean_norm", "clean_harm")  # PR #27 physical route (pmdb.clean), see src/v2/materialise_clean.py
 
 
 def harm_method(h) -> str:
@@ -41,7 +42,7 @@ def harm_method(h) -> str:
         return "none"
     if h is True or str(h) == "True":
         return "gmm"
-    assert h in HARM_METHODS, h
+    assert h in HARM_METHODS or h in CLEAN_METHODS, h
     return str(h)
 
 
@@ -50,7 +51,21 @@ def load_half_raw(batch: str, site: str, harm: str = "none") -> np.ndarray:
     (byte-identical to pmdb.io.load_site(..., normalise='none', harmonise=harm))."""
     if harm in HARM_METHODS:
         return np.load(CACHE.parent / "harmonised" / harm / "half" / f"{batch}__{site}.npz")["image"]
+    if harm in CLEAN_METHODS:
+        return load_half_clean(batch, site, harm)[0]
     return np.load(CACHE / f"{batch}__{site}.npz")["image"]
+
+
+def load_half_clean(batch: str, site: str, harm: str) -> tuple[np.ndarray, np.ndarray]:
+    """Physical-clean arrays (PR #27) materialised by src.v2.materialise_clean: uint8 (H,W,3) with
+    pore 0 / graphite 100 (Inlens 40) / Si free, fixed physical scale (z x 100, Inlens z x 40), invalid pixels zeroed, plus the
+    per-detector validity mask (bool, H,W,3)."""
+    kind = harm.split("_", 1)[1]
+    root = CACHE.parent / "clean" / kind / "half"
+    z = np.load(root / f"{batch}__{site}.npz")
+    im, valid = z["image"].copy(), z["valid"]
+    im[~valid] = 0
+    return im, valid
 
 
 def load_full_raw(batch: str, site: str) -> np.ndarray:

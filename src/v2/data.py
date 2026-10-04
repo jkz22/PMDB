@@ -10,7 +10,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from src.v2.common import CROP, SEED, STRIDE_TRAIN, grid, load_half_raw, manifest, harm_method
+from src.v2.common import CLEAN_METHODS, CROP, SEED, STRIDE_TRAIN, grid, harm_method, load_half_clean, load_half_raw, manifest
 
 VIEWS = {"stack": (0, 1, 2), "BSE": (0, 0, 0), "Inlens": (1, 1, 1), "SE_type": (2, 2, 2)}
 HELDOUT_FRAC = 0.2
@@ -81,9 +81,15 @@ class FieldStore:
         self.fields = fields.reset_index(drop=True)
         self.harm = harm_method(harmonise)
         hp = harmonise_params().set_index(["group_id", "channel"]) if self.harm == "gmm" else None
-        self.images = []
+        self.images, self.valid = [], []
         for b, s, gid in self.fields[["batch", "site", "group_id"]].itertuples(index=False, name=None):
-            a = load_half_raw(b, s, self.harm).astype(np.float32)
+            if self.harm in CLEAN_METHODS:
+                a, v = load_half_clean(b, s, self.harm)
+                a = a.astype(np.float32)
+                self.valid.append(v.all(-1))
+            else:
+                a = load_half_raw(b, s, self.harm).astype(np.float32)
+                self.valid.append(None)
             if hp is not None:
                 for c in range(3):
                     g, o = hp.loc[(gid, c), ["gain", "offset"]]
@@ -124,12 +130,21 @@ class GPUCropLoader:
             yield out
 
 
+MIN_VALID = 0.9  # clean route: drop crops with < 90 % valid pixels (border/collector/free surface/charging)
+
+
+def _valid_frac(valid, y, x, size):
+    return 1.0 if valid is None else float(valid[y:y + size, x:x + size].mean())
+
+
 class CropDataset(Dataset):
     def __init__(self, store: FieldStore, view: str = "stack", stride: int = STRIDE_TRAIN,
                  size: int = CROP, random_offset: bool = False, kpis: pd.DataFrame | None = None,
-                 kpi_cols: tuple[str, ...] = ()):
+                 kpi_cols: tuple[str, ...] = (), min_valid: float = MIN_VALID):
         self.store, self.ch, self.size, self.random_offset = store, list(VIEWS[view]), size, random_offset
-        self.index = [(i, y, x) for i, im in enumerate(store.images) for (y, x) in grid(*im.shape[:2], size, stride)]
+        valid = getattr(store, "valid", None) or [None] * len(store.images)
+        self.index = [(i, y, x) for i, im in enumerate(store.images) for (y, x) in grid(*im.shape[:2], size, stride)
+                      if _valid_frac(valid[i], y, x, size) >= min_valid]
         self.group = np.array([store.fields.group_id[i] for i, _, _ in self.index])
         self.batch = np.array([store.fields.batch[i] for i, _, _ in self.index])
         self.kpi = None

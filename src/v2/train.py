@@ -52,6 +52,8 @@ def train_fields(c: dict) -> pd.DataFrame:
     if c["fold"] is not None:  # Stage C cross-fitting over all fields, grouped by field
         m["fold"] = grouped_folds(m.group_id.to_numpy(), c["n_folds"], c["seed"])
         f = m[m.fold != c["fold"]]
+    elif c["train_set"] == "all_fields":  # transductive SSL: every labelled field, nothing held out
+        f = m
     else:
         f = m[~m.heldout]
     if c["lobo"] is not None:

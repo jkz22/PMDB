@@ -1,0 +1,2 @@
+hash,family,harmonise,fvu,r2_recon,dead_features,n_features,k,d,mass_imaging,mass_material,mass_mixed,mass_rare,n_rare,n_material,n_imaging,n_mixed,n_batch_selective,mass_batch_selective
+1dbc37456a8f,vae_c,clean_harm,0.04811196029186249,0.9518880397081375,40,1024,8,128,0.1846880371498051,0.4216516078178402,0.14611162196563068,0.24754873306672395,422,323,160,119,0,0.0

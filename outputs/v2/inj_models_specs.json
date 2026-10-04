@@ -1,0 +1,123 @@
+[
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "aug": "aug1",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": false,
+  "aug": "aug1",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "hybrid",
+  "aug": "aug1",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "aug": "aug1",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "aug": "aug1",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "aug": "aug1",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "aug": "aug1",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ },
+ {
+  "task": "cls",
+  "arch": "resnet18_imnet",
+  "view": "stack",
+  "harmonise": "affine2",
+  "aug": "aug1",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "INJ",
+  "save": true
+ }
+]

@@ -1,0 +1,222 @@
+[
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_norm",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_norm",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_norm",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_norm",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_norm",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_harm",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_harm",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_harm",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_harm",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "stack",
+  "harmonise": "clean_harm",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": true,
+  "attrib": true
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_norm",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_norm",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_norm",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_norm",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_norm",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_harm",
+  "fold": 0,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_harm",
+  "fold": 1,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_harm",
+  "fold": 2,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_harm",
+  "fold": 3,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ },
+ {
+  "task": "cls",
+  "arch": "effb4_micronet",
+  "view": "BSE",
+  "harmonise": "clean_harm",
+  "fold": 4,
+  "n_folds": 5,
+  "stage": "CLEAN",
+  "save": false,
+  "attrib": false
+ }
+]
