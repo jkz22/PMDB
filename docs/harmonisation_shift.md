@@ -67,6 +67,23 @@ excluded, so it shows up as a uniform amplitude deficit); the rising part is the
 `spectrum` therefore also partially corrects the gain, but not the black level (DC) — for a
 pure texture correction run it after `hybrid` (not built here).
 
+## 2b. `hybrid_spectrum` — the recommended single modelling input
+
+`spectrum` keeps the DC term, so on its own it only halves the Batch-3 black-level gap (§6); `hybrid`
+(`pmdb/harmonise.py`) fixes black level and gain but leaves the texture shift. `hybrid_spectrum` stacks
+the two: the per-site hybrid LUT is applied first, then the spectrum filter is **refit on the LUT-corrected
+grey** (a filter fitted on raw grey would compensate the 0.69× gain a second time) and applied with the
+same policy as §2 (labelled sites only, held-out transform-only, invalid pixels filled before the FFT and
+restored afterwards). Models/params in `cache/harmonised_shift/hybrid_spectrum/`, same loader:
+
+```python
+from pmdb.harmonise_shift import load_shift
+img, mask3 = load_shift("Batch_3", "71vgq3fw", method="hybrid_spectrum")   # (H, W, 3) uint8, (H, W, 3) uint16
+```
+
+Rebuild: `python scripts/build_harmonise_shift.py --methods hybrid_spectrum` (~5 min, needs `outputs/clean` and
+`cache/harmonised/hybrid`).
+
 ## 3. `fda` — Fourier Domain Adaptation
 
 Yang & Soatto's `FDA_source_to_target_np` as published: the centred low-frequency window of half-width

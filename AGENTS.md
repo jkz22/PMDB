@@ -60,6 +60,9 @@ img, mask3 = load_ext("Batch_3", "71vgq3fw", method="nyul")  # img (H, W, 3) uin
 #    ComBat tables: outputs/harmonisation_shift/combat/ (scripts/run_combat_features.py).
 from pmdb.harmonise_shift import load_shift
 img, mask3 = load_shift("Batch_3", "71vgq3fw", method="spectrum")  # same shapes as load_ext
+#    "hybrid_spectrum" = the recommended single input for modelling: hybrid LUT (black level/gain) followed by the
+#    spectrum filter refit on the LUT-corrected grey (texture); fitted on labelled sites, applied as-is to held-out.
+img, mask3 = load_shift("Batch_3", "71vgq3fw", method="hybrid_spectrum")
 ```
 
 ### Dataset Specifications

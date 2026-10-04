@@ -43,7 +43,8 @@ from pmdb.harmonise_ext import (  # noqa: F401 (re-exported)
     load_half_raw,
 )
 
-METHODS: tuple[str, ...] = ("spectrum", "fda")
+METHODS: tuple[str, ...] = ("spectrum", "fda", "hybrid_spectrum")
+SPECTRUM_METHODS = ("spectrum", "hybrid_spectrum")   # hybrid_spectrum = hybrid LUT (pmdb.harmonise) then spectrum filter refit on the LUT'd grey
 DETECTORS = C.DETECTORS
 DEFAULT_SHIFT_ROOT = REPO_ROOT / "cache" / "harmonised_shift"
 DEFAULT_SHIFT_HELDOUT_ROOT = REPO_ROOT / "cache_heldout" / "harmonised_shift"
@@ -226,6 +227,17 @@ def fda_apply(img: np.ndarray, valid: np.ndarray, model: FdaModel) -> tuple[np.n
 # ----------------------------------------------------------------------------------------------
 # storage (same layout as pmdb.harmonise_ext)
 # ----------------------------------------------------------------------------------------------
+def hybrid_lut_grey(batch: str, site: str, detector: str, grey: np.ndarray) -> np.ndarray:
+    """Apply the per-site ``hybrid`` LUT (``pmdb.harmonise``, fitted on labelled sites, held-out LUTs in
+    ``cache_heldout/harmonised/hybrid``) to one detector's raw grey; float input is rounded to uint8 first."""
+    from pmdb import harmonise as H
+    from pmdb.io import get_cache_root
+
+    root = REPO_ROOT / "cache_heldout" if batch.lower().startswith("batch_heldout") else get_cache_root()
+    lut = H.load_lut(root, "hybrid", batch, site)
+    return lut[DETECTORS.index(detector)][to_uint8(grey)].astype(np.float32)
+
+
 def method_dir(root: Path, method: str) -> Path:
     return Path(root) / method
 
@@ -244,14 +256,14 @@ def save_models(root: Path, method: str, models: dict) -> None:
     d = method_dir(root, method)
     d.mkdir(parents=True, exist_ok=True)
     (d / "model.json").write_text(json.dumps({k: m.to_json() for k, m in models.items()}, indent=1))
-    if method == "fda":
+    if method not in SPECTRUM_METHODS:
         np.savez_compressed(d / "model.npz", **{f"{k}__amplitude": m.amplitude.astype(np.float32) for k, m in models.items()})
 
 
 def load_models(root: Path, method: str) -> dict:
     d = method_dir(root, method)
     meta = json.loads((d / "model.json").read_text())
-    if method == "spectrum":
+    if method in SPECTRUM_METHODS:
         return {k: SpectrumModel.from_json(v) for k, v in meta.items()}
     z = np.load(d / "model.npz")
     return {k: FdaModel(z[f"{k}__amplitude"].astype(np.float64), v["beta"], v["reference_sites"]) for k, v in meta.items()}

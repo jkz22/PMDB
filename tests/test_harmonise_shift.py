@@ -152,3 +152,14 @@ def test_figures_only_methods_come_from_saved_summary(tmp_path):
 def test_figures_only_without_summary_fails_clearly(tmp_path):
     with pytest.raises(SystemExit):
         _eval_script().resolve_methods(None, True, tmp_path)
+
+
+def test_hybrid_spectrum_is_a_spectrum_model_and_lists_as_a_method(tmp_path):
+    assert "hybrid_spectrum" in S.METHODS and "hybrid_spectrum" in S.SPECTRUM_METHODS
+    rng = np.random.default_rng(0)
+    img = rng.normal(100, 10, (600, 600)).astype(np.float32)
+    sm = {"BSE": S.spectrum_fit([img], [np.ones(img.shape, bool)], ["a"])}
+    S.save_models(tmp_path, "hybrid_spectrum", sm)
+    back = S.load_models(tmp_path, "hybrid_spectrum")
+    assert isinstance(back["BSE"], S.SpectrumModel)
+    np.testing.assert_allclose(back["BSE"].reference, sm["BSE"].reference, rtol=1e-6)
