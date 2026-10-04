@@ -76,6 +76,23 @@ parameters; weakly sourced choices become measured robustness sweeps rather than
 - D17 (user, 2026-10-03: "this is a hackathon, not a scientific paper") SCOPE CUT: D13 SiOx full run and D14 robustness
   sweeps are REMOVED. Only the default pure-Si configuration runs (34 sites × 2 foil orientations). D13/D14 above are
   superseded; no SiOx gate (G4x), no sweep config/mode, no Spearman robustness filter. Prefer pragmatic scope.
+- D22 (user request 2026-10-04: "xgboost on our merged and filtered KPI list, then augment with FEM; the fingerprint
+  naive Bayes is the one to beat"; PRE-REGISTERED before any run).
+  Inputs: outputs/kpis/screen/site_kpis_filtered.csv (26 screened KPIs, 31 sites) MINUS A02_curtaining_index and
+  A03_height_um (imaging/acquisition, not material: milling streaks; frame height of an interior window) -> 24 KPIs.
+  Held-out values from outputs/heldout/kpis/site_kpis.csv. Site level.
+  Model (fixed, no tuning): xgboost XGBClassifier(objective="multi:softprob", n_estimators=300, max_depth=2,
+  learning_rate=0.05, subsample=0.8, colsample_bytree=0.8, min_child_weight=1, reg_lambda=1.0, tree_method="hist",
+  random_state=0, n_jobs=1), sample_weight = inverse class frequency (training fold). Single-stage 3-class.
+  Arms: X1 = 24 KPIs; X2 = X1 + the D21 A1 physics FEM features (swell_resid in-fold on K01, si_stress_spread);
+  X3 = X1 + top-2 raw FEM site metrics selected in-fold exactly as D21 A2; X2e/X3e = same on outputs/fem/edge5
+  (sensitivity only, never final).
+  Comparator: Leo's fingerprint A0 = 21/31 (outputs/fem_fingerprint/main).
+  RULE: an XGB arm BEATS the fingerprint iff LOO correct >= 22/31 AND permutation p <= 0.05 (>= 1000 label
+  permutations, all in-fold steps rerun per permutation, seed per permutation index). Among passing arms pick highest
+  LOO correct; tie -> fewer features (X1 < X2 < X3). If none passes, the fingerprint stays classifier of record.
+  Also report balanced accuracy, confusion, and per-site agreement with the fingerprint (both right / only XGB right /
+  only NB right / both wrong). Held-out scored after the rule with the chosen arm, plus X1 for reference.
 - D21 (user chose "Steps 0-3", 2026-10-04; PRE-REGISTERED before any run) FEM-ON-FINGERPRINT TEST. Diagnosis:
   .claude/checkpoint/reports/fem-why.synthesiser.md. Base model = Leo's fingerprint (pmdb/fingerprint.py, 16 site
   features, robust naive Bayes, argmin score, LOO 21/31 = 0.677). Arms (all LOO over 31 labelled sites, refit per fold):
