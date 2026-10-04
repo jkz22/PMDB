@@ -128,6 +128,16 @@ per batch for the strongest KPIs and > 50 for most, and 49 of 62 B1+B2-vs-B3 con
 reachable at 50. This puts a number on the v2 modelling conclusion "more fields, not more models".
 The estimate is optimistic (it assumes the observed separation is real).
 
+### 2.8 QC sheets: swelling cards for all 31 labelled fields (`figures/swelling_cards_Batch_*.png`)
+
+`scripts/swelling_cards.py` renders one card per field (BSE crop + SOC-1 growth map: yellow Si, red
+growth landing on graphite, blue into pore, green into binder/CB), sorted by constrained share within
+each batch, with the three F02 headline numbers in the title. Use them to check any F02 value against
+the picture before it is quoted: the two high-Si Batch 1 fields (`4ih2ggld`, `5n1q8atc`) are
+immediately recognisable as the pore-closure cases, and a field whose growth lands mostly on green is a
+segmentation question, not a lithiation result. The joint pre-specified acceptance score built on this
+family is in `docs/acceptance.md` §4.
+
 ## 3. Limits
 * 2D proxies of 3D quantities; binder / carbon black are one "unassigned solid" class in the v0 masks.
 * Isotropic, redistribution-free swelling with a single 280 % volume figure; real Si expands

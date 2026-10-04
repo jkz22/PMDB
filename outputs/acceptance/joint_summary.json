@@ -1,0 +1,27 @@
+{
+  "kpi_v1": {
+    "n_columns": 33,
+    "auc_reject_vs_B3": 0.5,
+    "perm_p": 0.4935064935064935,
+    "perm_p_bonferroni3": 1.0,
+    "median_score_B3": 1.499183040909345,
+    "median_score_B12": 1.5025722754852915
+  },
+  "fingerprint": {
+    "n_columns": 16,
+    "auc_reject_vs_B3": 0.5378151260504203,
+    "perm_p": 0.3836163836163836,
+    "perm_p_bonferroni3": 1.0,
+    "median_score_B3": 1.0020121270961706,
+    "median_score_B12": 1.2259622384015103
+  },
+  "functional": {
+    "n_columns": 31,
+    "auc_reject_vs_B3": 0.7142857142857143,
+    "perm_p": 0.026973026973026972,
+    "perm_p_bonferroni3": 0.08091908091908091,
+    "median_score_B3": 1.1968987322402194,
+    "median_score_B12": 1.8558020844430168
+  },
+  "n_perm": 1000
+}

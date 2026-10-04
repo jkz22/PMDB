@@ -62,3 +62,46 @@ precision on Batch 3 are what a 17-of-31 majority buys, not discrimination.
 - What would change this: a few more baseline fields (Batch 3 is the cheapest batch to extend),
   or a 3D/second-slice measurement of the one quantity that is physically tied to the batch
   difference (through-thickness Si placement) rather than more 2D descriptors.
+
+## 4. Pre-specified multivariate score (no column search)
+
+`scripts/run_acceptance_joint.py` (→ `outputs/acceptance/joint*.csv`, `joint_summary.json`). Three
+families were fixed before looking: all v1 KPI/A columns (33), the 16 fingerprint features, and all
+functional F columns (31). A field's score in a family is the RMS of its leave-one-out |robust z|
+against Batch 3 over every column of the family, so no column is picked after the fact. Rejecting
+Batch 1+2 from Batch 3 (1000 label permutations of the same statistic, Bonferroni × 3 families):
+
+| family | columns | AUC | perm p | × 3 | median score B3 / B1+2 |
+|---|---|---|---|---|---|
+| v1 KPIs | 33 | 0.50 | 0.49 | 1.0 | 1.50 / 1.50 |
+| fingerprint | 16 | 0.54 | 0.38 | 1.0 | 1.00 / 1.23 |
+| functional | 31 | 0.71 | 0.027 | 0.08 | 1.20 / 1.86 |
+
+Reading: the composition KPIs and the fingerprint give *no* joint one-class signal against Batch 3,
+confirming §2–3 (the fingerprint's accuracy is a Batch 1 / Batch 2 contrast, not a Batch 3 boundary).
+The functional family is the only one that moves, and it is borderline once the three families are
+accounted for (p ≈ 0.08). With 14 non-baseline fields this is a hint that the lithiation-geometry
+columns are the right place to look for an acceptance rule, not a rule. The mechanism is the one in
+`docs/functional.md` §2.3/§2.6: Batch 1/2 fields sit at lower constrained share and higher pore loss,
+driven by Si fraction and object size.
+
+Held-out sites (score vs the Batch 3 reference statistics; percentile among the 17 LOO Batch 3 scores):
+
+| site | v1 KPIs | fingerprint | functional |
+|---|---|---|---|
+| 3e122cbj | 4.16 (100th) | 0.57 (0th) | 5.34 (100th) |
+| fn0mhxef | 1.19 (24th) | 1.18 (65th) | 1.02 (29th) |
+| xrv9xvzb | 1.17 (24th) | 1.23 (65th) | 1.05 (35th) |
+
+3e122cbj is outside every Batch 3 field on both the composition and functional families (consistent
+with `docs/functional.md` §2.5: twice the Si, swelling into free space); fn0mhxef and xrv9xvzb are
+inside the Batch 3 cloud on all three families, so the functional/joint evidence gives them no reason
+to be rejected from the baseline — their batch labels rest on the fingerprint's Batch 1/2/3 classifier
+alone and should carry its (moderate) confidence, not a one-class rejection.
+
+Caveat worth a follow-up: 3e122cbj's *fingerprint* joint score is lower than any Batch 3 field (0.57)
+although the fingerprint classifier assigns it to Batch 1. A field can be central in the robust-z sense
+on every depth/pair-correlation column individually while its *combination* is Batch 1-like; the RMS-z
+score is per-column and does not see covariance. This is a limitation of the pre-specified score, not
+evidence against the Batch 1 call, but it should be checked against the fingerprint's conformal p for
+that site before anything is quoted.

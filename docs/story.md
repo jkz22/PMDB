@@ -114,6 +114,14 @@ which is exactly the best-of-84 chance level (permutation p = 0.50), and the fin
 Batch-3-vs-rest AUC is 0.56; its 0.68 accuracy comes from recognising Batch 1 and the B1/B2 contrast. Batch 3 is the wide batch,
 the others sit inside it (`docs/acceptance.md`).
 
+Scoring a whole pre-specified family at once (RMS of leave-one-out robust z vs Batch 3, no column
+search; `docs/acceptance.md` §4) gives the same picture with one nuance: composition KPIs AUC 0.50 and
+fingerprint 0.54 carry no Batch 3 boundary, the functional family reaches 0.71 (perm p 0.027, ≈ 0.08
+after correcting for three families). The lithiation geometry is the only place a Batch 3 acceptance
+rule could come from, and with 14 non-baseline fields it is a hint, not a rule. Held-out: 3e122cbj is
+outside Batch 3 on composition and function; fn0mhxef and xrv9xvzb are inside on everything. Per-field
+swelling QC sheets for all 31 labelled fields: `outputs/functional/figures/swelling_cards_Batch_*.png`.
+
 ### Where each piece lives
 | Layer | Session / branch | Files |
 |---|---|---|
