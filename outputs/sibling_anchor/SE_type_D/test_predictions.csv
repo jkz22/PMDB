@@ -1,7 +1,7 @@
-site,parent,f,assigned,confidence,p_B1,p_B2,p_B3,cut_rule_call,siblings
-0eryguqq,G1612,4.775155584542071,Batch_2,low,0.0,0.5762642212963891,0.42373577870361084,Batch_3,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
-4hq27w4c,G2148,-10.254555606620546,Batch_1,high,1.0,0.0,0.0,Batch_1,f1vzngrs (1) -9.01; epqdaau9 (2) -8.80
-fhwrjtet,G1612,5.881497303284582,Batch_3,high,0.0,0.0,1.0,Batch_3,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
-fspqbkxl,G2148,-11.24701020312808,Batch_1,high,1.0,0.0,0.0,Batch_1,f1vzngrs (1) -9.01; epqdaau9 (2) -8.80
-soo2ax3r,G2156,4.052500429348076,Batch_2,high,0.0,0.6907390731534993,0.30926092684650075,Batch_3,fzrt2k6r (1) +3.55; b3esycq1 (2) +4.35
-y59rxmxl,G1880,0.0731628313796642,Batch_1,low,0.5991458015860911,0.4008541984139089,0.0,Batch_2,uhdslk0o (1) -0.09
+site,parent,f,assigned,confidence,cut_rule_call,anchored_call,anchored_p_B1,anchored_p_B2,anchored_p_B3,siblings
+0eryguqq,G1612,4.775155584542071,Batch_3,high,Batch_3,Batch_2,0.0,0.5762642212963891,0.42373577870361084,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
+4hq27w4c,G2148,-10.254555606620546,Batch_1,high,Batch_1,Batch_1,1.0,0.0,0.0,f1vzngrs (1) -9.01; epqdaau9 (2) -8.80
+fhwrjtet,G1612,5.881497303284582,Batch_3,high,Batch_3,Batch_3,0.0,0.0,1.0,ptg8lmto (3) +5.44; xgj4xftb (3) +6.21
+fspqbkxl,G2148,-11.24701020312808,Batch_1,high,Batch_1,Batch_1,1.0,0.0,0.0,f1vzngrs (1) -9.01; epqdaau9 (2) -8.80
+soo2ax3r,G2156,4.052500429348076,Batch_3,low,Batch_3,Batch_2,0.0,0.6907390731534993,0.30926092684650075,fzrt2k6r (1) +3.55; b3esycq1 (2) +4.35
+y59rxmxl,G1880,0.0731628313796642,Batch_2,low,Batch_2,Batch_1,0.5991458015860911,0.4008541984139089,0.0,uhdslk0o (1) -0.09

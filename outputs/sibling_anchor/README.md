@@ -10,7 +10,7 @@ functional-morphology branch). Two predictors, 34 labelled sites (31 + 3 release
 | predictor | SE_type_D | BSE_D |
 |---|---|---|
 | two-cut rule, LOPO, 34 sites | 0.647 | 0.676 |
-| sibling-anchored (site placed relative to the labelled crops of its own parent image), 32 sites | 0.531 | 0.594 |
+| sibling-anchored (site placed relative to the labelled crops of its own parent image), 32 sites | 0.562 | 0.594 |
 | sibling-anchored, the 19 sites in mixed-label parents | 0.368 | 0.368 |
 | LOPO two-cut rule on those same 19 sites | 0.526 | 0.474 |
 
@@ -30,7 +30,7 @@ functional-morphology branch). Two predictors, 34 labelled sites (31 + 3 release
 
 | site | parent | SE_type_D | BSE_D | call | confidence | why |
 |---|---|---|---|---|---|---|
-| 0eryguqq | G1612 | +4.8 | +16.2 | Batch_3 | high | pure-B3 parent, inside sibling range |
+| 0eryguqq | G1612 | +4.8 | +16.2 | Batch_3 | high | pure-B3 parent; slightly below both B3 siblings on SE and BSE (not inside their range), still well above the B3 cut |
 | fhwrjtet | G1612 | +5.9 | +18.3 | Batch_3 | high | pure-B3 parent, inside sibling range |
 | fspqbkxl | G2148 | −11.2 | +0.7 | Batch_1 | high | below B1 cut on both detectors; darker than the B1 sibling |
 | 4hq27w4c | G2148 | −10.3 | −1.6 | Batch_1 | high | below B1 cut on both detectors; darker than the B1 sibling |

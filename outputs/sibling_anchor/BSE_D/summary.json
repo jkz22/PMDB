@@ -1,6 +1,7 @@
 {
   "feature": "BSE_D",
   "delta_within_pure_parent_sd": 0.7291549495462363,
+  "note_delta": "per-fold delta (evaluated site excluded) is used for labelled_eval; this is the all-34 value used for test sites",
   "n_labelled": 34,
   "majority": 0.5294117647058824,
   "cut_rule_full_fit": {

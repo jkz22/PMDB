@@ -12,30 +12,30 @@ Labelled sites 34 (31 + 3 released truths), majority 0.529. delta (within pure-p
 
 ## Test-site calls
 
-| site | parent | D | assigned | conf | p(B1) | p(B2) | p(B3) | cut-rule | labelled siblings (label) D |
+| site | parent | D | assigned (cut rule) | conf | anchored (cross-check) | anch p(B1) | anch p(B2) | anch p(B3) | labelled siblings (label) D |
 |---|---|---|---|---|---|---|---|---|---|
-| 0eryguqq | G1612 | +16.25 | Batch_3 | high | 0.00 | 0.15 | 0.85 | Batch_3 | ptg8lmto (3) +16.50; xgj4xftb (3) +18.86 |
-| 4hq27w4c | G2148 | -1.63 | Batch_1 | high | 1.00 | 0.00 | 0.00 | Batch_1 | f1vzngrs (1) -0.95; epqdaau9 (2) -0.09 |
-| fhwrjtet | G1612 | +18.29 | Batch_3 | high | 0.00 | 0.00 | 1.00 | Batch_3 | ptg8lmto (3) +16.50; xgj4xftb (3) +18.86 |
-| fspqbkxl | G2148 | +0.67 | Batch_1 | low | 0.38 | 0.24 | 0.38 | Batch_1 | f1vzngrs (1) -0.95; epqdaau9 (2) -0.09 |
-| soo2ax3r | G2156 | +10.55 | Batch_1 | high | 0.70 | 0.00 | 0.30 | Batch_3 | fzrt2k6r (1) +10.29; b3esycq1 (2) +11.48 |
-| y59rxmxl | G1880 | +5.05 | Batch_1 | low | 0.58 | 0.42 | 0.00 | Batch_2 | uhdslk0o (1) +5.37 |
+| 0eryguqq | G1612 | +16.25 | Batch_3 | high | Batch_3 | 0.00 | 0.15 | 0.85 | ptg8lmto (3) +16.50; xgj4xftb (3) +18.86 |
+| 4hq27w4c | G2148 | -1.63 | Batch_1 | high | Batch_1 | 1.00 | 0.00 | 0.00 | f1vzngrs (1) -0.95; epqdaau9 (2) -0.09 |
+| fhwrjtet | G1612 | +18.29 | Batch_3 | high | Batch_3 | 0.00 | 0.00 | 1.00 | ptg8lmto (3) +16.50; xgj4xftb (3) +18.86 |
+| fspqbkxl | G2148 | +0.67 | Batch_1 | high | Batch_1 | 0.38 | 0.24 | 0.38 | f1vzngrs (1) -0.95; epqdaau9 (2) -0.09 |
+| soo2ax3r | G2156 | +10.55 | Batch_3 | low | Batch_1 | 0.70 | 0.00 | 0.30 | fzrt2k6r (1) +10.29; b3esycq1 (2) +11.48 |
+| y59rxmxl | G1880 | +5.05 | Batch_2 | low | Batch_1 | 0.58 | 0.42 | 0.00 | uhdslk0o (1) +5.37 |
 
 ## Per-site labelled evaluation
 
 | site | parent | truth | D | mixed | LOPO cut | anchored | p(B1) | p(B2) | p(B3) |
 |---|---|---|---|---|---|---|---|---|---|
-| ptg8lmto | G1612 | Batch_3 | +16.50 |  | Batch_3 | Batch_3 | 0.00 | 0.32 | 0.68 |
+| ptg8lmto | G1612 | Batch_3 | +16.50 |  | Batch_3 | Batch_3 | 0.00 | 0.29 | 0.71 |
 | xgj4xftb | G1612 | Batch_3 | +18.86 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | iv6g2oq0 | G1780 | Batch_1 | +0.94 |  | Batch_1 | Batch_1 | 1.00 | 0.00 | 0.00 |
 | uhdslk0o | G1880 | Batch_1 | +5.37 |  | Batch_2 | Batch_2 | 0.00 | 1.00 | 0.00 |
 | 0grcilhi | G1904 | Batch_3 | +12.03 |  | Batch_3 | Batch_3 | 0.00 | 0.25 | 0.75 |
-| hawkfj64 | G1904 | Batch_3 | +12.49 |  | Batch_3 | Batch_3 | 0.00 | 0.31 | 0.69 |
+| hawkfj64 | G1904 | Batch_3 | +12.49 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | mgxahqnk | G1904 | Batch_3 | +13.24 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | fn0mhxef | G2048 | Batch_1 | +0.84 | y | Batch_1 | Batch_1 | 1.00 | 0.00 | 0.00 |
 | avn74qx1 | G2048 | Batch_2 | +2.02 | y | Batch_1 | Batch_1 | 0.63 | 0.37 | 0.00 |
 | 3806gxp0 | G2048 | Batch_2 | +5.87 | y | Batch_1 | Batch_1 | 0.64 | 0.16 | 0.20 |
-| 71vgq3fw | G2060 | Batch_3 | +31.27 |  | Batch_3 | Batch_2 | 0.00 | 0.70 | 0.30 |
+| 71vgq3fw | G2060 | Batch_3 | +31.27 |  | Batch_3 | Batch_2 | 0.00 | 0.69 | 0.31 |
 | tuy3zymq | G2060 | Batch_3 | +32.05 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | x7u69zsw | G2060 | Batch_3 | +32.66 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | kbdh4tri | G2060 | Batch_3 | +32.67 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
@@ -47,7 +47,7 @@ Labelled sites 34 (31 + 3 released truths), majority 0.529. delta (within pure-p
 | r17byphk | G2080 | Batch_2 | +8.01 | y | Batch_2 | Batch_2 | 0.00 | 1.00 | 0.00 |
 | cfe5vt7s | G2080 | Batch_3 | +9.38 | y | Batch_2 | Batch_2 | 0.00 | 0.67 | 0.33 |
 | ufdvpb81 | G2088 | Batch_3 | +16.87 |  | Batch_3 | Batch_3 | 0.00 | 0.39 | 0.61 |
-| hzumfsms | G2088 | Batch_3 | +17.35 |  | Batch_3 | Batch_3 | 0.00 | 0.19 | 0.81 |
+| hzumfsms | G2088 | Batch_3 | +17.35 |  | Batch_3 | Batch_3 | 0.00 | 0.20 | 0.80 |
 | 9luzk4jm | G2088 | Batch_3 | +18.01 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | xrv9xvzb | G2088 | Batch_3 | +18.49 |  | Batch_3 | Batch_3 | 0.00 | 0.00 | 1.00 |
 | f1vzngrs | G2148 | Batch_1 | -0.95 | y | Batch_1 | Batch_1 | 1.00 | 0.00 | 0.00 |
